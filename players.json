@@ -1,0 +1,22 @@
+{
+  "region": {
+    "platform": "br1",
+    "routing": "americas"
+  },
+  "players": [
+    { "gameName": "UDA Garu",         "tagLine": "Garu1"  },
+    { "gameName": "UDA JuninCambota", "tagLine": "Zovao"  },
+    { "gameName": "metal mummy",      "tagLine": "br1"    },
+    { "gameName": "UDA eREYNAmira",   "tagLine": "2654"   },
+    { "gameName": "Maou",             "tagLine": "TopBr"  },
+    { "gameName": "UDA Olinto",       "tagLine": "Jesus"  },
+    { "gameName": "Taiyoshin",        "tagLine": "2001"   },
+    { "gameName": "Gui",              "tagLine": "Gui"    },
+    { "gameName": "UDA Aaurora",      "tagLine": "lara"   },
+    { "gameName": "YaGoo1v9",         "tagLine": "1v9"    },
+    { "gameName": "luizin1v9",        "tagLine": "2021"   },
+    { "gameName": "CliqueLetal",      "tagLine": "G900"   },
+    { "gameName": "различие",         "tagLine": "666"    },
+    { "gameName": "UDA NexxtEdit",    "tagLine": "Will"   }
+  ]
+}

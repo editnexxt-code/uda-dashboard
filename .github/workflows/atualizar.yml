@@ -1,0 +1,76 @@
+name: Atualizar dashboard
+
+on:
+  schedule:
+    # 17:00 em Brasilia = 20:00 UTC (o Brasil nao tem mais horario de verao).
+    # O agendador do GitHub costuma atrasar de 5 a 20 min em horario de pico.
+    - cron: "0 20 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nunca deixa duas atualizacoes publicarem ao mesmo tempo.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # O banco precisa sobreviver de um dia para o outro: o fetch e incremental
+      # e so baixa o que ainda nao tem. A chave leva o run_id (sempre unica, sempre
+      # grava) e o restore-keys pega a entrada mais recente que existir. Se o cache
+      # sumir, a run seguinte refaz a carga inteira sozinha -- so demora mais.
+      - name: Restaurar banco
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: uda-db-${{ github.run_id }}
+          restore-keys: uda-db-
+
+      - name: Coletar dados e gerar o HTML
+        env:
+          RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
+        run: python run.py
+
+      # if: always() -- se a coleta cair no meio, o que ja baixou fica guardado
+      # e a run de amanha retoma dali em vez de comecar do zero.
+      - name: Guardar banco
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: uda-db-${{ github.run_id }}
+
+      - name: Montar o site
+        run: |
+          mkdir -p site
+          cp dashboard.html site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publicar:
+    needs: gerar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

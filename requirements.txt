@@ -1,0 +1,3 @@
+requests>=2.31
+# Opcional, mas sem ela os icones entram como PNG cru e o HTML triplica de tamanho.
+Pillow>=10.0

@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>União dos Afundados</title>
+<link rel="icon" href="__UDA_LOGO__">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1116;  --card:#161B22;  --card2:#1C222B;  --card3:#222933;
+  --line:#232A33; --line2:#1C222A;
+  --txt:#E9EDF2;  --mut:#8A94A3;  --dim:#5D6673;
+  --teal:#0AC8B9; --teal-s:rgba(10,200,185,.13);
+  --gold:#C8AA6E; --gold-s:rgba(200,170,110,.13);
+  --red:#E5484D;  --red-s:rgba(229,72,77,.13);
+  --blue:#4C8DFF; --blue-s:rgba(76,141,255,.13);
+  --barneutral:#2A323D;
+  --r:16px; --rs:10px; --rp:999px;
+  --disp:"Montserrat",system-ui,sans-serif;
+  --body:"Barlow","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:400 14px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.up{text-transform:uppercase;letter-spacing:.12em}
+
+/* =========================================================== LAYOUT */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+@media(max-width:1080px){.app{grid-template-columns:1fr}}
+
+/* ---------------------------------------------------------- sidebar */
+aside{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:1080px){aside{position:static;height:auto}}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 18px 18px}
+.brand img{width:38px;height:38px;flex:0 0 auto}
+.brand .t{font:700 14px/1.15 var(--disp);letter-spacing:.02em}
+.brand .s{font:500 10px/1 var(--body);color:var(--dim);margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
+.navgroup{padding:6px 12px}
+.navgroup .lbl{font:600 9.5px/1 var(--body);letter-spacing:.15em;text-transform:uppercase;color:var(--dim);padding:12px 10px 8px}
+.nav{display:flex;align-items:center;gap:11px;width:100%;border:1px solid transparent;background:none;
+  color:var(--mut);cursor:pointer;padding:10px 11px;border-radius:var(--rs);font:500 13.5px/1 var(--body);
+  text-align:left;transition:.13s;margin-bottom:2px}
+.nav:hover{background:var(--card2);color:var(--txt)}
+.nav[aria-current="page"]{background:var(--card3);border-color:var(--line);color:var(--txt);font-weight:600}
+.nav svg{width:17px;height:17px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav[aria-current="page"] svg{stroke:var(--teal)}
+.nav .badge{margin-left:auto;font:600 10.5px/1 var(--body);background:var(--gold-s);color:var(--gold);
+  padding:4px 7px;border-radius:var(--rp);font-variant-numeric:tabular-nums}
+.sidecard{margin:auto 12px 14px;background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.sidecard .k{font:600 9.5px/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.sidecard .v{font:700 26px/1 var(--disp);margin-top:9px;font-variant-numeric:tabular-nums}
+.sidecard .s{font-size:11.5px;color:var(--mut);margin-top:5px}
+.sidecard .track{height:5px;border-radius:var(--rp);background:var(--barneutral);margin-top:11px;overflow:hidden}
+.sidecard .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+
+/* ---------------------------------------------------------- topbar */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(14,17,22,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:16px 30px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.topbar h1{margin:0;font:700 21px/1.2 var(--disp)}
+.topbar .sub{font-size:12.5px;color:var(--mut);margin-top:3px}
+.tbright{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:3px}
+.seg button{appearance:none;border:0;background:none;color:var(--mut);cursor:pointer;font:500 12.5px/1 var(--body);
+  padding:7px 12px;border-radius:7px;white-space:nowrap;transition:.13s}
+.seg button:hover{color:var(--txt);background:var(--card2)}
+.seg button[aria-pressed="true"]{background:var(--card3);color:var(--txt);font-weight:600}
+.seg button b{font-variant-numeric:tabular-nums;opacity:.55;margin-left:5px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--rp);padding:7px 13px;font-size:12px;color:var(--mut);white-space:nowrap}
+.chip b{color:var(--txt);font-weight:600}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.dot.old{background:var(--red)}
+.content{padding:26px 30px 60px}
+
+/* =========================================================== CARDS */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px}
+.card.flush{padding:0}
+.ch{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.ch .ic{width:34px;height:34px;border-radius:var(--rs);display:grid;place-items:center;background:var(--teal-s);flex:0 0 auto}
+.ch .ic svg{width:17px;height:17px;stroke:var(--teal);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ch .ic.gold{background:var(--gold-s)} .ch .ic.gold svg{stroke:var(--gold)}
+.ch .ic.red{background:var(--red-s)}   .ch .ic.red svg{stroke:var(--red)}
+.ch h2{margin:0;font:600 15.5px/1.25 var(--disp)}
+.ch .hint{font-size:12px;color:var(--dim);margin-top:3px}
+.ch .act{margin-left:auto;font-size:12px;color:var(--mut)}
+/* cabeçalho de seção fora de card (usado pelos halls, que já são uma grade) */
+.sh-plain{margin-bottom:14px}
+.sh-plain .ch{margin-bottom:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.g23{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.g32{grid-template-columns:minmax(0,1fr) minmax(0,1.9fr)}
+@media(max-width:1180px){.g2,.g23,.g32{grid-template-columns:1fr}}
+section{margin-bottom:16px}
+
+/* stat cards no estilo da referência: chip de ícone + rótulo + valor com unidade fraca */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:flex;gap:14px;align-items:center}
+.stat .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;background:var(--card2)}
+.stat .ic svg{width:20px;height:20px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.stat .k{font-size:12px;color:var(--mut)}
+.stat .v{font:700 21px/1.15 var(--disp);margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .v small{font:500 12.5px/1 var(--body);color:var(--dim);margin-left:4px}
+.teal .ic{background:var(--teal-s)} .teal .ic svg{stroke:var(--teal)}
+.gold .ic{background:var(--gold-s)} .gold .ic svg{stroke:var(--gold)}
+.red  .ic{background:var(--red-s)}  .red  .ic svg{stroke:var(--red)}
+.blue .ic{background:var(--blue-s)} .blue .ic svg{stroke:var(--blue)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--rp);
+  font:600 11.5px/1 var(--body);font-variant-numeric:tabular-nums}
+.pill.t{background:var(--teal-s);color:var(--teal)}
+.pill.r{background:var(--red-s);color:var(--red)}
+.pill.g{background:var(--gold-s);color:var(--gold)}
+.pill.n{background:var(--card3);color:var(--mut)}
+.good{color:var(--teal)} .bad{color:var(--red)} .au{color:var(--gold)}
+
+/* =========================================================== PÓDIO */
+.podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:stretch}
+@media(max-width:860px){.podium{grid-template-columns:1fr}}
+.pod{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center;position:relative}
+.pod.p1{background:var(--card2);border-color:rgba(200,170,110,.4)}
+.pod .rk{position:absolute;top:16px;left:16px;font:700 12px/1 var(--body);color:var(--dim);
+  background:var(--card3);border-radius:var(--rp);padding:5px 9px}
+.pod.p1 .rk{background:var(--gold-s);color:var(--gold)}
+.pod .av{width:64px;height:64px;border-radius:50%;margin:6px auto 0;border:2px solid var(--line)}
+.pod.p1 .av{width:80px;height:80px;border-color:var(--gold)}
+.pod .nm{font:600 15px/1.25 var(--disp);margin-top:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod.p1 .nm{font-size:17px}
+.pod .el{font-size:12px;color:var(--mut);margin-top:4px}
+.pod .sc{font:700 32px/1 var(--disp);margin-top:15px;font-variant-numeric:tabular-nums}
+.pod.p1 .sc{font-size:40px;color:var(--gold)}
+.pod .sl{font-size:11px;color:var(--dim);margin-top:5px}
+.pod .ft{display:flex;gap:8px;justify-content:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+
+.shame .row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line2)}
+.shame .row:last-child{border-bottom:0}
+.shame .p{font:700 13px/1 var(--body);color:var(--dim);width:26px;font-variant-numeric:tabular-nums}
+.shame img{width:38px;height:38px;border-radius:50%;border:1px solid var(--line)}
+.shame .nm{font-weight:600;font-size:13.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shame .nm em{display:block;font-style:normal;font-size:11.5px;color:var(--dim);font-weight:400;margin-top:2px}
+
+/* =========================================================== TABELA */
+.tbox{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}
+table{border-collapse:collapse;width:100%}
+thead th{position:sticky;top:0;z-index:3;background:var(--card2);font:600 11px/1.3 var(--body);color:var(--mut);
+  padding:13px 14px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+thead th.l{text-align:left}
+thead th:hover,thead th.on{color:var(--teal)}
+tbody td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}
+tbody td.l{text-align:left}
+tbody tr{cursor:pointer;transition:.1s}
+tbody tr:hover{background:var(--card2)}
+tbody tr:last-child td{border-bottom:0}
+.rnk{font:700 14px/1 var(--disp);color:var(--dim);width:36px;font-variant-numeric:tabular-nums}
+.rnk.r1{color:var(--gold)}
+.pl{display:flex;align-items:center;gap:11px;min-width:180px}
+.pl img{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);flex:0 0 auto}
+.pl .a{font-weight:600;font-size:13.5px}
+.pl .b{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.eloc{display:flex;align-items:center;gap:9px;min-width:126px}
+.eloc img{width:26px;height:26px}
+.eloc .a{font-size:12.5px;font-weight:600}
+.eloc .b{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.wr{display:flex;flex-direction:column;gap:6px;align-items:flex-end;min-width:92px}
+.wr .t{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.wr .track{width:80px;height:5px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden}
+.wr .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+.wr .track i.lo{background:var(--red)}
+
+/* =========================================================== GRÁFICOS */
+.chart{display:block;width:100%}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:middle}
+svg text{font-family:var(--body)}
+
+/* =========================================================== PRÊMIOS */
+.awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:14px}
+.aw{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:0;overflow:hidden;
+  position:relative;transition:.16s}
+.aw:hover{border-color:rgba(10,200,185,.45)}
+.aw.bad:hover{border-color:rgba(229,72,77,.45)}
+/* faixa fina no topo, na cor do prêmio */
+.aw::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal)}
+.aw.bad::before{background:var(--red)}
+.aw-h{display:flex;align-items:center;gap:9px;padding:14px 16px 0}
+.aw-h .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--teal-s);flex:0 0 auto}
+.aw-h .ic svg{width:14px;height:14px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.aw.bad .aw-h .ic{background:var(--red-s)} .aw.bad .aw-h .ic svg{stroke:var(--red)}
+.aw-h .t{font:700 10.5px/1.2 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+.aw.bad .aw-h .t{color:var(--red)}
+.aw-b{display:flex;align-items:center;gap:13px;padding:13px 16px 14px}
+.aw-b img{width:50px;height:50px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto}
+.aw-b .who{min-width:0;flex:1}
+.aw-b .p{font:600 14.5px/1.2 var(--disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-b .d{font-size:11px;color:var(--dim);margin-top:3px}
+.aw-b .big{text-align:right;flex:0 0 auto}
+.aw-b .big .n2{font:700 22px/1 var(--disp);font-variant-numeric:tabular-nums}
+.aw-b .big .u{font-size:10.5px;color:var(--dim);margin-top:3px}
+.aw-m{padding:0 16px 12px}
+.aw-m .track{height:6px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;position:relative}
+.aw-m .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+.aw.bad .aw-m .track i{background:var(--red)}
+.aw-m .cap{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:7px}
+.aw-m .cap b{color:var(--mut);font-variant-numeric:tabular-nums}
+.aw-f{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--line);background:var(--card)}
+.aw-f .lbl{font-size:10px;color:var(--dim);flex:0 0 auto}
+.aw-f .ru{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);min-width:0}
+.aw-f .ru img{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
+.aw-f .ru span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ------------------------------------------------------- os afundados */
+.sunk{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.sunk{grid-template-columns:1fr}}
+.sk{background:var(--card2);border:1px solid rgba(229,72,77,.28);border-radius:var(--r);
+  padding:18px;position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:var(--red);opacity:.5}
+.sk-h{display:flex;align-items:center;gap:12px}
+.sk-h .pos{font:700 30px/1 var(--disp);color:rgba(229,72,77,.35);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.sk-h img{width:48px;height:48px;border-radius:50%;border:2px solid rgba(229,72,77,.45);flex:0 0 auto}
+.sk-h .who{min-width:0;flex:1}
+.sk-h .nm{font:600 15px/1.2 var(--disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sk-h .el{font-size:11.5px;color:var(--dim);margin-top:3px}
+.sk-h .sc{font:700 26px/1 var(--disp);color:var(--red);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.sk-why{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.sk-gap{margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.sk-gap .lbl{font-size:10.5px;color:var(--dim);display:flex;justify-content:space-between}
+.sk-gap .track{height:6px;border-radius:var(--rp);background:var(--barneutral);margin-top:7px;overflow:hidden;position:relative}
+.sk-gap .track i{display:block;height:100%;border-radius:var(--rp);background:var(--red)}
+.sk-gap .track u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold);text-decoration:none}
+.sk-worst{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.sk-worst img{width:32px;height:32px;border-radius:8px;flex:0 0 auto}
+.sk-worst .l{font-size:10.5px;color:var(--dim)}
+.sk-worst .v{font-size:12.5px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* =========================================================== JOGADORES */
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(452px,1fr));gap:16px}
+@media(max-width:600px){.pcards{grid-template-columns:1fr}}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.pc-h{display:flex;gap:13px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.pc-h img{width:50px;height:50px;border-radius:50%;border:2px solid var(--line)}
+.pc-h .nm{font:600 16px/1.2 var(--disp)}
+.pc-h .tg{font-size:11.5px;color:var(--dim);margin-top:3px}
+.pc-h .rt{margin-left:auto;text-align:right}
+.pc-h .rt .s{font:700 26px/1 var(--disp);font-variant-numeric:tabular-nums}
+.pc-h .rt .l{font-size:10.5px;color:var(--dim);margin-top:4px}
+.avgl{padding:13px 20px;background:var(--card2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+.avgl b{color:var(--txt);font-variant-numeric:tabular-nums}
+.pc-b{display:grid;grid-template-columns:196px 1fr;gap:20px;padding:20px}
+@media(max-width:600px){.pc-b{grid-template-columns:1fr}}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;align-content:start}
+.mini div{display:flex;justify-content:space-between;font-size:12.5px;padding-bottom:5px;border-bottom:1px solid var(--line2)}
+.mini span{color:var(--dim)}
+.mini b{font-variant-numeric:tabular-nums}
+.form{display:flex;gap:4px;padding:0 20px 16px;flex-wrap:wrap}
+.form i{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font:600 10px/1 var(--body);font-style:normal}
+.form i.w{background:var(--teal-s);color:var(--teal)}
+.form i.l{background:var(--red-s);color:var(--red)}
+.champs{padding:14px 20px 18px;border-top:1px solid var(--line)}
+.champ{display:flex;align-items:center;gap:11px;padding:6px 0;font-size:12.5px}
+.champ img{width:30px;height:30px;border-radius:8px;border:1px solid var(--line)}
+.champ .cn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.champ .cg,.champ .ck{font-size:11.5px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.champ .cg{width:56px} .champ .ck{width:56px}
+.champ .cw{font-weight:600;width:44px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* =========================================================== MATRIZ */
+table.mx{border-collapse:separate;border-spacing:3px;width:auto}
+.mx th,.mx td{border:0}
+.mx-corner{background:transparent!important;position:sticky;left:0;z-index:5;width:126px;min-width:126px;cursor:default}
+.mx-h{padding:0 0 8px!important;text-align:center!important;vertical-align:bottom;background:transparent!important;border:0!important;cursor:default;min-width:50px}
+.mx-h span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);font:500 10.5px/1 var(--body);color:var(--dim);max-height:80px}
+.mx-r{position:sticky;left:0;z-index:4;background:var(--card)!important;text-align:left!important;padding:0 10px 0 2px!important;border:0!important;cursor:default;width:126px;min-width:126px}
+.mx-r img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:inline-block;vertical-align:middle}
+.mx-r span{font:500 11.5px/1 var(--body);margin-left:9px;vertical-align:middle}
+.mx-c{text-align:center!important;padding:0!important;height:42px;min-width:50px;background:var(--card2);
+  border-radius:9px;vertical-align:middle;cursor:default}
+.mx-c b{display:block;font:600 12px/1 var(--body);font-variant-numeric:tabular-nums}
+.mx-c i{display:block;font:400 9.5px/1 var(--body);font-style:normal;opacity:.5;margin-top:2px}
+.mx-self{background:var(--bg);color:var(--dim)}
+
+/* barras horizontais (rotas, filas) */
+.hbar{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2)}
+.hbar:last-child{border-bottom:0}
+.hbar .hn{width:88px;font-size:12.5px;font-weight:500;flex:0 0 auto}
+.hbar .ht{flex:1;height:8px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;min-width:40px}
+.hbar .ht i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+.hbar .hq{width:46px;text-align:right;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.hbar .hs{width:40px;text-align:right;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* feed das últimas partidas */
+.mrow{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--line2);align-items:flex-start}
+.mrow:last-child{border-bottom:0}
+.mmeta{width:132px;flex:0 0 auto}
+.mmeta .mq{font-size:12.5px;font-weight:600}
+.mmeta .md{font-size:11.5px;color:var(--dim);margin-top:3px}
+.mps{flex:1;display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.mp{display:flex;align-items:center;gap:9px;background:var(--card2);border:1px solid var(--line);
+  border-radius:var(--rs);padding:7px 11px 7px 7px;min-width:186px}
+.mp.w{border-left:3px solid var(--teal)} .mp.l{border-left:3px solid var(--red)}
+.mp img{width:30px;height:30px;border-radius:8px;flex:0 0 auto}
+.mp .mpn{flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp .mpn em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);font-weight:400}
+.mp .mpk{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* melhor / pior partida no cartão do jogador */
+.bw{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px}
+@media(max-width:600px){.bw{grid-template-columns:1fr}}
+.bwc{background:var(--card2);border:1px solid var(--line);border-radius:var(--rs);padding:11px 13px;display:flex;gap:10px;align-items:center}
+.bwc img{width:32px;height:32px;border-radius:8px;flex:0 0 auto}
+.bwc .l{font-size:10.5px;color:var(--dim)}
+.bwc .v{font-size:12.5px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.roles{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 16px}
+
+/* =========================================================== LISTAS */
+.lrow{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+.lrow:last-child{border-bottom:0}
+.lrow .ims{display:flex;flex:0 0 auto}
+.lrow .ims img{width:30px;height:30px;border-radius:50%;border:2px solid var(--card)}
+.lrow .ims img+img{margin-left:-11px}
+.lrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .st{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rec{display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid var(--line2)}
+.rec:last-child{border-bottom:0}
+.rec img{width:40px;height:40px;border-radius:10px;border:1px solid var(--line)}
+.rec .lb{font-size:11px;color:var(--dim)}
+.rec .t1{font-weight:600;font-size:13px;margin-top:2px}
+.rec .t2{font-size:11.5px;color:var(--mut);margin-top:2px;font-variant-numeric:tabular-nums}
+.rec .vv{margin-left:auto;font:700 19px/1 var(--disp);font-variant-numeric:tabular-nums}
+
+/* =========================================================== REGRAS */
+.prose{max-width:78ch}
+.prose h3{font:600 16px/1.3 var(--disp);margin:30px 0 10px;color:var(--txt)}
+.prose h3:first-child{margin-top:0}
+.prose p{margin:0 0 12px;color:var(--mut)}
+.prose li{margin-bottom:6px;color:var(--mut)}
+.prose b{color:var(--txt)}
+.prose code{background:var(--card2);border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-size:12.5px;color:var(--teal)}
+.formula{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:var(--rs);
+  padding:16px 20px;margin:18px 0;font:600 15px/1.4 var(--body);color:var(--txt);font-variant-numeric:tabular-nums}
+.wtable{width:100%;max-width:420px;margin:16px 0}
+.wtable .wrow{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.wtable .wrow:last-child{border-bottom:0}
+.wtable .wn{flex:1;font-size:13px}
+.wtable .wb{width:120px;height:6px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden}
+.wtable .wb i{display:block;height:100%;border-radius:var(--rp);background:var(--gold)}
+.wtable .wv{width:42px;text-align:right;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ====================================================== TOOLTIP GLOBAL */
+#tip{position:fixed;z-index:300;pointer-events:none;opacity:0;transform:translateY(4px);
+  transition:opacity .12s,transform .12s;background:#0B0E13;border:1px solid var(--line);
+  border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.45;color:var(--txt);
+  box-shadow:0 12px 34px rgba(0,0,0,.6);max-width:300px}
+#tip.on{opacity:1;transform:translateY(0)}
+#tip .tt{font-weight:600;font-size:12.5px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+#tip .tr{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--mut);padding:2px 0}
+#tip .tr b{color:var(--txt);font-variant-numeric:tabular-nums}
+#tip .tk{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+#tip .ts{color:var(--dim);font-size:11px;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+
+/* faixas de hover nos gráficos de série: linha vertical só no que está sob o cursor */
+.band rect{fill:transparent}
+.band line{stroke:var(--gold);stroke-width:1;opacity:0;transition:opacity .1s}
+.band:hover line{opacity:.55}
+.band:hover rect{fill:rgba(255,255,255,.03)}
+[data-tip]{cursor:default}
+
+/* seletor de jogadores da aba Evolução */
+.psel{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.pchip{display:inline-flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);
+  border-radius:var(--rp);padding:5px 12px 5px 5px;font-size:12.5px;color:var(--mut);cursor:pointer;
+  transition:.13s;user-select:none}
+.pchip img{width:22px;height:22px;border-radius:50%;flex:0 0 auto}
+.pchip:hover{border-color:var(--teal);color:var(--txt)}
+.pchip[aria-pressed="true"]{background:var(--card3);color:var(--txt);font-weight:600}
+.pchip .sw{width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.pchip[aria-pressed="false"]{opacity:.42}
+.pbtn{appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--mut);
+  border-radius:var(--rp);padding:6px 13px;font:500 12px/1 var(--body);cursor:pointer;transition:.13s}
+.pbtn:hover{border-color:var(--teal);color:var(--txt)}
+
+/* ------------------------------------------------ estados de hover gerais */
+.card{transition:border-color .16s}
+.card:hover{border-color:#2C3540}
+.stat{transition:border-color .16s,transform .16s}
+.stat:hover{border-color:#2C3540;transform:translateY(-2px)}
+.pod{transition:border-color .16s,transform .16s}
+.pod:hover{transform:translateY(-3px)}
+.pod.p1:hover{border-color:var(--gold)}
+.sk{transition:border-color .16s,transform .16s}
+.sk:hover{border-color:rgba(229,72,77,.55);transform:translateY(-2px)}
+.aw{transition:border-color .16s,transform .16s}
+.aw:hover{transform:translateY(-2px)}
+.pc{transition:border-color .16s}
+.pc:hover{border-color:#2C3540}
+.mp{transition:border-color .16s,background .16s}
+.mp:hover{background:var(--card3);border-color:#2C3540}
+.hbar{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.hbar:hover{background:var(--card2)}
+.lrow{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.lrow:hover{background:var(--card2)}
+.rec{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.rec:hover{background:var(--card2)}
+.champ{transition:background .13s;border-radius:7px;padding-left:7px;padding-right:7px;margin:0 -7px}
+.champ:hover{background:var(--card2)}
+.form i{transition:transform .12s}
+.form i:hover{transform:scale(1.22)}
+.mx-c{transition:transform .12s,outline .12s}
+.mx-c:hover{outline:2px solid var(--teal);outline-offset:1px;transform:scale(1.06)}
+.aw-f .ru{transition:color .13s}
+.aw-f .ru:hover{color:var(--txt)}
+svg circle[data-tip],svg rect[data-tip]{transition:opacity .12s}
+svg circle[data-tip]:hover{opacity:.75}
+
+/* =========================================================== DIVERSOS */
+.empty{padding:44px 24px;text-align:center;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.empty h3{font:600 14px/1 var(--disp);color:var(--txt);margin:0 0 9px}
+#demo-banner{background:var(--red);color:#fff;text-align:center;padding:11px 20px;font-size:13px}
+#demo-banner b{font-family:var(--disp);font-weight:700}
+#demo-banner code{background:rgba(0,0,0,.28);padding:2px 7px;border-radius:5px}
+footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);display:flex;gap:18px;flex-wrap:wrap}
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--card3);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#333d4a}
+</style>
+</head>
+<body>
+<div id="demo-banner" hidden><b>DADOS FICTÍCIOS</b> — nada aqui veio da Riot.
+  Números sorteados por <code>demo.py</code>. Para o painel real, rode <code>python run.py</code>.</div>
+
+<div class="app">
+  <aside>
+    <div class="brand">
+      <img src="__UDA_LOGO__" alt="">
+      <div><div class="t">União dos Afundados</div><div class="s" id="brandsub">Painel</div></div>
+    </div>
+    <div id="nav"></div>
+    <div class="sidecard" id="sidecard"></div>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div><h1 id="ptitle">Visão geral</h1><div class="sub" id="psub"></div></div>
+      <div class="tbright" id="tbright"></div>
+    </div>
+    <div class="content">
+      <div id="app"></div>
+      <footer><span id="ft-fonte">Dados: Riot Games API · Data Dragon</span>
+        <span id="ft-jan"></span><span id="ft-ger"></span>
+        <span style="margin-left:auto">Não endossado pela Riot Games.</span></footer>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = /*__UDA_DATA__*/null;
+
+/* --------------------------------------------------------------- utils */
+const $=(s,r=document)=>r.querySelector(s);
+const h=(s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf=(v,d=1)=>(v==null||isNaN(v))?"—":Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const ni=(v)=>(v==null||isNaN(v))?"—":Math.round(v).toLocaleString("pt-BR");
+const sg=(v,d=1)=>(v>0?"+":"")+nf(v,d);
+const DD=DATA?DATA.ddragon:"15.1.1", CIDX=DATA?DATA.championIndex:{};
+const FB=' onerror="this.style.visibility=\'hidden\'" loading="lazy" ';
+/* Os icones vem embutidos no proprio arquivo (DATA.icons). O CDN fica so como
+   rede de seguranca para um id que nao tenha sido baixado. */
+const PACK=(DATA&&DATA.icons)||{profile:{},champion:{},crest:{}};
+const champImg=(id,nm)=>PACK.champion[String(id)]
+  ||`https://ddragon.leagueoflegends.com/cdn/${DD}/img/champion/${CIDX[String(id)]||(nm||"").replace(/[^A-Za-z]/g,"")}.png`;
+const iconImg=(id)=>PACK.profile[String(id||29)]
+  ||`https://ddragon.leagueoflegends.com/cdn/${DD}/img/profileicon/${id||29}.png`;
+const crestImg=(t)=>PACK.crest[(t||"unranked").toLowerCase()]
+  ||`https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${(t||"unranked").toLowerCase()}.svg`;
+const TIER={IRON:"Ferro",BRONZE:"Bronze",SILVER:"Prata",GOLD:"Ouro",PLATINUM:"Platina",EMERALD:"Esmeralda",
+  DIAMOND:"Diamante",MASTER:"Mestre",GRANDMASTER:"Grão-Mestre",CHALLENGER:"Desafiante",UNRANKED:"Sem elo"};
+function eloTxt(r){
+  if(!r||!r.tier||r.tier==="UNRANKED") return {name:"Sem elo",sub:"",tier:"unranked"};
+  const apex=["MASTER","GRANDMASTER","CHALLENGER"].includes(r.tier);
+  return {name:apex?TIER[r.tier]:`${TIER[r.tier]||r.tier} ${r.division}`,sub:`${r.lp} PDL`,tier:r.tier};
+}
+const cl=(v,r)=>v>=r?"good":"bad";
+const dcl=(v,inv)=>v===0?"":((inv?v<0:v>0)?"good":"bad");
+const short=(n)=>n.replace(/^UDA /,"");
+function ago(ms){if(!ms)return "—";const m=Math.floor((Date.now()-ms)/60000);
+  if(m<1)return "agora";if(m<60)return `há ${m} min`;
+  const hh=Math.floor(m/60);return hh<24?`há ${hh}h`:`há ${Math.floor(hh/24)}d`;}
+
+/* ícones de traço, no espírito da referência */
+const I={
+  grid:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
+  rank:'<path d="M4 20V10M12 20V4M20 20v-6"/>',
+  trend:'<path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  sword:'<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/>',
+  skull:'<circle cx="12" cy="10" r="8"/><circle cx="9" cy="10" r="1.5"/><circle cx="15" cy="10" r="1.5"/><path d="M8 18v3M12 18v3M16 18v3"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+  award:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/>',
+  eye:'<path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+const svg=(p)=>`<svg viewBox="0 0 24 24">${p}</svg>`;
+
+/* ---------------------------------------------------- motor de tooltip
+   Delegação no documento: qualquer elemento com data-tip mostra o balão,
+   inclusive dentro de SVG. Como é delegado, nada precisa ser religado
+   quando a página é redesenhada. */
+const TIP=document.createElement("div"); TIP.id="tip"; document.body.appendChild(TIP);
+let tipOn=false;
+function moverTip(e){
+  const m=14, r=TIP.getBoundingClientRect();
+  let x=e.clientX+m, y=e.clientY+m;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-m;
+  if(y+r.height>innerHeight-8) y=e.clientY-r.height-m;
+  TIP.style.left=Math.max(8,x)+"px"; TIP.style.top=Math.max(8,y)+"px";
+}
+document.addEventListener("mouseover",e=>{
+  const alvo=e.target.closest?e.target.closest("[data-tip]"):null;
+  if(!alvo){ if(tipOn){TIP.classList.remove("on");tipOn=false;} return; }
+  TIP.innerHTML=alvo.getAttribute("data-tip");
+  TIP.classList.add("on"); tipOn=true; moverTip(e);
+},true);
+document.addEventListener("mousemove",e=>{ if(tipOn) moverTip(e); },true);
+document.addEventListener("mouseout",e=>{
+  if(!e.relatedTarget||!e.relatedTarget.closest||!e.relatedTarget.closest("[data-tip]")){
+    TIP.classList.remove("on"); tipOn=false; }
+},true);
+window.addEventListener("scroll",()=>{TIP.classList.remove("on");tipOn=false;},true);
+
+/* monta o conteúdo do balão e já devolve pronto para colar no atributo */
+const tipHTML=(titulo,linhas,rodape)=>h(
+  `<div class="tt">${titulo}</div>`
+  + (linhas||[]).map(l=>Array.isArray(l)
+      ? `<div class="tr"><span>${l[2]?`<i class="tk" style="background:${l[2]};display:inline-block;margin-right:6px"></i>`:""}${l[0]}</span><b>${l[1]}</b></div>`
+      : `<div class="tr"><span>${l}</span></div>`).join("")
+  + (rodape?`<div class="ts">${rodape}</div>`:""));
+const tip=(titulo,linhas,rodape)=>` data-tip="${tipHTML(titulo,linhas,rodape)}" `;
+const chead=(icon,t,hint,tone,act)=>`<div class="ch"><div class="ic ${tone||""}">${svg(icon)}</div>
+  <div><h2>${t}</h2>${hint?`<div class="hint">${hint}</div>`:""}</div>${act?`<div class="act">${act}</div>`:""}</div>`;
+const noData=(t,m)=>`<div class="empty"><h3>${t}</h3><p>${m}</p></div>`;
+
+/* ============================================================ GRÁFICOS */
+
+/* barras com topo arredondado + linha, como o "Health Report" da referência */
+function barLine(trend){
+  if(!trend||trend.length<2) return noData("POUCOS DADOS","Ainda não há semanas suficientes.");
+  const W=1080,H=340,PL=48,PR=24,PT=20,PB=44,iw=W-PL-PR,ih=H-PT-PB,n=trend.length;
+  const bw=Math.min(46,iw/n*.55), X=i=>PL+iw*(i+.5)/n, Y=v=>PT+ih-(v/100)*ih;
+  const g=[0,25,50,75,100].map(v=>`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}"
+    stroke="#232A33" stroke-dasharray="${v===0?"0":"3 5"}"/>
+    <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${v}%</text>`).join("");
+  const melhor=Math.max(...trend.map(t=>t.winrate));
+  const bars=trend.map((d,i)=>{
+    const y=Y(d.winrate),hh=PT+ih-y, dest=d.winrate===melhor;
+    const t=tip(`Semana ${h(d.week)}`,[
+      ["Aproveitamento",nf(d.winrate,1)+"%","var(--teal)"],
+      ["Partidas",ni(d.games)],
+      ["Vitórias",`${ni(d.wins)}V ${ni(d.games-d.wins)}D`],
+    ],dest?"melhor semana do período":null);
+    return `<g${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}" fill="transparent"/>
+      <rect x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${Math.max(hh,3)}" rx="7"
+      fill="${dest?"var(--teal)":"var(--barneutral)"}"/></g>`;
+  }).join("");
+  const path=trend.map((d,i)=>`${i?"L":"M"}${X(i)},${Y(d.winrate)}`).join(" ");
+  const step=Math.ceil(n/12);
+  const xl=trend.map((d,i)=>i%step===0?`<text x="${X(i)}" y="${H-16}" fill="#5D6673" font-size="10.5" text-anchor="middle">${d.week.replace(/^\d{4}-/,"")}</text>`:"").join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${bars}
+    <path d="${path}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" opacity=".85"/>
+    ${trend.map((d,i)=>`<circle cx="${X(i)}" cy="${Y(d.winrate)}" r="3" fill="var(--gold)"/>`).join("")}${xl}</svg>`;
+}
+
+/* medidor em meia-lua, como o "Stress Level" */
+function gauge(valor,rotulo,pill,tone){
+  const W=260,H=165,cx=130,cy=134,R=94,T=18;
+  const p=Math.max(0,Math.min(100,valor))/100;
+  const pt=(f)=>[cx+Math.cos(Math.PI*(1-f))*R, cy-Math.sin(Math.PI*(1-f))*R];
+  // large-arc-flag SEMPRE 0: o medidor varre no maximo 180 graus, entao nenhum
+  // trecho dele e "arco maior". Com 1 acima de 50% o traco saia partido em dois.
+  const arc=(f0,f1,col)=>{const[a,b]=pt(f0),[c,d]=pt(f1);
+    return `<path d="M${a},${b} A${R},${R} 0 0 1 ${c},${d}" fill="none" stroke="${col}" stroke-width="${T}" stroke-linecap="round"/>`;};
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:260px;margin:0 auto">
+    ${arc(0,1,"var(--barneutral)")}${p>.008?arc(0,p,tone||"var(--teal)"):""}
+    <text x="${cx}" y="${cy-16}" fill="var(--txt)" font-size="34" font-weight="700" text-anchor="middle"
+      style="font-family:var(--disp)">${nf(valor,1)}%</text>
+    <text x="${cx}" y="${cy+6}" fill="#5D6673" font-size="12" text-anchor="middle">${h(rotulo)}</text></svg>
+    ${pill?`<div style="text-align:center;margin-top:10px">${pill}</div>`:""}`;
+}
+
+function scatter(players){
+  const pool=players.filter(p=>p.rank!=null);
+  if(pool.length<2) return noData("SEM JOGADORES","Ninguém atingiu o mínimo de partidas nesta fila.");
+  const W=1080,H=420,PL=60,PR=26,PT=22,PB=50,iw=W-PL-PR,ih=H-PT-PB;
+  const xs=pool.map(p=>p.stats.deaths_10min),ys=pool.map(p=>p.stats.dmg_min);
+  const x0=Math.min(...xs)*.86,x1=Math.max(...xs)*1.1,y0=Math.min(...ys)*.86,y1=Math.max(...ys)*1.1;
+  const X=v=>PL+((v-x0)/(x1-x0||1))*iw, Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
+  const mx=xs.reduce((a,b)=>a+b,0)/xs.length,my=ys.reduce((a,b)=>a+b,0)/ys.length;
+  let g="";
+  for(let i=0;i<=4;i++){const vy=y0+(y1-y0)*i/4,vx=x0+(x1-x0)*i/4;
+    g+=`<line x1="${PL}" y1="${Y(vy)}" x2="${W-PR}" y2="${Y(vy)}" stroke="#232A33" stroke-dasharray="3 5"/>
+      <text x="${PL-12}" y="${Y(vy)+4}" fill="#5D6673" font-size="11" text-anchor="end">${(vy/1000).toFixed(1)}k</text>
+      <text x="${X(vx)}" y="${H-22}" fill="#5D6673" font-size="11" text-anchor="middle">${vx.toFixed(1)}</text>`;}
+  g+=`<line x1="${X(mx)}" y1="${PT}" x2="${X(mx)}" y2="${PT+ih}" stroke="#3A4453" stroke-dasharray="4 4"/>
+      <line x1="${PL}" y1="${Y(my)}" x2="${W-PR}" y2="${Y(my)}" stroke="#3A4453" stroke-dasharray="4 4"/>`;
+  const pts=pool.map(p=>{const cx=X(p.stats.deaths_10min),cy=Y(p.stats.dmg_min);
+    const bom=p.stats.dmg_min>=my&&p.stats.deaths_10min<=mx,ruim=p.stats.dmg_min<my&&p.stats.deaths_10min>mx;
+    const c=bom?"var(--teal)":ruim?"var(--red)":"var(--gold)";
+    const t=tip(h(p.gameName),[
+      ["Dano por minuto",ni(p.stats.dmg_min),c],
+      ["Mortes a cada 10 min",nf(p.stats.deaths_10min,2)],
+      ["KDA",nf(p.stats.kda,2)],
+      ["Aproveitamento",nf(p.stats.winrate,1)+"%"],
+      ["UDA Score",nf(p.score,1)],
+    ],bom?"carrega: dano alto e morre pouco":ruim?"alimenta: dano baixo e morre muito":"meio-termo");
+    return `<g${t}><circle cx="${cx}" cy="${cy}" r="7" fill="${c}" fill-opacity=".9" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/>
+      <text x="${cx}" y="${cy-13}" fill="#8A94A3" font-size="11" text-anchor="middle">${h(short(p.gameName).slice(0,12))}</text></g>`;}).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${pts}
+    <text x="${PL+iw/2}" y="${H-4}" fill="#5D6673" font-size="11" text-anchor="middle">mortes a cada 10 minutos →</text>
+    <text x="14" y="${PT+ih/2}" fill="#5D6673" font-size="11" text-anchor="middle" transform="rotate(-90 14 ${PT+ih/2})">dano por minuto →</text></svg>`;
+}
+
+function radar(entry,labels){
+  const keys=Object.keys(entry.radar||{});
+  if(!keys.length) return `<div style="color:var(--dim);font-size:12px;display:grid;place-items:center;height:196px;text-align:center">sem partidas<br>suficientes</div>`;
+  const S=196,C=S/2,R=64,n=keys.length;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [C+Math.cos(a)*r,C+Math.sin(a)*r];};
+  let rings="",axes="",labs="";
+  [.25,.5,.75,1].forEach(f=>{rings+=`<polygon points="${keys.map((_,i)=>pt(i,R*f).join(",")).join(" ")}" fill="none" stroke="#232A33"/>`;});
+  keys.forEach((k,i)=>{const[x,y]=pt(i,R);axes+=`<line x1="${C}" y1="${C}" x2="${x}" y2="${y}" stroke="#1E252E"/>`;
+    const[lx,ly]=pt(i,R+18),an=Math.abs(lx-C)<6?"middle":(lx>C?"start":"end");
+    labs+=`<text x="${lx}" y="${ly+3}" fill="#5D6673" font-size="9.5" text-anchor="${an}">${h((labels[k]||k).slice(0,12))}</text>`;});
+  const poly=keys.map((k,i)=>pt(i,R*Math.max(.06,entry.radar[k]/100)).join(",")).join(" ");
+  const BRUTO={winrate:s=>nf(s.winrate,1)+"%",kda:s=>nf(s.kda,2),kp:s=>nf(s.kp,0)+"%",
+    dmg_min:s=>ni(s.dmg_min),cs_min:s=>nf(s.cs_min,1),vision_min:s=>nf(s.vision_min,2),
+    survival:s=>nf(s.survival,1)+" min por morte"};
+  const dots=keys.map((k,i)=>{const[x,y]=pt(i,R*Math.max(.06,entry.radar[k]/100));
+    const v=entry.radar[k];
+    const t=tip(labels[k]||k,[
+      ["Valor",(BRUTO[k]?BRUTO[k](entry.stats):"—"),"var(--teal)"],
+      ["Posição no grupo",v>=50?`${v} de 100 — acima da média`:`${v} de 100 — abaixo da média`],
+    ],"50 = média exata da UDA nesta métrica");
+    return `<g${t}><circle cx="${x}" cy="${y}" r="9" fill="transparent"/>
+      <circle cx="${x}" cy="${y}" r="2.8" fill="var(--teal)"/></g>`;}).join("");
+  return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:196px">${rings}${axes}
+    <polygon points="${poly}" fill="rgba(10,200,185,.18)" stroke="var(--teal)" stroke-width="1.8"/>${dots}${labs}</svg>`;
+}
+
+const CORES=["#0AC8B9","#C8AA6E","#4C8DFF","#E5484D","#A78BFA","#F59E0B","#34D399","#F472B6",
+  "#60A5FA","#FBBF24","#2DD4BF","#FB923C","#818CF8","#4ADE80"];
+
+/* Seleção de jogadores da aba Evolução. Vazio = todos.
+   A cor de cada um é fixa pela posição no elenco, então não muda quando
+   você liga e desliga gente -- senão o gráfico vira outra coisa a cada clique. */
+let selJog=new Set();
+const ordemJog=()=>((DATA&&DATA.data.all)?DATA.data.all.players.map(p=>p.puuid):[]);
+const corDe=(puuid,fallback)=>{
+  const i=ordemJog().indexOf(puuid);
+  return CORES[(i>=0?i:(fallback||0))%CORES.length];
+};
+const visiveis=(series)=>!series?[]:
+  (selJog.size?series.filter(s=>selJog.has(s.puuid)):series);
+
+function serieChart(series,opts){
+  const o=Object.assign({H:400,yFmt:v=>nf(v,1),eixo:"",zero:null,campo:"y",unidade:""},opts||{});
+  const use=visiveis(series).filter(s=>s.pontos&&s.pontos.length>1);
+  if(!use.length) return noData("NENHUM JOGADOR SELECIONADO",
+    "Escolha pelo menos um jogador nos chips acima para desenhar a evolução.");
+  const W=1080,PL=58,PR=142,PT=20,PB=42,H=o.H,iw=W-PL-PR,ih=H-PT-PB;
+  const maxN=Math.max(...use.map(s=>s.pontos.length));
+  const all=use.flatMap(s=>s.pontos.map(p=>p[o.campo]));
+  let y0=Math.min(...all),y1=Math.max(...all);
+  if(o.zero!=null){y0=Math.min(y0,o.zero);y1=Math.max(y1,o.zero);}
+  const pad=(y1-y0)*.12||1;y0-=pad;y1+=pad;
+  const X=i=>PL+(maxN===1?iw/2:i*iw/(maxN-1)),Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
+  let g=[0,1,2,3,4].map(i=>{const v=y0+(y1-y0)*i/4;
+    return `<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="#232A33" stroke-dasharray="3 5"/>
+      <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${o.yFmt(v)}</text>`;}).join("");
+  if(o.zero!=null) g+=`<line x1="${PL}" y1="${Y(o.zero)}" x2="${W-PR}" y2="${Y(o.zero)}" stroke="#3A4453"/>`;
+
+  const ls=use.map((s,k)=>{const c=corDe(s.puuid,k);
+    const d=s.pontos.map((p,i)=>`${i?"L":"M"}${X(i)},${Y(p[o.campo])}`).join(" ");
+    const u=s.pontos[s.pontos.length-1];
+    return {c,s,path:`<path d="${d}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" opacity=".92"/>
+      <circle cx="${X(s.pontos.length-1)}" cy="${Y(u[o.campo])}" r="3.6" fill="${c}"/>`,
+      leg:{n:short(s.gameName),c,v:u[o.campo]}};});
+
+  /* faixa invisível por índice: mostra todos os jogadores naquele ponto */
+  const bandas=Array.from({length:maxN},(_,i)=>{
+    const bw=iw/Math.max(1,maxN-1);
+    const linhas=ls.filter(l=>l.s.pontos[i]!=null)
+      .map(l=>[short(l.s.gameName),o.yFmt(l.s.pontos[i][o.campo])+o.unidade,l.c])
+      .sort((a,b)=>parseFloat(String(b[1]).replace(",","."))-parseFloat(String(a[1]).replace(",",".")));
+    if(!linhas.length) return "";
+    const t=tip(`Partida ${i+1}`,linhas,o.eixo);
+    return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
+      <line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih}"/></g>`;}).join("");
+
+  const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
+    `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
+     <text x="16" y="0" fill="#8A94A3" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${ls.map(l=>l.path).join("")}${bandas}${leg}
+    <text x="${PL+iw/2}" y="${H-6}" fill="#5D6673" font-size="11" text-anchor="middle">${h(o.eixo)}</text></svg>`;
+}
+
+function corridaMensal(meses){
+  if(!meses||meses.length<2) return noData("POUCOS MESES","A corrida do UDA Score precisa de pelo menos dois meses.");
+  const byP={};
+  meses.forEach((m,mi)=>m.entradas.forEach(e=>{
+    (byP[e.puuid]=byP[e.puuid]||{puuid:e.puuid,gameName:e.gameName,pontos:[]})
+      .pontos.push({i:mi,y:e.score,rank:e.rank,games:e.games});}));
+  const series=visiveis(Object.values(byP)).filter(s=>s.pontos.length>1);
+  if(!series.length) return noData("SEM SÉRIE",
+    selJog.size?"Nenhum dos jogadores escolhidos tem dois meses seguidos com partidas suficientes."
+               :"Ninguém tem partidas suficientes em dois meses seguidos.");
+  const W=1080,H=400,PL=58,PR=142,PT=20,PB=44,iw=W-PL-PR,ih=H-PT-PB,n=meses.length;
+  const X=i=>PL+(n===1?iw/2:i*iw/(n-1)),Y=v=>PT+ih-((v-1)/98)*ih;
+  let g=[10,30,50,70,90].map(v=>`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}"
+    stroke="${v===50?"#3A4453":"#232A33"}" stroke-dasharray="${v===50?"5 4":"3 5"}"/>
+    <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${v}</text>`).join("");
+  const ls=series.map((s,k)=>{const c=corDe(s.puuid,k);
+    return {c,s,g:`<path d="${s.pontos.map((p,i)=>`${i?"L":"M"}${X(p.i)},${Y(p.y)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2" opacity=".92"/>
+      ${s.pontos.map(p=>`<circle cx="${X(p.i)}" cy="${Y(p.y)}" r="3.4" fill="${c}"/>`).join("")}`,
+      leg:{n:short(s.gameName),c,v:s.pontos[s.pontos.length-1].y}};});
+  const bandas=meses.map((m,i)=>{
+    const bw=iw/Math.max(1,n-1);
+    const linhas=ls.map(l=>{const p=l.s.pontos.find(x=>x.i===i);
+      return p?[short(l.s.gameName),`${nf(p.y,1)} · ${p.rank}º · ${p.games} jogos`,l.c]:null;})
+      .filter(Boolean).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+    if(!linhas.length) return "";
+    const t=tip(h(m.mes),linhas,"Score recalculado só com as partidas do mês");
+    return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
+      <line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih}"/></g>`;}).join("");
+  const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
+    `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
+     <text x="16" y="0" fill="#8A94A3" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${ls.map(l=>l.g).join("")}${bandas}${leg}
+    ${meses.map((m,i)=>`<text x="${X(i)}" y="${H-16}" fill="#5D6673" font-size="10.5" text-anchor="middle">${h(m.mes)}</text>`).join("")}</svg>`;
+}
+
+function heatmap(mapa){
+  if(!mapa||!mapa.celulas) return noData("SEM DADOS","Sem partidas para montar o mapa.");
+  const DIAS=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+  const W=1080,H=290,PL=50,PT=30,cw=(W-PL-18)/24,ch=30,max=Math.max(1,...mapa.celulas.flat());
+  let cells="";
+  const DIASL=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
+  mapa.celulas.forEach((l,d)=>l.forEach((v,hh)=>{
+    const f=v===0?"#1A2028":`rgba(10,200,185,${.1+v/max*.85})`;
+    const t=tip(`${DIASL[d]}, ${String(hh).padStart(2,"0")}h`,[
+      ["Partidas",ni(v),v?"var(--teal)":null],
+      ["Fatia do total",nf(v/mapa.total*100,1)+"%"],
+    ],v===max?"é o horário de pico de vocês":v===0?"nunca jogaram nesse horário":null);
+    cells+=`<rect${t} x="${PL+hh*cw+1.5}" y="${PT+d*ch+1.5}" width="${cw-3}" height="${ch-3}" rx="6" fill="${f}"/>`;
+    if(v>max*.6) cells+=`<text x="${PL+hh*cw+cw/2}" y="${PT+d*ch+ch/2+4}" fill="#062B29" font-size="10" font-weight="700" text-anchor="middle" pointer-events="none">${v}</text>`;}));
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${cells}
+    ${DIAS.map((d,i)=>`<text x="${PL-12}" y="${PT+i*ch+ch/2+4}" fill="#8A94A3" font-size="11" text-anchor="end">${d}</text>`).join("")}
+    ${[0,3,6,9,12,15,18,21].map(hh=>`<text x="${PL+hh*cw+cw/2}" y="${PT-11}" fill="#5D6673" font-size="10.5" text-anchor="middle">${String(hh).padStart(2,"0")}h</text>`).join("")}</svg>`;
+}
+
+/* ========================================================= COMPONENTES */
+const stat=(tone,icon,k,v,unit)=>`<div class="stat ${tone}"><div class="ic">${svg(icon)}</div>
+  <div style="min-width:0"><div class="k">${k}</div><div class="v">${v}${unit?`<small>${unit}</small>`:""}</div></div></div>`;
+
+function statRow(g){
+  const t=g.team, mk=t.multikills||{};
+  return `<div class="stats">
+    ${stat("teal",I.grid,"Partidas analisadas",ni(t.uniqueMatches),`de ${ni(t.games)} participações`)}
+    ${stat(t.winrate>=50?"teal":"red",I.target,"Aproveitamento",nf(t.winrate,1)+"%",`${ni(t.wins)}V ${ni(t.losses)}D`)}
+    ${stat("gold",I.sword,"KDA do grupo",nf(t.kda,2),`${nf(t.kills,1)}/${nf(t.deaths,1)}/${nf(t.assists,1)}`)}
+    ${stat("blue",I.clock,"Partida média",nf(t.avg_minutes,0),"min")}
+    ${stat("red",I.skull,"Mortes totais",ni(t.total_deaths),`${nf(t.deaths_10min,2)} /10min`)}
+    ${stat("teal",I.bolt,"Participação em abates",nf(t.kp,0)+"%","dos abates do time")}
+    ${stat("gold",I.target,"Dano por minuto",ni(t.dmg_min),`${nf(t.dmg_share,0)}% do time`)}
+    ${stat("blue",I.grid,"CS por minuto",nf(t.cs_min,1),`${nf(t.cs_game,0)} por jogo`)}
+    ${stat("teal",I.clock,"Visão por minuto",nf(t.vision_min,2),`${nf(t.wards_game,1)} sentinelas/jogo`)}
+    ${stat("gold",I.award,"Multikills",ni(mk.double+mk.triple+mk.quadra+mk.penta),
+       `${mk.triple} triplos · ${mk.quadra} quádruplos · ${mk.penta} pentas`)}
+    ${stat("blue",I.heart,"Cura e escudo",ni(t.heal_shield_game),"por partida, em aliados")}
+    ${stat("red",I.skull,"Rendições",nf(t.surrender_rate,0)+"%","das partidas terminaram em WW")}
+  </div>`;
+}
+
+/* barras horizontais reaproveitadas por rota e por fila */
+function barrasHoriz(itens,campoNome,campoQtd,campoWr,campoShare){
+  if(!itens||!itens.length) return noData("SEM DADOS","Nada para mostrar nesta fila.");
+  const max=Math.max(...itens.map(i=>i[campoQtd]));
+  return `<div>${itens.map(i=>`<div class="hbar"${tip(h(i[campoNome]),[
+      ["Partidas",ni(i[campoQtd])],
+      ["Fatia do total",nf(i[campoShare],1)+"%"],
+      ["Aproveitamento",nf(i[campoWr],1)+"%",i[campoWr]>=50?"var(--teal)":"var(--red)"],
+    ])}>
+    <div class="hn">${h(i[campoNome])}</div>
+    <div class="ht"><i style="width:${i[campoQtd]/max*100}%"></i></div>
+    <div class="hq">${ni(i[campoQtd])}</div>
+    <div class="hs">${nf(i[campoShare],0)}%</div>
+    <span class="pill ${i[campoWr]>=50?"t":"r"}">${nf(i[campoWr],0)}%</span>
+  </div>`).join("")}</div>`;
+}
+
+function feedRecentes(list){
+  if(!list||!list.length) return noData("SEM PARTIDAS","Nada recente nesta fila.");
+  const quando=(ms)=>{const d=Math.floor((Date.now()-ms)/86400000);
+    return d===0?"hoje":d===1?"ontem":`há ${d} dias`;};
+  return `<div>${list.map(m=>`<div class="mrow">
+    <div class="mmeta"><div class="mq">${h(m.queue)}</div>
+      <div class="md">${quando(m.date)} · ${m.minutes} min</div></div>
+    <div class="mps">${m.players.map(p=>`<div class="mp ${p.win?"w":"l"}"${tip(
+      `${h(p.gameName)} · ${h(p.champion)}`,[
+        ["Resultado",p.win?"Vitória":"Derrota",p.win?"var(--teal)":"var(--red)"],
+        ["KDA",`${p.k} / ${p.d} / ${p.a} = ${nf(p.kda,2)}`],
+        ["Dano em campeões",ni(p.dmg)],
+        ["Farm",`${ni(p.cs)} CS`],
+        ["Rota",p.role||"—"],
+      ],`${h(m.queue)} · ${m.minutes} min`)}>
+      <img src="${champImg(p.championId,p.champion)}"${FB}>
+      <div class="mpn">${h(short(p.gameName))}${p.role?`<em>${h(p.role)}</em>`:""}</div>
+      <div class="mpk">${p.k}/${p.d}/${p.a}</div>
+      <span class="pill ${p.win?"t":"r"}" style="font-size:10px;padding:3px 8px">${p.win?"V":"D"}</span>
+    </div>`).join("")}</div></div>`).join("")}</div>`;
+}
+
+function podio(g){
+  const top=g.podium.map(id=>g.players.find(p=>p.puuid===id)).filter(Boolean);
+  if(!top.length) return noData("SEM RANKING",`Ninguém atingiu o mínimo de ${DATA.minGames} partidas nesta fila.`);
+  const ord=[top[1],top[0],top[2]].filter(Boolean);
+  return `<div class="podium">${ord.map(p=>{const e=eloTxt(p.ranks.solo),s=p.stats;
+    const t=tip(h(p.gameName),[
+      ["UDA Score",nf(p.score,1)+` · ${p.rank}º`,"var(--gold)"],
+      ["Aproveitamento",`${nf(s.winrate,1)}% (${s.wins}V ${s.losses}D)`],
+      ["KDA",`${nf(s.kills,1)} / ${nf(s.deaths,1)} / ${nf(s.assists,1)} = ${nf(s.kda,2)}`],
+      ["Participação em abates",nf(s.kp,0)+"%"],
+      ["Dano por minuto",ni(s.dmg_min)],
+      ["Elo",e.name+(e.sub?` · ${e.sub}`:"")],
+    ],"o Score compara contra o próprio grupo, não contra o servidor");
+    return `<div class="pod p${p.rank}"${t}><div class="rk">${p.rank}º</div>
+      <img class="av" src="${iconImg(p.icon)}"${FB}>
+      <div class="nm">${h(short(p.gameName))}</div>
+      <div class="el">${h(e.name)}</div>
+      <div class="sc">${nf(p.score,1)}</div><div class="sl">UDA Score</div>
+      <div class="ft"><span class="pill ${s.winrate>=50?"t":"r"}">${nf(s.winrate,0)}% WR</span>
+        <span class="pill n">${nf(s.kda,2)} KDA</span></div></div>`;}).join("")}</div>`;
+}
+
+function afundados(g){
+  const rk=g.players.filter(p=>p.rank!=null);
+  const l=g.shame.map(id=>rk.find(p=>p.puuid===id)).filter(Boolean).filter(p=>!g.podium.includes(p.puuid));
+  if(!l.length) return "";
+  const lider=rk[0]?rk[0].score:99;
+  /* pílulas só com o que está de fato abaixo da média do grupo */
+  const med=(f)=>rk.reduce((s,p)=>s+f(p),0)/rk.length;
+  const mWr=med(p=>p.stats.winrate), mKda=med(p=>p.stats.kda),
+        mD=med(p=>p.stats.deaths_10min), mDmg=med(p=>p.stats.dmg_min),
+        mKp=med(p=>p.stats.kp), mCs=med(p=>p.stats.cs_min);
+  const why=p=>{const s=p.stats,c=[];
+    if(s.winrate<mWr) c.push([`${nf(s.winrate,0)}% de vitórias`,`média ${nf(mWr,0)}%`]);
+    if(s.kda<mKda) c.push([`KDA ${nf(s.kda,2)}`,`média ${nf(mKda,2)}`]);
+    if(s.deaths_10min>mD) c.push([`${nf(s.deaths_10min,2)} mortes/10min`,`média ${nf(mD,2)}`]);
+    if(s.dmg_min<mDmg) c.push([`${ni(s.dmg_min)} dano/min`,`média ${ni(mDmg)}`]);
+    if(s.kp<mKp) c.push([`${nf(s.kp,0)}% de participação`,`média ${nf(mKp,0)}%`]);
+    if(s.cs_min<mCs) c.push([`${nf(s.cs_min,1)} cs/min`,`média ${nf(mCs,1)}`]);
+    return c.slice(0,4);};
+  return `<div class="card">${chead(I.skull,"Os afundados",
+      "a régua é o próprio grupo — alguém tinha que ficar embaixo","red")}
+    <div class="sunk">${l.map(p=>{
+      const e=eloTxt(p.ranks.solo), w=p.worstGame, motivos=why(p);
+      return `<div class="sk">
+        <div class="sk-h"><div class="pos">${p.rank}º</div>
+          <img src="${iconImg(p.icon)}"${FB}>
+          <div class="who"><div class="nm">${h(short(p.gameName))}</div>
+            <div class="el">${h(e.name)} · ${p.stats.games} partidas</div></div>
+          <div class="sc">${nf(p.score,1)}</div></div>
+        ${motivos.length?`<div class="sk-why">${motivos.map(([a,b])=>
+          `<span class="pill r" title="${h(b)}">${h(a)}</span>`).join("")}</div>`:""}
+        <div class="sk-gap"><div class="lbl"><span>UDA Score</span>
+            <span>líder: <b style="color:var(--gold)">${nf(lider,1)}</b></span></div>
+          <div class="track"><i style="width:${Math.max(3,Math.min(100,p.score))}%"></i>
+            <u style="left:50%" title="50 = média do grupo"></u></div></div>
+        ${w?`<div class="sk-worst"><img src="${champImg(w.championId,w.champion)}"${FB}>
+          <div><div class="l">Pior partida</div>
+            <div class="v bad">${w.k}/${w.d}/${w.a} de ${h(w.champion)} · ${w.minutes} min</div></div></div>`:""}
+      </div>`;}).join("")}</div></div>`;
+}
+
+const COLS=[
+  {k:"rank",t:"#",l:1,f:p=>`<span class="rnk ${p.rank<=3?"r1":""}">${p.rank??"—"}</span>`},
+  {k:"gameName",t:"Jogador",l:1,s:p=>p.gameName.toLowerCase(),
+   f:p=>`<div class="pl"><img src="${iconImg(p.icon)}"${FB}><div><div class="a">${h(p.gameName)}</div>
+     <div class="b">#${h(p.tagLine)} · nível ${p.level}</div></div></div>`},
+  {k:"elo",t:"Elo",l:1,s:p=>p.ranks.solo?p.ranks.solo.weight:-1,f:p=>{const e=eloTxt(p.ranks.solo),r=p.ranks.solo;
+    return `<div class="eloc" title="${r?`Ranqueada solo: ${r.wins}V ${r.losses}D`:""}"><img src="${crestImg(e.tier)}"${FB}>
+      <div><div class="a">${h(e.name)}</div><div class="b">${r?`${r.lp} PDL · ${nf(r.winrate,0)}%`:"—"}</div></div></div>`;}},
+  {k:"games",t:"Jogos",s:p=>p.stats.games,f:p=>`<span class="num">${p.stats.games}</span>`},
+  {k:"winrate",t:"Vitórias",s:p=>p.stats.winrate,f:p=>`<div class="wr">
+    <div class="t ${cl(p.stats.winrate,50)}">${nf(p.stats.winrate,1)}%</div>
+    <div class="track"><i class="${p.stats.winrate<50?"lo":""}" style="width:${Math.max(0,Math.min(100,p.stats.winrate))}%"></i></div>
+    <div class="b" style="font-size:10.5px;color:var(--dim)">${p.stats.wins}V ${p.stats.losses}D</div></div>`},
+  {k:"kda",t:"KDA",s:p=>p.stats.kda,f:p=>`<div><span class="num ${cl(p.stats.kda,3)}" style="font-size:13.5px">${nf(p.stats.kda,2)}</span>
+    <div style="font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums">${nf(p.stats.kills,1)}/${nf(p.stats.deaths,1)}/${nf(p.stats.assists,1)}</div></div>`},
+  {k:"kp",t:"Particip.",s:p=>p.stats.kp,f:p=>`<span class="num">${nf(p.stats.kp,0)}%</span>`},
+  {k:"cs_min",t:"CS/min",s:p=>p.stats.cs_min,f:p=>`<span class="num">${nf(p.stats.cs_min,1)}</span>`},
+  {k:"gold_min",t:"Ouro/min",s:p=>p.stats.gold_min,f:p=>`<span class="num">${ni(p.stats.gold_min)}</span>`},
+  {k:"dmg_min",t:"Dano/min",s:p=>p.stats.dmg_min,f:p=>`<span class="num">${ni(p.stats.dmg_min)}</span>`},
+  {k:"dmg_share",t:"% do dano",s:p=>p.stats.dmg_share,f:p=>`<span class="num">${nf(p.stats.dmg_share,0)}%</span>`},
+  {k:"vision_min",t:"Visão/min",s:p=>p.stats.vision_min,f:p=>`<span class="num">${nf(p.stats.vision_min,2)}</span>`},
+  {k:"dmg_taken_min",t:"Dano sofrido/min",s:p=>p.stats.dmg_taken_min,f:p=>`<span class="num">${ni(p.stats.dmg_taken_min)}</span>`},
+  {k:"heal_shield_game",t:"Cura+escudo",s:p=>p.stats.heal_shield_game,f:p=>`<span class="num">${ni(p.stats.heal_shield_game)}</span>`},
+  {k:"turrets_game",t:"Torres/jogo",s:p=>p.stats.turrets_game,f:p=>`<span class="num">${nf(p.stats.turrets_game,1)}</span>`},
+  {k:"first_blood_rate",t:"First blood",s:p=>p.stats.first_blood_rate,f:p=>`<span class="num">${nf(p.stats.first_blood_rate,0)}%</span>`},
+  {k:"multikills",t:"Multikills",s:p=>{const m=p.stats.multikills;return m.double+m.triple*3+m.quadra*9+m.penta*27;},
+   f:p=>{const m=p.stats.multikills;
+     return `<span class="num" title="${m.double} duplos · ${m.triple} triplos · ${m.quadra} quádruplos · ${m.penta} pentas">${m.double+m.triple+m.quadra+m.penta}</span>`
+       +(m.penta?` <span class="pill g" style="font-size:9.5px;padding:2px 6px">${m.penta} PENTA</span>`:"");}},
+  {k:"deaths_10min",t:"Mortes/10min",s:p=>-p.stats.deaths_10min,
+   f:p=>`<span class="num ${p.stats.deaths_10min<=1.6?"good":"bad"}">${nf(p.stats.deaths_10min,2)}</span>`},
+  {k:"score",t:"UDA Score",s:p=>p.score??-1,f:p=>p.score==null?`<span style="color:var(--dim)">—</span>`
+    :`<span class="pill ${p.score>=60?"t":p.score>=45?"g":"r"}" style="font-size:13px;padding:6px 12px">${nf(p.score,1)}</span>`},
+];
+let sortKey="rank",sortDir=1;
+
+function tabela(g){
+  const col=COLS.find(c=>c.k===sortKey);
+  const rows=[...g.players].sort((a,b)=>{
+    if(sortKey==="rank") return ((a.rank??1e9)-(b.rank??1e9))*(sortDir>0?1:-1);
+    const av=col.s?col.s(a):0,bv=col.s?col.s(b):0;
+    return typeof av==="string"?av.localeCompare(bv)*(sortDir>0?1:-1):(bv-av)*(sortDir>0?1:-1);});
+  return `<div class="tbox"><table><thead><tr>${COLS.map(c=>
+    `<th class="${c.l?"l":""} ${c.k===sortKey?"on":""}" data-k="${c.k}">${c.t}${c.k===sortKey?(sortDir>0?" ↓":" ↑"):""}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(p=>{const s=p.stats,e=eloTxt(p.ranks.solo);
+      const t=tip(h(p.gameName),[
+        ["Elo",e.name+(e.sub?` · ${e.sub}`:"")],
+        ["UDA Score",p.score==null?"sem ranking":`${nf(p.score,1)} · ${p.rank}º lugar`,
+          p.score==null?null:(p.score>=60?"var(--teal)":p.score>=45?"var(--gold)":"var(--red)")],
+        ["Partidas",`${s.games} · ${s.wins}V ${s.losses}D`],
+        ["KDA",`${nf(s.kills,1)} / ${nf(s.deaths,1)} / ${nf(s.assists,1)} = ${nf(s.kda,2)}`],
+        ["Rota mais jogada",p.roles&&p.roles[0]?`${ROTAS[p.roles[0].role]||p.roles[0].role} (${p.roles[0].games})`:"—"],
+        ["Campeão mais jogado",p.champions&&p.champions[0]?`${p.champions[0].champion} (${p.champions[0].games})`:"—"],
+      ],"clique para abrir o cartão completo");
+      return `<tr data-p="${h(p.puuid)}"${t}>${COLS.map(c=>`<td class="${c.l?"l":""}">${c.f(p)}</td>`).join("")}</tr>`;}).join("")}</tbody></table></div>`;
+}
+
+const AWICON={carregador:I.bolt,assassino:I.sword,imortal:I.heart,farmador:I.grid,
+  sentinela:I.eye,presenca:I.users,doador:I.skull,cego:I.eye,fantasma:I.user,
+  turista:I.grid,azarado:I.target,figurante:I.bolt};
+
+function awards(l,bad){
+  if(!l||!l.length) return "";
+  return `<div class="awards">${l.map(a=>{
+    const edge=a.edge==null?null:Math.round(a.edge);
+    return `<div class="aw ${bad?"bad":""}">
+      <div class="aw-h"><div class="ic">${svg(AWICON[a.key]||I.award)}</div><div class="t">${h(a.title)}</div></div>
+      <div class="aw-b">
+        <img src="${iconImg(a.icon)}"${FB}>
+        <div class="who"><div class="p">${h(a.player)}</div><div class="d">${h(a.desc)}</div></div>
+        <div class="big"><div class="n2">${h(a.value)}</div><div class="u">${h(a.unit)}</div></div>
+      </div>
+      <div class="aw-m">
+        <div class="track"><i style="width:${Math.max(6,Math.min(100,a.fill??100))}%"></i></div>
+        <div class="cap"><span>média do grupo <b>${h(a.avg??"—")}</b></span>
+          ${edge!=null?`<span><b>${edge>0?"+":""}${edge}%</b> ${edge>=0?"acima":"abaixo"}</span>`:""}</div>
+      </div>
+      ${a.runnersUp&&a.runnersUp.length?`<div class="aw-f"><span class="lbl">seguido por</span>
+        ${a.runnersUp.map(r=>`<span class="ru"><img src="${iconImg(r.icon)}"${FB}>
+          <span>${h(short(r.player))} ${h(r.value)}</span></span>`).join("")}</div>`:""}
+    </div>`;}).join("")}</div>`;
+}
+
+function playerCard(p,labels){
+  const s=p.stats,e=eloTxt(p.ranks.solo),ef=eloTxt(p.ranks.flex);
+  const c=p.score==null?"var(--dim)":p.score>=60?"var(--teal)":p.score>=45?"var(--gold)":"var(--red)";
+  return `<div class="pc" id="pc-${h(p.puuid)}">
+    <div class="pc-h"><img src="${iconImg(p.icon)}"${FB}>
+      <div style="min-width:0"><div class="nm">${h(p.gameName)}</div>
+      <div class="tg">#${h(p.tagLine)} · ${h(e.name)}${ef.tier!=="unranked"?` · Flex ${h(ef.name)}`:""}</div></div>
+      <div class="rt"><div class="s" style="color:${c}">${p.score==null?"—":nf(p.score,1)}</div>
+      <div class="l">Score${p.rank?` · ${p.rank}º`:""}</div></div></div>
+    <div class="avgl">Média: <b>${nf(s.kills,1)} / ${nf(s.deaths,1)} / ${nf(s.assists,1)}</b> em <b>${nf(s.avg_minutes,0)} min</b> · <b>${nf(s.winrate,0)}%</b> de vitórias em <b>${s.games}</b> jogos</div>
+    <div class="pc-b"><div>${radar(p,labels)}</div><div class="mini">
+      <div><span>KDA</span><b class="${cl(s.kda,3)}">${nf(s.kda,2)}</b></div>
+      <div><span>Participação</span><b>${nf(s.kp,0)}%</b></div>
+      <div><span>CS/min</span><b>${nf(s.cs_min,1)}</b></div>
+      <div><span>Ouro/min</span><b>${ni(s.gold_min)}</b></div>
+      <div><span>Dano/min</span><b>${ni(s.dmg_min)}</b></div>
+      <div><span>% do dano</span><b>${nf(s.dmg_share,0)}%</b></div>
+      <div><span>Visão/min</span><b>${nf(s.vision_min,2)}</b></div>
+      <div><span>Sentinelas</span><b>${nf(s.wards_game,1)}</b></div>
+      <div><span>Mortes/10min</span><b class="${s.deaths_10min<=1.6?"good":"bad"}">${nf(s.deaths_10min,2)}</b></div>
+      <div><span>First blood</span><b>${nf(s.first_blood_rate,0)}%</b></div>
+      <div><span>Torres</span><b>${nf(s.turrets_game,1)}</b></div>
+      <div><span>Pentakills</span><b class="${s.multikills.penta?"good":""}">${s.multikills.penta}</b></div>
+    </div></div>
+    ${p.roles&&p.roles.length?`<div class="roles">${p.roles.map(r=>
+      `<span class="pill n">${h(ROTAS[r.role]||r.role)} · ${r.games}</span>`).join("")}</div>`:""}
+    <div class="form">${p.form.map(f=>`<i class="${f.win?"w":"l"}"${tip(h(f.champion),[
+      ["Resultado",f.win?"Vitória":"Derrota",f.win?"var(--teal)":"var(--red)"],
+      ["KDA",`${f.k} / ${f.d} / ${f.a} = ${nf(f.kda,2)}`],
+      ["Dano",ni(f.dmg)],["Farm",`${ni(f.cs)} CS`],
+    ],`${h(f.queue)} · ${f.minutes} min`)}>${f.win?"V":"D"}</i>`).join("")}</div>
+    ${(p.bestGame||p.worstGame)?`<div class="bw">
+      ${p.bestGame?`<div class="bwc"><img src="${champImg(p.bestGame.championId,p.bestGame.champion)}"${FB}>
+        <div><div class="l">Melhor partida</div><div class="v good">${p.bestGame.k}/${p.bestGame.d}/${p.bestGame.a} · ${h(p.bestGame.champion)}</div></div></div>`:""}
+      ${p.worstGame?`<div class="bwc"><img src="${champImg(p.worstGame.championId,p.worstGame.champion)}"${FB}>
+        <div><div class="l">Pior partida</div><div class="v bad">${p.worstGame.k}/${p.worstGame.d}/${p.worstGame.a} · ${h(p.worstGame.champion)}</div></div></div>`:""}
+    </div>`:""}
+    <div class="champs">${p.champions.map(c=>`<div class="champ"><img src="${champImg(c.championId,c.champion)}"${FB}>
+      <span class="cn">${h(c.champion)}</span><span class="cg">${c.games} jogo${c.games>1?"s":""}</span>
+      <span class="cw ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</span><span class="ck">${nf(c.kda,2)} KDA</span></div>`).join("")
+      ||`<div style="color:var(--dim);font-size:12px">sem dados</div>`}</div></div>`;
+}
+const ROTAS={TOP:"Topo",JUNGLE:"Selva",MIDDLE:"Meio",BOTTOM:"Atirador",UTILITY:"Suporte"};
+
+function championTable(l){
+  if(!l.length) return noData("SEM CAMPEÕES","Nenhum campeão atingiu 3 partidas nesta fila.");
+  return `<div class="tbox"><table><thead><tr><th class="l">Campeão</th><th>Jogos</th><th>Pilotos</th><th>Vitórias</th><th>KDA</th></tr></thead>
+    <tbody>${l.map(c=>`<tr${tip(h(c.champion),[
+      ["Partidas",ni(c.games)],
+      ["Resultado",`${c.wins}V ${c.losses}D`],
+      ["Aproveitamento",nf(c.winrate,1)+"%",c.winrate>=50?"var(--teal)":"var(--red)"],
+      ["KDA médio",nf(c.kda,2)],
+      ["Pilotos",`${c.pilots} membro${c.pilots>1?"s":""} do grupo`],
+    ],c.pilots>1?"mais de uma pessoa joga esse campeão":"exclusividade de um membro")}>
+      <td class="l"><div class="pl"><img src="${champImg(c.championId,c.champion)}"${FB} style="width:32px;height:32px;border-radius:9px">
+      <div class="a">${h(c.champion)}</div></div></td>
+      <td><span class="num">${c.games}</span></td><td><span class="num" style="color:var(--mut)">${c.pilots}</span></td>
+      <td><div class="wr" style="min-width:auto"><div class="t ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</div>
+        <div class="track"><i class="${c.winrate<50?"lo":""}" style="width:${c.winrate}%"></i></div></div></td>
+      <td><span class="num ${cl(c.kda,3)}">${nf(c.kda,2)}</span></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function recordes(r){
+  const it=[["Maior massacre",r.bestKda,x=>`${nf(x.kda,2)}`,"var(--teal)"],
+            ["Maior dano numa partida",r.mostDamage,x=>ni(x.dmg),"var(--gold)"],
+            ["A vergonha máxima",r.mostDeaths,x=>`${x.d}`,"var(--red)"]].filter(([,v])=>v);
+  if(!it.length) return noData("SEM RECORDES","Sem partidas nesta fila.");
+  return it.map(([lb,g,fv,cor])=>`<div class="rec"><img src="${champImg(g.championId,g.champion)}"${FB}>
+    <div style="min-width:0"><div class="lb">${lb}</div><div class="t1">${h(g.player)} · ${h(g.champion)}</div>
+    <div class="t2">${g.k}/${g.d}/${g.a} · ${h(g.queue)} · ${g.minutes} min</div></div>
+    <div class="vv" style="color:${cor}">${fv(g)}</div></div>`).join("");
+}
+
+function comparacao(list){
+  const ok=list.filter(p=>p.comparable),falta=list.filter(p=>!p.comparable);
+  if(!ok.length) return noData("AMOSTRA PEQUENA","Cada jogador precisa de partidas suficientes nos dois cenários: com a UDA no time e sem ninguém da UDA.");
+  return `<div class="tbox"><table><thead><tr><th class="l">Jogador</th><th>WR juntos</th><th>WR sozinho</th>
+    <th>Δ vitórias</th><th>KDA juntos</th><th>KDA sozinho</th><th>Δ KDA</th><th>Δ mortes</th><th>Δ particip.</th><th>Δ dano/min</th></tr></thead><tbody>
+    ${ok.map(p=>{const d=p.delta;return `<tr>
+      <td class="l"><div class="pl"><img src="${iconImg(p.icon)}"${FB}><div><div class="a">${h(p.gameName)}</div>
+        <div class="b">${p.together.games} juntos · ${p.alone.games} sozinho</div></div></div></td>
+      <td><span class="num">${nf(p.together.winrate,1)}%</span></td>
+      <td><span class="num" style="color:var(--mut)">${nf(p.alone.winrate,1)}%</span></td>
+      <td><span class="pill ${d.winrate>0?"t":d.winrate<0?"r":"n"}">${sg(d.winrate)}pp</span></td>
+      <td><span class="num">${nf(p.together.kda,2)}</span></td>
+      <td><span class="num" style="color:var(--mut)">${nf(p.alone.kda,2)}</span></td>
+      <td><span class="num ${dcl(d.kda)}">${sg(d.kda,2)}</span></td>
+      <td><span class="num ${dcl(d.deaths,true)}">${sg(d.deaths,2)}</span></td>
+      <td><span class="num ${dcl(d.kp)}">${sg(d.kp)}pp</span></td>
+      <td><span class="num ${dcl(d.dmg_min)}">${sg(d.dmg_min,0)}</span></td></tr>`;}).join("")}
+    </tbody></table>${falta.length?`<div style="padding:14px 16px;font-size:12px;color:var(--dim);border-top:1px solid var(--line2)">
+      Sem amostra dos dois lados ainda: ${falta.map(p=>h(p.gameName)).join(" · ")}</div>`:""}</div>`;
+}
+
+function matriz(m){
+  if(!m.order.length) return noData("SEM DUPLAS","Ninguém jogou junto o suficiente.");
+  const cor=w=>w>=50?`background:rgba(10,200,185,${.1+(w-50)/50*.6})`:`background:rgba(229,72,77,${.1+(50-w)/50*.6})`;
+  const cur=n=>short(n).slice(0,10);
+  return `<div class="tbox" style="padding:16px"><table class="mx"><thead><tr><th class="mx-corner"></th>
+    ${m.order.map(p=>`<th class="mx-h"><span>${h(cur(m.names[p]))}</span></th>`).join("")}</tr></thead><tbody>
+    ${m.order.map(a=>`<tr><th class="mx-r"><img src="${iconImg(m.icons[a])}"${FB}><span>${h(cur(m.names[a]))}</span></th>
+      ${m.order.map(b=>{if(a===b) return `<td class="mx-c mx-self">—</td>`;
+        const c=m.cells[a+"|"+b];
+        if(!c) return `<td class="mx-c"${tip(`${h(short(m.names[a]))} + ${h(short(m.names[b]))}`,
+          ["Menos de "+m.minPair+" partidas juntos"])}></td>`;
+        return `<td class="mx-c" style="${cor(c.winrate)}"${tip(
+          `${h(short(m.names[a]))} + ${h(short(m.names[b]))}`,[
+          ["Aproveitamento",nf(c.winrate,1)+"%",c.winrate>=50?"var(--teal)":"var(--red)"],
+          ["Partidas juntos",ni(c.games)],
+          ["Resultado",`${c.wins}V ${c.losses}D`],
+        ],c.winrate>=50?"essa dupla funciona":"essa dupla afunda junto")}>
+          <b>${nf(c.winrate,0)}%</b><i>${c.games}</i></td>`;}).join("")}</tr>`).join("")}
+    </tbody></table></div>
+    <div class="legend"><span><i style="background:rgba(10,200,185,.65)"></i>vencem juntos</span>
+    <span><i style="background:rgba(229,72,77,.65)"></i>afundam juntos</span>
+    <span><i style="background:var(--card2)"></i>menos de ${m.minPair} partidas</span>
+    <span>número pequeno = partidas juntos</span></div>`;
+}
+
+const formacoes=(l)=>!l.length?noData("SEM FORMAÇÕES","Ninguém jogou junto o suficiente ainda."):
+  l.map(f=>`<div class="lrow"><span class="ims">${f.icons.slice(0,5).map(i=>`<img src="${iconImg(i)}"${FB}>`).join("")}</span>
+    <span class="nm"><span class="pill n" style="font-size:10px;padding:3px 8px">${h(f.label)}</span>
+    <div style="margin-top:5px;font-size:12.5px">${f.members.map(h).join(" · ")}</div></span>
+    <span class="st">${f.wins}V ${f.losses}D</span>
+    <span class="pill ${f.winrate>=50?"t":"r"}">${nf(f.winrate,0)}%</span></div>`).join("");
+
+const confrontos=(l)=>!l.length?noData("SEM CONFRONTOS","Vocês nunca caíram em times opostos."):
+  l.map(c=>`<div class="lrow"><span class="ims"><img src="${iconImg(c.iconA)}"${FB}><img src="${iconImg(c.iconB)}"${FB}></span>
+    <span class="nm">${h(c.a)} <span style="color:var(--dim)">×</span> ${h(c.b)}</span>
+    <span class="st">${c.games} duelo${c.games>1?"s":""}</span>
+    <span class="pill n" style="font-size:13px">${c.aWins} – ${c.bWins}</span></div>`).join("");
+
+/* ============================================================= PÁGINAS */
+const PAGES=[
+  {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O panorama do grupo na fila selecionada"},
+  {k:"ranking",n:"Classificação",i:I.rank,g:"Principal",q:1,sub:"Todos os jogadores, todas as métricas"},
+  {k:"evolucao",n:"Evolução",i:I.trend,g:"Principal",q:1,sub:"Como o desempenho de vocês muda ao longo do tempo"},
+  {k:"equipe",n:"Em equipe",i:I.users,g:"Grupo",q:0,sub:"Só as partidas com 2 ou mais da UDA no mesmo time"},
+  {k:"jogadores",n:"Jogadores",i:I.user,g:"Grupo",q:1,sub:"Um cartão por pessoa, com radar comparativo"},
+  {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo joga, e com que resultado"},
+  {k:"regras",n:"Regras",i:I.book,g:"Ajuda",q:0,sub:"Como o UDA Score é calculado"},
+];
+let page="visao",fila="all";
+const grupo=()=>DATA.data[page==="equipe"?"squad":fila];
+const filas=()=>DATA.groups.filter(g=>g.key!=="squad");
+
+function pVisao(){
+  const g=grupo(); if(!g||!g.players.length) return vazio();
+  const t=g.team, acima=t.winrate>=50;
+  return `<section>${statRow(g)}</section>
+    <section><div class="grid g23">
+      <div class="card">${chead(I.award,"O pódio",`mínimo de ${DATA.minGames} partidas para entrar no ranking`,"gold")}
+        ${podio(g)}</div>
+      <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
+        ${gauge(t.winrate,`${ni(t.wins)}V · ${ni(t.losses)}D`,
+          `<span class="pill ${acima?"t":"r"}">${acima?"Acima de 50%":"Abaixo de 50%"}</span>`,
+          acima?"var(--teal)":"var(--red)")}</div>
+    </div></section>
+    ${afundados(g)?`<section>${afundados(g)}</section>`:""}
+    <section><div class="sh-plain">${chead(I.award,"Hall da fama",
+      "o melhor de cada métrica, e quanto ele está à frente da média do grupo","gold")}</div>
+      ${awards(g.awardsGood,false)}</section>
+    <section><div class="sh-plain">${chead(I.skull,"Hall da vergonha","alguém tinha que ser","red")}</div>
+      ${awards(g.awardsBad,true)}</section>
+    <section><div class="grid g23">
+      <div class="card">${chead(I.bolt,"Carrega ou alimenta?","dano por minuto contra mortes a cada 10 minutos")}
+        ${scatter(g.players)}
+        <div class="legend"><span><i style="background:var(--teal)"></i>dano acima da média, morrendo pouco</span>
+        <span><i style="background:var(--gold)"></i>meio-termo</span>
+        <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div>
+      <div class="card">${chead(I.award,"Recordes","","gold")}${recordes(g.records)}</div>
+    </div></section>
+    <section><div class="grid g2">
+      <div class="card">${chead(I.user,"Rotas do grupo","quanto vocês jogam de cada uma, e com que aproveitamento")}
+        ${barrasHoriz(g.roles,"role","games","winrate","share")}</div>
+      <div class="card">${chead(I.grid,"Filas","distribuição das partidas")}
+        ${barrasHoriz(g.queues,"queue","matches","winrate","share")}</div>
+    </div></section>
+    <section><div class="card">${chead(I.clock,"Últimas partidas",
+      "as mais recentes do grupo — passe o mouse para ver dano e CS")}
+      ${feedRecentes(g.recent)}</div></section>`;
+}
+
+function pRanking(){
+  const g=grupo(); if(!g||!g.players.length) return vazio();
+  return `<section><div id="tbl">${tabela(g)}</div></section>
+    <section><div class="card"><div class="prose" style="max-width:none">
+      <p style="margin:0">O <b>UDA Score</b> compara cada jogador contra o próprio grupo, não contra o servidor —
+      50 é exatamente a média da UDA. Já a coluna <b>Elo</b> é a medida absoluta, vinda direto da Riot.
+      Alguém pode ter Score alto e elo baixo: significa que rende bem <i>para o padrão de vocês</i>.
+      A página <b>Regras</b> tem a fórmula inteira.</p></div></div></section>`;
+}
+
+function seletorJogadores(g){
+  const lista=g.players.filter(p=>p.stats.games>0);
+  const n=selJog.size;
+  return `<div class="card">${chead(I.user,"Quem aparece nos gráficos",
+    n?`${n} de ${lista.length} selecionados — clique para ligar e desligar`
+     :`todos os ${lista.length} — clique num jogador para isolar`)}
+    <div class="psel">
+      ${n?`<button class="pbtn" data-sel="todos"${tip("Mostrar todos",["Volta a desenhar o elenco inteiro"])}>Mostrar todos</button>`:""}
+      ${lista.map(p=>{const on=!n||selJog.has(p.puuid);
+        return `<button class="pchip" data-jog="${h(p.puuid)}" aria-pressed="${on}"
+          ${tip(h(p.gameName),[["UDA Score",p.score==null?"—":nf(p.score,1)],
+            ["Partidas",ni(p.stats.games)],["Aproveitamento",nf(p.stats.winrate,1)+"%"]],
+            n?(selJog.has(p.puuid)?"clique para tirar dos gráficos":"clique para incluir")
+             :"clique para ver só este jogador")}>
+          <img src="${iconImg(p.icon)}"${FB}>
+          <span class="sw" style="background:${corDe(p.puuid,0)}"></span>
+          ${h(short(p.gameName))}</button>`;}).join("")}
+    </div></div>`;
+}
+
+function pEvolucao(){
+  const g=grupo(); if(!g||!g.players.length) return vazio();
+  const ev=DATA.evolution&&DATA.evolution[page==="equipe"?"squad":fila];
+  let o=`<section>${seletorJogadores(g)}</section>
+    <section><div class="card">${chead(I.cal,"Aproveitamento por semana","barras são as semanas; a linha dourada acompanha a taxa de vitórias")}
+    ${barLine(g.trend)}</div></section>`;
+  if(ev&&ev.scoreMensal&&ev.scoreMensal.length)
+    o+=`<section><div class="card">${chead(I.trend,"A corrida do UDA Score","o Score recalculado dentro de cada mês — quem sobe e quem afunda","gold")}
+      ${corridaMensal(ev.scoreMensal)}</div></section>`;
+  if(ev&&ev.mediaMovel&&ev.mediaMovel.length)
+    o+=`<section><div class="card">${chead(I.heart,"Forma recente","média móvel de KDA nas últimas 10 partidas de cada um")}
+      ${serieChart(ev.mediaMovel,{campo:"kda",H:410,eixo:"partidas, da mais antiga à mais recente",yFmt:v=>nf(v,1)})}</div></section>`;
+  if(ev&&ev.saldo&&ev.saldo.length)
+    o+=`<section><div class="card">${chead(I.trend,"Saldo acumulado","vitórias menos derrotas ao longo do tempo — acima de zero é lucro")}
+      ${serieChart(ev.saldo,{campo:"saldo",H:410,zero:0,eixo:"partidas, da mais antiga à mais recente",yFmt:v=>sg(v,0)})}</div></section>`;
+  if(ev&&ev.atividade)
+    o+=`<section><div class="card">${chead(I.clock,"Quando vocês jogam",
+      ev.atividade.pico?`pico: ${ev.atividade.diaLabel} às ${String(ev.atividade.pico.hora).padStart(2,"0")}h, com ${ev.atividade.pico.n} partidas`:"")}
+      ${heatmap(ev.atividade)}</div></section>`;
+  if(ev&&ev.sequencias&&ev.sequencias.length)
+    o+=`<section><div class="card flush">${`<div style="padding:22px 24px 0">${chead(I.bolt,"Sequências","a maior sequência de cada um, e como está agora")}</div>`}
+      <div class="tbox" style="border:0;border-radius:0"><table><thead><tr><th class="l">Jogador</th>
+      <th>Sequência atual</th><th>Maior de vitórias</th><th>Maior de derrotas</th></tr></thead><tbody>
+      ${ev.sequencias.map(s=>`<tr><td class="l"><div class="pl"><img src="${iconImg(s.icon)}"${FB}>
+        <div class="a">${h(s.gameName)}</div></div></td>
+        <td>${s.atual>0?`<span class="pill t">${s.atual}V seguidas</span>`:s.atual<0?`<span class="pill r">${-s.atual}D seguidas</span>`:`<span class="pill n">—</span>`}</td>
+        <td><span class="num good">${s.maiorVitorias}</span></td>
+        <td><span class="num bad">${s.maiorDerrotas}</span></td></tr>`).join("")}</tbody></table></div></div></section>`;
+  return o;
+}
+
+function pEquipe(){
+  const g=DATA.data.squad,x=g&&g.squadExtra;
+  if(!g||!x||!g.players.length) return noData("SEM PARTIDAS EM EQUIPE","Ninguém do grupo jogou no mesmo time ainda.");
+  return `<section><div class="stats">
+      ${stat("gold",I.users,"Partidas em equipe",ni(x.squadMatches),`de ${ni(x.totalMatches)}`)}
+      ${stat("teal",I.target,"Fatia do total",nf(x.coopRate,0)+"%","do que vocês jogam")}
+      ${stat(g.team.winrate>=50?"teal":"red",I.award,"Aproveitamento juntos",nf(g.team.winrate,1)+"%",`${ni(g.team.wins)}V ${ni(g.team.losses)}D`)}
+      ${stat("blue",I.sword,"KDA em equipe",nf(g.team.kda,2),`${nf(g.team.kills,1)}/${nf(g.team.deaths,1)}/${nf(g.team.assists,1)}`)}
+    </div></section>
+    <section><div class="card flush" style="padding:22px 24px 0">${chead(I.trend,"Junto ou sozinho?","o mesmo jogador nos dois cenários — Δ é quanto ele muda com a UDA no time")}</div>
+      <div style="margin-top:-6px">${comparacao(x.comparison)}</div></section>
+    <section><div class="card">${chead(I.users,"Matriz de sinergia",`aproveitamento de cada dupla no mesmo time · mínimo de ${x.matrix.minPair} partidas`)}
+      ${matriz(x.matrix)}</div></section>
+    <section><div class="grid g2">
+      <div class="card">${chead(I.users,"Formações","trios, quartetos e time completo")}${formacoes(x.lineups)}</div>
+      <div class="card">${chead(I.sword,"Confrontos internos","quando caem em times opostos","red")}${confrontos(x.clashes)}</div>
+    </div></section>`;
+}
+
+function pJogadores(){
+  const g=grupo(); if(!g||!g.players.length) return vazio();
+  return `<section><div class="pcards">${g.players.map(p=>playerCard(p,DATA.metricLabels)).join("")}</div></section>`;
+}
+
+function pCampeoes(){
+  const g=grupo(); if(!g||!g.players.length) return vazio();
+  return `<section>${championTable(g.champions)}</section>`;
+}
+
+function pRegras(){
+  const P=[["Vitórias",28],["KDA",18],["Dano por minuto",14],["Participação em abates",12],
+           ["CS por minuto",10],["Sobrevivência",10],["Visão por minuto",8]];
+  return `<section><div class="card"><div class="prose">
+    <h3>O que o UDA Score mede</h3>
+    <p>O Score compara <b>vocês com vocês</b>, não com o servidor. Um Score de <b>50 é exatamente a média
+    da UDA</b>. Acima disso você está acima dos seus amigos; abaixo, o contrário.</p>
+    <p>Isso não é preguiça: a Riot não publica estatísticas agregadas do BR. Não existe endpoint de
+    "média do Esmeralda". Sites como o LeagueOfGraphs conseguem porque baixam milhões de partidas por
+    conta própria. Comparar vocês com um número inventado seria pior do que não comparar.</p>
+
+    <h3>As sete métricas e seus pesos</h3>
+    <div class="wtable">${P.map(([m,v])=>`<div class="wrow"><span class="wn">${m}</span>
+      <span class="wb"><i style="width:${v/28*100}%"></i></span><span class="wv">${v}%</span></div>`).join("")}</div>
+    <p><b>Sobrevivência</b> é quantos minutos você vive por morte. <b>Participação</b> é a fatia dos
+    abates do time em que você entrou, matando ou assistindo.</p>
+
+    <h3>Como as métricas viram nota</h3>
+    <p>Cada métrica vira um <b>z-score</b>: quantos desvios-padrão você está da média do grupo.
+    Se a UDA ganha 50% em média e você ganha 58%, seu z de vitórias é positivo.</p>
+    <p>É isso que torna a nota justa. Uma métrica em que todos são parecidos quase não separa ninguém;
+    uma em que vocês se espalham muito pesa de verdade. O peso diz o quanto a métrica <i>importa</i>;
+    o z-score diz o quanto ela <i>distingue</i>.</p>
+    <p>O z é travado em <code>±2,6</code> desvios, para que um único jogo fora da curva não domine a nota.</p>
+    <div class="formula">Score = 50 + 15,5 × Σ (peso × z-score)</div>
+    <p>O resultado é limitado entre 1 e 99.</p>
+
+    <h3>Quem entra no ranking</h3>
+    <p>É preciso ter no mínimo <b>${DATA.minGames} partidas</b> na fila em questão. Sem isso, alguém com
+    dois jogos de sorte lideraria. Quem não atinge aparece na tabela com <code>—</code> no lugar da nota.</p>
+
+    <h3>Por fila, não no geral</h3>
+    <p>O Score é recalculado dentro de cada fila, porque a média do grupo muda. Em <b>ARAM</b> e
+    <b>Outros modos</b> os pesos são diferentes: CS e visão saem (não significam nada lá) e o dano sobe
+    para 25%.</p>
+
+    <h3>O que não entra na conta</h3>
+    <ul>
+      <li><b>Partidas contra bots</b>, tutorial e o modo Prática — inflariam vitórias e KDA artificialmente.</li>
+      <li><b>Arena</b> (o 2v2v2v2, <code>gameMode=CHERRY</code>) — a API agrupa os jogadores de um jeito em que
+      "abates do time" somaria 9 pessoas, destruindo participação e % de dano.</li>
+      <li><b>Remakes</b> e qualquer partida com menos de 5 minutos.</li>
+    </ul>
+    <p>A classificação é por <code>gameMode</code>, que vem dentro da partida, e não por ID de fila —
+    a Riot cria IDs novos sem avisar e a lista pública dela fica desatualizada.</p>
+
+    <h3>O radar de cada jogador</h3>
+    <p>Usa exatamente os mesmos z-scores, só que por métrica isolada, numa escala de 0 a 100. É por isso
+    que ele mostra o <i>formato</i> do jogador: quem é dano puro tem uma ponta esticada, quem é equilibrado
+    tem um polígono cheio.</p>
+    <p style="border-top:1px solid var(--line);padding-top:16px;margin-top:24px">O Score não mede habilidade
+    absoluta. Se a UDA inteira melhorasse 20% amanhã, as notas continuariam em torno de 50 — a régua é o
+    próprio grupo. Para habilidade absoluta, a coluna <b>Elo</b> é a medida honesta.</p>
+  </div></div></section>`;
+}
+
+const vazio=()=>noData("SEM PARTIDAS NESTA FILA",
+  `Ninguém do grupo jogou <b>${h((DATA.groups.find(x=>x.key===fila)||{}).label||fila)}</b> na janela analisada.`);
+const RENDER={visao:pVisao,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
+  jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
+
+/* ========================================================== NAVEGAÇÃO */
+function pintarNav(){
+  const grupos=[...new Set(PAGES.map(p=>p.g))];
+  $("#nav").innerHTML=grupos.map(gr=>`<div class="navgroup"><div class="lbl">${gr}</div>
+    ${PAGES.filter(p=>p.g===gr).map(p=>{
+      const badge=p.k==="equipe"&&DATA.data.squad?`<span class="badge">${DATA.data.squad.team.uniqueMatches}</span>`:"";
+      return `<button class="nav" data-p="${p.k}" ${p.k===page?'aria-current="page"':""}>${svg(p.i)}${h(p.n)}${badge}</button>`;
+    }).join("")}</div>`).join("");
+  document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>irPara(b.dataset.p,fila));
+
+  const meta=PAGES.find(p=>p.k===page)||PAGES[0];
+  $("#ptitle").textContent=meta.n;
+  $("#psub").textContent=meta.sub;
+
+  const t=DATA.data.all?DATA.data.all.team:{winrate:0,uniqueMatches:0};
+  $("#sidecard").innerHTML=`<div class="k">Aproveitamento geral</div>
+    <div class="v ${t.winrate>=50?"good":"bad"}">${nf(t.winrate,1)}%</div>
+    <div class="s">${ni(t.uniqueMatches)} partidas analisadas</div>
+    <div class="track"><i style="width:${Math.max(0,Math.min(100,t.winrate))}%;background:${t.winrate>=50?"var(--teal)":"var(--red)"}"></i></div>`;
+
+  const idade=DATA.lastFetch?(Date.now()-DATA.lastFetch)/3600000:999;
+  $("#tbright").innerHTML=`${meta.q?`<div class="seg">${filas().map(g=>{
+      const d=DATA.data[g.key];
+      return `<button data-q="${g.key}" aria-pressed="${g.key===fila}">${h(g.label)}<b>${d?d.team.uniqueMatches:0}</b></button>`;
+    }).join("")}</div>`:""}
+    <span class="chip"><span class="dot ${idade<26?"":"old"}"></span>${DATA.demo?"Gerado":"Atualizado"} <b>${ago(DATA.lastFetch||DATA.generatedAt)}</b></span>
+    <span class="chip">Patch <b>${h(DD)}</b></span>`;
+  document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>irPara(page,b.dataset.q));
+}
+
+function irPara(p,q){
+  page=RENDER[p]?p:"visao"; fila=DATA.data[q]?q:"all";
+  location.hash=`#/${page}/${fila}`;
+  sortKey="rank";sortDir=1;
+  pintarNav(); desenhar(); window.scrollTo({top:0,behavior:"instant"});
+}
+function desenhar(){
+  $("#app").innerHTML=RENDER[page]();
+  if($("#tbl")) ligarTabela();
+  ligarSeletor();
+}
+
+function ligarSeletor(){
+  document.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{selJog.clear();desenhar();});
+  document.querySelectorAll("[data-jog]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.jog;
+    // Sem seleção ativa, o primeiro clique ISOLA aquele jogador.
+    // Com seleção ativa, alterna; tirar o último volta a mostrar todos.
+    if(!selJog.size) selJog=new Set([id]);
+    else if(selJog.has(id)) selJog.delete(id);
+    else selJog.add(id);
+    desenhar();
+  });
+}
+
+function ligarTabela(){
+  document.querySelectorAll("#tbl thead th").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(k===sortKey) sortDir*=-1; else {sortKey=k;sortDir=1;}
+    $("#tbl").innerHTML=tabela(grupo()); ligarTabela();});
+  document.querySelectorAll("#tbl tbody tr[data-p]").forEach(tr=>tr.onclick=()=>{
+    const id=tr.dataset.p; irPara("jogadores",fila);
+    setTimeout(()=>{const c=document.getElementById("pc-"+id);
+      if(c){c.scrollIntoView({behavior:"smooth",block:"center"});
+        c.style.borderColor="var(--teal)";setTimeout(()=>c.style.borderColor="",1800);}},60);});
+}
+
+if(!DATA){
+  $("#app").innerHTML=noData("PAINEL AINDA NÃO GERADO","Rode <code>python run.py</code> para buscar os dados e montar o painel.");
+}else{
+  if(DATA.demo){$("#demo-banner").hidden=false;document.title="DADOS FICTÍCIOS · "+document.title;
+    $("#ft-fonte").innerHTML="<b style='color:var(--red)'>Dados fictícios</b> — gerados por demo.py, sem chamada à Riot";}
+  $("#brandsub").textContent=(DATA.platform||"br1").toUpperCase()+" · "+(DATA.data.all?DATA.data.all.players.length:0)+" jogadores";
+  $("#ft-jan").textContent=`Janela: ${DATA.windowDays>0?DATA.windowDays+" dias":"histórico completo"}`;
+  $("#ft-ger").textContent=`Gerado em ${new Date(DATA.generatedAt).toLocaleString("pt-BR")}`;
+  const m=(location.hash||"").match(/^#\/([a-z]+)\/([a-z]+)/);
+  if(m){if(RENDER[m[1]])page=m[1];if(DATA.data[m[2]])fila=m[2];}
+  window.addEventListener("hashchange",()=>{const x=(location.hash||"").match(/^#\/([a-z]+)\/([a-z]+)/);
+    if(x&&(x[1]!==page||x[2]!==fila)) irPara(x[1],x[2]);});
+  pintarNav(); desenhar();
+}
+</script>
+</body>
+</html>

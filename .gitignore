@@ -1,0 +1,8 @@
+.env
+data/
+site/
+dashboard.html
+dashboard-demo.html
+__pycache__/
+*.pyc
+*.bak
