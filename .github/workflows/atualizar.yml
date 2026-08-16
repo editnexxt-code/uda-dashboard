@@ -2,9 +2,10 @@ name: Atualizar dashboard
 
 on:
   schedule:
-    # 17:00 em Brasilia = 20:00 UTC (o Brasil nao tem mais horario de verao).
+    # De 2 em 2 horas. As horas impares em UTC caem nas horas PARES de Brasilia
+    # (UTC-3, sem horario de verao): 00h, 02h, 04h ... 22h.
     # O agendador do GitHub costuma atrasar de 5 a 20 min em horario de pico.
-    - cron: "0 20 * * *"
+    - cron: "0 1-23/2 * * *"
   workflow_dispatch: {}
 
 permissions:
