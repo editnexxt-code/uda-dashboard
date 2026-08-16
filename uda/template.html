@@ -7,7 +7,7 @@
 <link rel="icon" href="__UDA_LOGO__">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0E1116;  --card:#161B22;  --card2:#1C222B;  --card3:#222933;
@@ -21,21 +21,40 @@
   --r:16px; --rs:10px; --rp:999px;
   --disp:"Montserrat",system-ui,sans-serif;
   --body:"Barlow","Segoe UI",system-ui,sans-serif;
+  /* rampa de ouro: o --gold acima e o degrau 2. Os outros tres existem para que
+     bisel e gravacao sejam a MESMA cor em luminancias diferentes, nao cores novas. */
+  --gold-1:#F0E6D2; --gold-2:#C8AA6E; --gold-3:#8B6D34; --gold-4:#463714;
+  /* prata e bronze nomeados: filter:saturate() apagaria a arte junto do metal */
+  --m2a:#F1F5FA; --m2b:#C9D2DE; --m2c:#6C7784;
+  --m3a:#F0C39A; --m3b:#C88A5A; --m3c:#6E4526;
+  --ink:#0A0D12; --ink2:#11151C;
+  --cond:"Barlow Condensed",var(--disp);
+  --stage:52px;
+  --bevel:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.55);
+  --lift:0 18px 34px -20px rgba(0,0,0,.9);
+  --glass:repeating-linear-gradient(115deg,rgba(255,255,255,.022) 0 1px,transparent 1px 4px);
+  --e:cubic-bezier(.22,1,.36,1); --e-pop:cubic-bezier(.2,.9,.3,1.08);
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:400 14px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+/* escala fluida: sem isso um monitor de 2560px so dilui o mesmo texto de 14px */
+body{margin:0;background:var(--bg);color:var(--txt);font:400 14px/1.5 var(--body);
+  font-size:clamp(14px,.42vw + 12.6px,16px);-webkit-font-smoothing:antialiased}
 img{display:block;max-width:100%}
 .num{font-variant-numeric:tabular-nums;font-weight:600}
 .up{text-transform:uppercase;letter-spacing:.12em}
 
 /* =========================================================== LAYOUT */
+/* A sidebar e o UNICO @media que sobrou, e ela manda em 1180px -- nao em 1080.
+   Abaixo disso ela custa 252px que o conteudo nao tem: era esse degrau, somado ao
+   antigo @media de grid tambem em 1180, que fazia o card encolher quando a tela
+   crescia. Agora o degrau da sidebar cai onde o grid ja esta em 1 coluna. */
 .app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
-@media(max-width:1080px){.app{grid-template-columns:1fr}}
+@media(max-width:1180px){.app{grid-template-columns:1fr}}
 
 /* ---------------------------------------------------------- sidebar */
 aside{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:1080px){aside{position:static;height:auto}}
+@media(max-width:1180px){aside{position:static;height:auto}}
 .brand{display:flex;align-items:center;gap:11px;padding:20px 18px 18px}
 .brand img{width:38px;height:38px;flex:0 0 auto}
 .brand .t{font:700 14px/1.15 var(--disp);letter-spacing:.02em}
@@ -64,7 +83,9 @@ aside{background:var(--card);border-right:1px solid var(--line);display:flex;fle
 .topbar h1{margin:0;font:700 21px/1.2 var(--disp)}
 .topbar .sub{font-size:12.5px;color:var(--mut);margin-top:3px}
 .tbright{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.seg{display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:3px}
+/* sem o wrap os 6 botoes de fila somam 594px de min-content e empurravam a PAGINA
+   INTEIRA para 672px de largura -- o celular rolava de lado o site todo */
+.seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:3px}
 .seg button{appearance:none;border:0;background:none;color:var(--mut);cursor:pointer;font:500 12.5px/1 var(--body);
   padding:7px 12px;border-radius:7px;white-space:nowrap;transition:.13s}
 .seg button:hover{color:var(--txt);background:var(--card2)}
@@ -75,10 +96,19 @@ aside{background:var(--card);border-right:1px solid var(--line);display:flex;fle
 .chip b{color:var(--txt);font-weight:600}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
 .dot.old{background:var(--red)}
-.content{padding:26px 30px 60px}
+/* O container de conteudo e a REFERENCIA de todo grid daqui pra baixo: os grids
+   passam a responder a largura real disponivel, nao ao viewport. E isso que mata o
+   bug de a sidebar colapsar em 1080px e os grids em 1180px (card ficava mais
+   estreito quando a tela crescia). Nada de @media para grid de card. */
+/* --pad e a MESMA medida do padding lateral, exposta como token: e por ela que a
+   secao de palco (o podio) sai da coluna de leitura e vai de borda a borda. */
+.content{container-type:inline-size;container-name:content;--pad:clamp(20px,2.6vw,44px);
+  max-width:1760px;margin:0 auto;padding:34px var(--pad) 96px}
 
 /* =========================================================== CARDS */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px}
+/* overflow:hidden e o que faz o card RECORTAR a tabela de cantos quadrados que
+   mora dentro dele -- antes os cantos vazavam por cima do raio de 16px */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;overflow:hidden}
 .card.flush{padding:0}
 .ch{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 .ch .ic{width:34px;height:34px;border-radius:var(--rs);display:grid;place-items:center;background:var(--teal-s);flex:0 0 auto}
@@ -88,18 +118,34 @@ aside{background:var(--card);border-right:1px solid var(--line);display:flex;fle
 .ch h2{margin:0;font:600 15.5px/1.25 var(--disp)}
 .ch .hint{font-size:12px;color:var(--dim);margin-top:3px}
 .ch .act{margin-left:auto;font-size:12px;color:var(--mut)}
-/* cabeçalho de seção fora de card (usado pelos halls, que já são uma grade) */
-.sh-plain{margin-bottom:14px}
-.sh-plain .ch{margin-bottom:0}
 .grid{display:grid;gap:16px}
 .g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g23{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .g32{grid-template-columns:minmax(0,1fr) minmax(0,1.9fr)}
-@media(max-width:1180px){.g2,.g23,.g32{grid-template-columns:1fr}}
-section{margin-bottom:16px}
+@container content (max-width:900px){.g2,.g23,.g32{grid-template-columns:1fr}}
+/* a fila de tres vai direto para uma coluna: em duas, o terceiro card fica
+   sozinho embaixo ocupando meia largura -- o orfao que o resto da grade evita. */
+@container content (max-width:1020px){.g3{grid-template-columns:1fr}}
+section{margin-bottom:var(--stage)}
 
-/* stat cards no estilo da referência: chip de ícone + rótulo + valor com unidade fraca */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+/* KPIs em duas castas. Antes os 12 tinham o mesmo peso, entao "Partidas analisadas"
+   gritava tao alto quanto "Aproveitamento" e nada gritava de verdade. Agora:
+   4 HEROIS (span largo, numero condensado gigante, cor semantica, sparkline) e
+   8 TICKERS (span estreito, 22px, tudo em cinza). A cor volta a significar algo.
+   Grade de 24 colunas = divisores exatos: heroi 6 (4/fila), ticker 3 (8/fila).
+   auto-fit e PROIBIDO aqui -- era ele que produzia a fila orfa com 2 buracos. */
+.stats{display:grid;gap:14px;grid-template-columns:repeat(24,minmax(0,1fr))}
+.stats>*{grid-column:span 6}          /* tambem serve a fila de 4 da pagina Equipe */
+.stats>.kpi-tick{grid-column:span 3}
+@container content (max-width:1180px){
+  .stats{grid-template-columns:repeat(16,minmax(0,1fr))}
+  .stats>*{grid-column:span 8} .stats>.kpi-tick{grid-column:span 4}
+}
+@container content (max-width:760px){
+  .stats{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .stats>*{grid-column:span 8} .stats>.kpi-tick{grid-column:span 4}
+}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:flex;gap:14px;align-items:center}
 .stat .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;background:var(--card2)}
 .stat .ic svg{width:20px;height:20px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -111,6 +157,48 @@ section{margin-bottom:16px}
 .red  .ic{background:var(--red-s)}  .red  .ic svg{stroke:var(--red)}
 .blue .ic{background:var(--blue-s)} .blue .ic svg{stroke:var(--blue)}
 
+/* ---- KPI HEROI: o numero e o objeto, o resto e legenda ---- */
+.kpi-hero{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  background:linear-gradient(165deg,var(--card2),var(--card) 62%);
+  border:1px solid var(--line);border-radius:var(--r);padding:16px 18px 14px;
+  box-shadow:var(--bevel);transition:border-color .16s,transform .16s}
+.kpi-hero:hover{border-color:#2C3540;transform:translateY(-2px)}
+/* filete metalico no topo: liga o KPI ao mesmo vocabulario de material do podio */
+.kpi-hero::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--acc,var(--gold-2)),transparent);opacity:.85}
+.kpi-hero .top{display:flex;align-items:center;gap:9px;min-width:0}
+.kpi-hero .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--card3);background:color-mix(in srgb,var(--acc,var(--gold-2)) 16%,transparent)}
+.kpi-hero .ic svg{width:14px;height:14px;fill:none;stroke:var(--acc,var(--gold-2));
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.kpi-hero .k{font:700 10px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-hero .v{margin-top:8px;font:800 clamp(38px,4.2cqw,64px)/.9 var(--cond);
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--acc,var(--gold-2))}
+.kpi-hero .v small{font:600 15px/1 var(--cond);opacity:.72;margin-left:2px}
+.kpi-hero .foot{margin-top:auto;padding-top:10px;display:flex;align-items:flex-end;
+  justify-content:space-between;gap:10px}
+.kpi-hero .sub{font-size:11.5px;color:var(--dim);min-width:0}
+.kpi-hero .spark{flex:0 0 auto;display:block;opacity:.85}
+.kpi-hero .spark .ln{fill:none;stroke:var(--acc,var(--gold-2));stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round}
+.kpi-hero .spark .ar{fill:var(--acc,var(--gold-2));opacity:.14;stroke:none}
+
+/* ---- TICKER: dado de apoio. Sem cor, de proposito. ---- */
+.kpi-tick{background:var(--card);border:1px solid var(--line);border-radius:var(--rs);
+  padding:12px 13px;display:flex;flex-direction:column;gap:6px;min-width:0;
+  transition:border-color .16s}
+.kpi-tick:hover{border-color:#2C3540}
+/* rotulo pode quebrar em 2 linhas -- a altura minima e o que mantem os 8 valores
+   alinhados na mesma base, com ou sem quebra */
+.kpi-tick .k{display:flex;align-items:flex-start;gap:7px;font:600 10px/1.3 var(--body);
+  letter-spacing:.09em;text-transform:uppercase;color:var(--dim);min-width:0;min-height:26px}
+.kpi-tick .k svg{width:13px;height:13px;flex:0 0 auto;margin-top:1px;fill:none;stroke:var(--mut);
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kpi-tick .k span{min-width:0;overflow-wrap:anywhere}
+.kpi-tick .v{margin-top:auto;font:700 22px/1 var(--cond);color:var(--mut);font-variant-numeric:tabular-nums}
+.kpi-tick .v small{font:500 11px/1 var(--body);color:var(--dim);margin-left:4px}
+
 .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--rp);
   font:600 11.5px/1 var(--body);font-variant-numeric:tabular-nums}
 .pill.t{background:var(--teal-s);color:var(--teal)}
@@ -119,23 +207,8 @@ section{margin-bottom:16px}
 .pill.n{background:var(--card3);color:var(--mut)}
 .good{color:var(--teal)} .bad{color:var(--red)} .au{color:var(--gold)}
 
-/* =========================================================== PÓDIO */
-.podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:stretch}
-@media(max-width:860px){.podium{grid-template-columns:1fr}}
-.pod{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center;position:relative}
-.pod.p1{background:var(--card2);border-color:rgba(200,170,110,.4)}
-.pod .rk{position:absolute;top:16px;left:16px;font:700 12px/1 var(--body);color:var(--dim);
-  background:var(--card3);border-radius:var(--rp);padding:5px 9px}
-.pod.p1 .rk{background:var(--gold-s);color:var(--gold)}
-.pod .av{width:64px;height:64px;border-radius:50%;margin:6px auto 0;border:2px solid var(--line)}
-.pod.p1 .av{width:80px;height:80px;border-color:var(--gold)}
-.pod .nm{font:600 15px/1.25 var(--disp);margin-top:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pod.p1 .nm{font-size:17px}
-.pod .el{font-size:12px;color:var(--mut);margin-top:4px}
-.pod .sc{font:700 32px/1 var(--disp);margin-top:15px;font-variant-numeric:tabular-nums}
-.pod.p1 .sc{font-size:40px;color:var(--gold)}
-.pod .sl{font-size:11px;color:var(--dim);margin-top:5px}
-.pod .ft{display:flex;gap:8px;justify-content:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+/* O PODIO agora mora junto do vocabulario "ARENA UDA", la embaixo: ele depende
+   de .stage-layers, .artbox e da rampa de metal, entao nasce depois deles. */
 
 .shame .row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line2)}
 .shame .row:last-child{border-bottom:0}
@@ -145,7 +218,17 @@ section{margin-bottom:16px}
 .shame .nm em{display:block;font-style:normal;font-size:11.5px;color:var(--dim);font-weight:400;margin-top:2px}
 
 /* =========================================================== TABELA */
-.tbox{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}
+/* As duas sombras laterais so aparecem quando ha conteudo escondido: as camadas
+   `local` rolam junto e cobrem a sombra `scroll` quando a tabela cabe inteira.
+   Sem isso a tabela de 20 colunas rola sem nenhuma pista visual de que rola. */
+.tbox{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);background:var(--card);
+  background-image:linear-gradient(to right,var(--card),var(--card)),
+    linear-gradient(to left,var(--card),var(--card)),
+    linear-gradient(to right,rgba(0,0,0,.42),rgba(0,0,0,0)),
+    linear-gradient(to left,rgba(0,0,0,.42),rgba(0,0,0,0));
+  background-position:0 0,100% 0,0 0,100% 0;background-repeat:no-repeat;
+  background-size:22px 100%,22px 100%,13px 100%,13px 100%;
+  background-attachment:local,local,scroll,scroll}
 table{border-collapse:collapse;width:100%}
 thead th{position:sticky;top:0;z-index:3;background:var(--card2);font:600 11px/1.3 var(--body);color:var(--mut);
   padding:13px 14px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
@@ -174,48 +257,38 @@ tbody tr:last-child td{border-bottom:0}
 
 /* =========================================================== GRÁFICOS */
 .chart{display:block;width:100%}
+/* medidor e radar escalam com o card em vez de travar em 260px/196px. O teto de
+   ALTURA (e nao de largura) e o que impede um card largo de virar poster: o SVG
+   letterboxa sozinho dentro da caixa e continua centrado. */
+.gauge{display:block;width:100%;height:auto;max-height:clamp(200px,23vw,320px);margin:2px auto 0}
+/* o arco nunca vai encher um card de 620px sem virar poster: em vez de esticar o
+   desenho, o rodape de tres leituras ocupa a largura que sobra dos lados. */
+.gmeta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--line2)}
+.gmeta>div{text-align:center;min-width:0}
+.gmeta .k{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.18em}
+.gmeta .v{font:700 20px/1 var(--cond);margin-top:6px;font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdr{display:block;width:100%;height:auto;max-height:270px}
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)}
 .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:middle}
 svg text{font-family:var(--body)}
+/* entrada dos graficos: barra cresce da base, traco se desenha, area aparece.
+   transform-box:fill-box porque em SVG a origem padrao e a do viewBox, nao a do
+   proprio elemento -- sem isso a barra cresce a partir do canto da tela. */
+.gbar{transform-box:fill-box;transform-origin:50% 100%;animation:barGrow .5s var(--e) both}
+.gfade{animation:fadeIn .8s var(--e) both}
+.gdraw{animation:arcDraw .9s var(--e) both}
+.gpop{transform-box:fill-box;transform-origin:50% 50%;animation:pop .45s var(--e-pop) both}
 
-/* =========================================================== PRÊMIOS */
-.awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:14px}
-.aw{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:0;overflow:hidden;
-  position:relative;transition:.16s}
-.aw:hover{border-color:rgba(10,200,185,.45)}
-.aw.bad:hover{border-color:rgba(229,72,77,.45)}
-/* faixa fina no topo, na cor do prêmio */
-.aw::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal)}
-.aw.bad::before{background:var(--red)}
-.aw-h{display:flex;align-items:center;gap:9px;padding:14px 16px 0}
-.aw-h .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--teal-s);flex:0 0 auto}
-.aw-h .ic svg{width:14px;height:14px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.aw.bad .aw-h .ic{background:var(--red-s)} .aw.bad .aw-h .ic svg{stroke:var(--red)}
-.aw-h .t{font:700 10.5px/1.2 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
-.aw.bad .aw-h .t{color:var(--red)}
-.aw-b{display:flex;align-items:center;gap:13px;padding:13px 16px 14px}
-.aw-b img{width:50px;height:50px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto}
-.aw-b .who{min-width:0;flex:1}
-.aw-b .p{font:600 14.5px/1.2 var(--disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aw-b .d{font-size:11px;color:var(--dim);margin-top:3px}
-.aw-b .big{text-align:right;flex:0 0 auto}
-.aw-b .big .n2{font:700 22px/1 var(--disp);font-variant-numeric:tabular-nums}
-.aw-b .big .u{font-size:10.5px;color:var(--dim);margin-top:3px}
-.aw-m{padding:0 16px 12px}
-.aw-m .track{height:6px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;position:relative}
-.aw-m .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
-.aw.bad .aw-m .track i{background:var(--red)}
-.aw-m .cap{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:7px}
-.aw-m .cap b{color:var(--mut);font-variant-numeric:tabular-nums}
-.aw-f{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--line);background:var(--card)}
-.aw-f .lbl{font-size:10px;color:var(--dim);flex:0 0 auto}
-.aw-f .ru{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);min-width:0}
-.aw-f .ru img{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
-.aw-f .ru span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* =========================================================== PRÊMIOS
+   Os dois halls moram no bloco "AS DUAS SALAS", depois do pódio: eles são
+   feitos do mesmo material (.metal, .engraved, .artbox) e precisam nascer
+   DEPOIS dele -- .noart::before tem que continuar vencendo o quadro vazio. */
 
 /* ------------------------------------------------------- os afundados */
-.sunk{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:900px){.sunk{grid-template-columns:1fr}}
+.sunk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@container content (max-width:820px){.sunk{grid-template-columns:1fr}}
 .sk{background:var(--card2);border:1px solid rgba(229,72,77,.28);border-radius:var(--r);
   padding:18px;position:relative;overflow:hidden}
 .sk::after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:var(--red);opacity:.5}
@@ -238,9 +311,13 @@ svg text{font-family:var(--body)}
 .sk-worst .v{font-size:12.5px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
 
 /* =========================================================== JOGADORES */
-.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(452px,1fr));gap:16px}
-@media(max-width:600px){.pcards{grid-template-columns:1fr}}
-.pc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+/* min() no minmax: sem ele a faixa de 452px vira um PISO e o grid transborda em
+   qualquer container mais estreito, em vez de encolher */
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(452px,100%),1fr));gap:16px}
+/* o cartao e o proprio container do seu miolo -- ele nao sabe o tamanho da tela,
+   sabe o tamanho que a grade lhe deu */
+.pc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+  container-type:inline-size;container-name:pcard}
 .pc-h{display:flex;gap:13px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
 .pc-h img{width:50px;height:50px;border-radius:50%;border:2px solid var(--line)}
 .pc-h .nm{font:600 16px/1.2 var(--disp)}
@@ -250,8 +327,11 @@ svg text{font-family:var(--body)}
 .pc-h .rt .l{font-size:10.5px;color:var(--dim);margin-top:4px}
 .avgl{padding:13px 20px;background:var(--card2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--mut)}
 .avgl b{color:var(--txt);font-variant-numeric:tabular-nums}
-.pc-b{display:grid;grid-template-columns:196px 1fr;gap:20px;padding:20px}
-@media(max-width:600px){.pc-b{grid-template-columns:1fr}}
+/* o radar e o elemento mais informativo do cartao e era o menor: coluna travada em
+   196px. Agora ele cresce junto com o cartao (o max-width inline do SVG e liberado). */
+.pc-b{display:grid;grid-template-columns:minmax(200px,1fr) minmax(0,1.2fr);gap:20px;padding:20px}
+.pc-b>div>svg{max-width:none!important}
+@container pcard (max-width:430px){.pc-b{grid-template-columns:1fr}}
 .mini{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;align-content:start}
 .mini div{display:flex;justify-content:space-between;font-size:12.5px;padding-bottom:5px;border-bottom:1px solid var(--line2)}
 .mini span{color:var(--dim)}
@@ -269,15 +349,20 @@ svg text{font-family:var(--body)}
 .champ .cw{font-weight:600;width:44px;text-align:right;font-variant-numeric:tabular-nums}
 
 /* =========================================================== MATRIZ */
-table.mx{border-collapse:separate;border-spacing:3px;width:auto}
+/* width:auto deixava ~660px de fundo morto a direita da matriz. Com fixed as 14
+   colunas dividem o espaco real do card e a celula ganha area util. */
+table.mx{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fixed}
 .mx th,.mx td{border:0}
 .mx-corner{background:transparent!important;position:sticky;left:0;z-index:5;width:126px;min-width:126px;cursor:default}
-.mx-h{padding:0 0 8px!important;text-align:center!important;vertical-align:bottom;background:transparent!important;border:0!important;cursor:default;min-width:50px}
+.mx-h{padding:0 0 8px!important;text-align:center!important;vertical-align:bottom;background:transparent!important;border:0!important;cursor:default;min-width:0}
 .mx-h span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);font:500 10.5px/1 var(--body);color:var(--dim);max-height:80px}
+/* o avatar no topo da coluna e o que amarra a coluna a linha: sem ele voce le o
+   nome deitado de um lado e a foto do outro, e perde o cruzamento. */
+.mx-h img{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);margin:0 auto 6px}
 .mx-r{position:sticky;left:0;z-index:4;background:var(--card)!important;text-align:left!important;padding:0 10px 0 2px!important;border:0!important;cursor:default;width:126px;min-width:126px}
 .mx-r img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:inline-block;vertical-align:middle}
 .mx-r span{font:500 11.5px/1 var(--body);margin-left:9px;vertical-align:middle}
-.mx-c{text-align:center!important;padding:0!important;height:42px;min-width:50px;background:var(--card2);
+.mx-c{text-align:center!important;padding:0!important;height:42px;min-width:0;background:var(--card2);
   border-radius:9px;vertical-align:middle;cursor:default}
 .mx-c b{display:block;font:600 12px/1 var(--body);font-variant-numeric:tabular-nums}
 .mx-c i{display:block;font:400 9.5px/1 var(--body);font-style:normal;opacity:.5;margin-top:2px}
@@ -286,9 +371,20 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 /* barras horizontais (rotas, filas) */
 .hbar{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2)}
 .hbar:last-child{border-bottom:0}
-.hbar .hn{width:88px;font-size:12.5px;font-weight:500;flex:0 0 auto}
-.hbar .ht{flex:1;height:8px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;min-width:40px}
-.hbar .ht i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+/* rotulo elastico: "Ranqueada Solo/Duo" nao cabia em 88px e vazava sobre a barra */
+.hbar .hn{width:clamp(88px,18%,168px);flex:0 0 auto;font-size:12.5px;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* a trilha ganhou regua: tracinhos a cada 25% do maximo, para a barra parar de ser
+   decoracao e virar escala. O 50% e mais forte porque e o limiar do card. */
+.hbar .ht{flex:1;height:10px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;
+  min-width:40px;position:relative;box-shadow:var(--bevel);
+  background-image:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),rgba(255,255,255,.10) calc(25% - 1px) 25%)}
+.hbar .ht i{display:block;height:100%;border-radius:var(--rp);position:relative;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--bc,var(--teal)) 55%,transparent),var(--bc,var(--teal)));
+  animation:barW .6s var(--e) both}
+/* so o `from`: sem `to` o navegador usa a largura inline como valor final,
+   entao a animacao nao precisa saber o numero de cada barra */
+@keyframes barW{from{width:0}}
 .hbar .hq{width:46px;text-align:right;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .hbar .hs{width:40px;text-align:right;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
 
@@ -306,10 +402,17 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 .mp .mpn{flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mp .mpn em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);font-weight:400}
 .mp .mpk{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+/* 132px fixos + gap + 186px de minimo = 334px, contra 315px uteis num iPhone:
+   o feed transbordava. Em container estreito a linha vira coluna. */
+@container content (max-width:640px){
+  .mrow{flex-direction:column;gap:8px}
+  .mmeta{width:auto}
+  .mp{min-width:0;width:100%}
+}
 
 /* melhor / pior partida no cartão do jogador */
 .bw{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px}
-@media(max-width:600px){.bw{grid-template-columns:1fr}}
+@container pcard (max-width:430px){.bw{grid-template-columns:1fr}}
 .bwc{background:var(--card2);border:1px solid var(--line);border-radius:var(--rs);padding:11px 13px;display:flex;gap:10px;align-items:center}
 .bwc img{width:32px;height:32px;border-radius:8px;flex:0 0 auto}
 .bwc .l{font-size:10.5px;color:var(--dim)}
@@ -322,20 +425,26 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 .lrow .ims{display:flex;flex:0 0 auto}
 .lrow .ims img{width:30px;height:30px;border-radius:50%;border:2px solid var(--card)}
 .lrow .ims img+img{margin-left:-11px}
-.lrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* o nowrap aqui cortava a lista de membros do quinteto com reticencias mesmo com
+   1200px de card sobrando -- conteudo perdido por CSS, nao por falta de espaco */
+.lrow .nm{flex:1;min-width:0;overflow-wrap:anywhere}
 .lrow .st{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
-.rec{display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid var(--line2)}
-.rec:last-child{border-bottom:0}
-.rec img{width:40px;height:40px;border-radius:10px;border:1px solid var(--line)}
-.rec .lb{font-size:11px;color:var(--dim)}
-.rec .t1{font-weight:600;font-size:13px;margin-top:2px}
-.rec .t2{font-size:11.5px;color:var(--mut);margin-top:2px;font-variant-numeric:tabular-nums}
-.rec .vv{margin-left:auto;font:700 19px/1 var(--disp);font-variant-numeric:tabular-nums}
 
 /* =========================================================== REGRAS */
-.prose{max-width:78ch}
-.prose h3{font:600 16px/1.3 var(--disp);margin:30px 0 10px;color:var(--txt)}
+/* 78ch travado num card de 1600px deixava ~900px de card vazio a direita. O min()
+   tira o transbordo; as colunas e que de fato ocupam a largura. */
+.prose{max-width:min(78ch,100%)}
+.prose-cols{columns:2 340px;column-gap:52px}
+/* a Regras e o unico bloco longo o suficiente para colunas; o paragrafo solto da
+   Ranking traz max-width inline e fica de fora por isso.
+   columns por LARGURA (nao por contagem): o navegador decide quantas cabem e cada
+   uma mantem a medida legivel, em vez de duas colunas gordas de 60ch+. */
+@container content (min-width:1000px){
+  .card>.prose:not([style]){max-width:none;columns:46ch;column-gap:52px;column-rule:1px solid var(--line2)}
+}
+.prose h3{font:600 16px/1.3 var(--disp);margin:30px 0 10px;color:var(--txt);break-after:avoid}
 .prose h3:first-child{margin-top:0}
+.prose ul,.prose .formula,.prose .wtable{break-inside:avoid}
 .prose p{margin:0 0 12px;color:var(--mut)}
 .prose li{margin-bottom:6px;color:var(--mut)}
 .prose b{color:var(--txt)}
@@ -388,9 +497,6 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 .card:hover{border-color:#2C3540}
 .stat{transition:border-color .16s,transform .16s}
 .stat:hover{border-color:#2C3540;transform:translateY(-2px)}
-.pod{transition:border-color .16s,transform .16s}
-.pod:hover{transform:translateY(-3px)}
-.pod.p1:hover{border-color:var(--gold)}
 .sk{transition:border-color .16s,transform .16s}
 .sk:hover{border-color:rgba(229,72,77,.55);transform:translateY(-2px)}
 .aw{transition:border-color .16s,transform .16s}
@@ -403,8 +509,6 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 .hbar:hover{background:var(--card2)}
 .lrow{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
 .lrow:hover{background:var(--card2)}
-.rec{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
-.rec:hover{background:var(--card2)}
 .champ{transition:background .13s;border-radius:7px;padding-left:7px;padding-right:7px;margin:0 -7px}
 .champ:hover{background:var(--card2)}
 .form i{transition:transform .12s}
@@ -415,6 +519,509 @@ table.mx{border-collapse:separate;border-spacing:3px;width:auto}
 .aw-f .ru:hover{color:var(--txt)}
 svg circle[data-tip],svg rect[data-tip]{transition:opacity .12s}
 svg circle[data-tip]:hover{opacity:.75}
+
+/* ================================================== VOCABULARIO "ARENA UDA"
+   Base da linguagem visual, ainda sem uso no HTML: podio, halls e reliquias das
+   fases seguintes montam em cima daqui. Ter um vocabulario unico e o que impede
+   quatro secoes ilustradas de virarem quatro dialetos diferentes. */
+
+/* esqueleto editorial de todo bloco-poster: eyebrow > titulo > nota > regua */
+.eyebrow{font:700 10px/1 var(--body);letter-spacing:.28em;text-transform:uppercase;color:var(--gold-3)}
+.poster-title{margin:0;font:800 clamp(28px,4.2cqi,62px)/.92 var(--cond);text-transform:uppercase;letter-spacing:.005em}
+.poster-note{margin:10px auto 0;max-width:62ch;font-size:12.5px;color:var(--mut);text-align:center}
+.rule{height:1px;border:0;margin:18px 0;
+  background:linear-gradient(90deg,transparent,var(--gold-4) 18%,var(--gold-3) 50%,var(--gold-4) 82%,transparent)}
+
+/* material: a mesma cor em degraus de luminancia e o que faz existir bisel.
+   Prata e bronze sao TOKENS proprios -- filter:saturate() apagaria a arte junto. */
+.metal{box-shadow:var(--bevel),var(--lift);
+  background:linear-gradient(160deg,var(--gold-3) 0%,var(--gold-2) 26%,var(--gold-1) 44%,var(--gold-2) 62%,var(--gold-4) 100%)}
+.metal.silver{background:linear-gradient(160deg,var(--m2c) 0%,var(--m2b) 30%,var(--m2a) 48%,var(--m2b) 66%,var(--m2c) 100%)}
+.metal.bronze{background:linear-gradient(160deg,var(--m3c) 0%,var(--m3b) 30%,var(--m3a) 48%,var(--m3b) 66%,var(--m3c) 100%)}
+.engraved{background:linear-gradient(180deg,var(--gold-1),var(--gold-2) 55%,var(--gold-3));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.55))}
+
+/* CONTRATO DE 4 CAMADAS -- sempre nesta ordem, em toda secao ilustrada:
+   -3 arte / -2 luz / -1 vinheta / 0 conteudo. A ordem fixa e o que impede a
+   atmosfera de virar bagunca quando ela se repete em quatro lugares. */
+.stage-layers{position:relative;isolation:isolate;overflow:hidden;border-radius:var(--r);background:var(--ink2)}
+.stage-layers>.sl-art{position:absolute;inset:0;z-index:-3;width:100%;height:100%;
+  object-fit:cover;filter:blur(28px) brightness(.38)}
+.stage-layers>.sl-light{position:absolute;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(120% 78% at 50% 0%,rgba(200,170,110,.16),transparent 62%)}
+.stage-layers>.sl-vig{position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 96% at 50% 42%,transparent 42%,rgba(10,13,18,.72) 100%)}
+/* REGRA DE OURO: nenhum texto encosta em arte crua. O scrim garante contraste AA
+   seja o splash de Lux ou o de Nocturne. */
+.scrim{position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,transparent 30%,rgba(11,15,21,.72) 68%,#10141B 100%)}
+
+/* ---------------------------------------------- arte pesada vinda do CDN
+   REGRA DE PROJETO: toda arte remota e DECORATIVA. Nenhum dado existe apenas
+   dentro da imagem -- se o ddragon cair, o painel perde beleza e nao informacao.
+   Por isso .art nunca leva texto dentro e todo bloco ilustrado carrega o .scrim.
+   O container declara aspect-ratio porque a arte e absoluta: sem isso a caixa
+   nasceria com altura zero e pularia quando a imagem chegasse (CLS). */
+.artbox{position:relative;isolation:isolate;overflow:hidden;background:var(--ink2)}
+.artbox.por{aspect-ratio:308/560}    /* loading art, retrato do podio */
+.artbox.wide{aspect-ratio:16/9}      /* centered/splash, fundo de palco e hero */
+.art{position:absolute;inset:0;z-index:-3;width:100%;height:100%;
+  background-size:cover;background-position:center 22%;background-repeat:no-repeat;
+  object-fit:cover;object-position:center 22%}
+/* center 22% e a altura do rosto na maioria dos splashes; corte pelo meio decapita. */
+.art.blur{filter:blur(28px) brightness(.38)}
+
+/* Fallback: FBART marca o PAI com .noart em vez de sumir com o elemento, entao a
+   falha vira um gradiente solido e nunca um buraco de layout. Serve tanto para
+   <img class="art"> quanto para <div class="art" style="background-image:...">. */
+.noart .art{background-image:linear-gradient(160deg,var(--card2),var(--ink))!important;
+  filter:none}
+.noart img.art{display:none}
+.noart::before{content:"";position:absolute;inset:0;z-index:-3;
+  background:linear-gradient(160deg,var(--card2),var(--ink))}
+.noart>.sl-light{opacity:.45}
+
+/* ============================================================== O PÓDIO
+   O problema antigo era geometrico, nao decorativo: tres cards iguais em
+   align-items:stretch nunca viram podio, por mais ouro que se pinte neles. Aqui a
+   hierarquia existe na GEOMETRIA -- tres degraus de altura real, alinhados pela
+   base (align-items:end), e o campeao ganha ainda retrato mais alto, moldura de
+   ouro solida, halo, nome gravado em metal e o loureiro.
+   O DOM sai 1-2-3 (leitor de tela le o campeao primeiro e o celular empilha na
+   ordem certa); a inversao 2-1-3 vive so no `order`, que e visual. */
+.stage{position:relative;margin-inline:calc(var(--pad,24px)*-1);
+  padding:clamp(26px,3.2vw,50px) clamp(16px,3vw,40px) 0}
+.stage.stage-layers{border-radius:0}
+/* a linha do chao: fecha o palco por baixo, no lugar de um corte seco */
+.stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-3),transparent);opacity:.5}
+.pod-head{text-align:center;max-width:74ch;margin:0 auto clamp(20px,2.6vw,38px)}
+.pod-head .eyebrow{display:block;margin-bottom:11px}
+.pod-head .rule{max-width:320px;margin:14px auto 0}
+.pod-head .poster-note{margin-top:11px}
+
+.podium3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.16fr) minmax(0,1fr);
+  gap:clamp(8px,1.3vw,20px);align-items:end;max-width:1000px;margin:0 auto}
+/* 1000px e o teto: a loading art nasce com 308px de largura e a coluna do campeao
+   ja fica em ~350px. Passar muito disso e ampliar jpg e ver o borrao. */
+.pod{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.pod.p1{order:2} .pod.p2{order:1} .pod.p3{order:3}
+/* uma coluna so: o `order` sai de cena e o DOM 1-2-3 assume */
+@container content (max-width:720px){
+  .podium3{grid-template-columns:1fr;max-width:420px}
+  .podium3 .pod{order:0}
+  /* empilhado, o retrato inteiro custaria uma tela por jogador: corta mais fundo.
+     object-position:center 22% garante que o corte tire o pe, nao o rosto. */
+  .podium3 .pod .artbox{aspect-ratio:308/320}
+  .podium3 .pod.p1 .artbox{aspect-ratio:308/392}
+}
+
+/* ---- retrato: a arte e do CAMPEAO, a medalha e da PESSOA ---- */
+.pod-por{position:relative;margin-bottom:30px}
+.pod.p1 .pod-por{margin-bottom:38px}
+.pod .artbox{aspect-ratio:308/400;border-radius:14px 14px 4px 4px;
+  border:1px solid var(--line);box-shadow:var(--lift)}
+.pod.p1 .artbox{aspect-ratio:308/468;border:1px solid var(--gold-2);
+  box-shadow:0 0 90px -26px var(--gold-2),var(--lift)}
+.pod.p2 .artbox{border-color:var(--m2b)}
+.pod.p3 .artbox{border-color:var(--m3b)}
+.pod .pod-por,.pod .art{transition:transform .22s var(--e)}
+.pod:hover .pod-por{transform:translateY(-5px)}
+.pod:hover .art{transform:scale(1.04)}
+/* posicao dentro do retrato, sempre por cima do scrim */
+.pod .laurel{position:absolute;left:50%;top:0;width:clamp(96px,58%,168px);
+  transform:translate(-50%,-46%);color:var(--gold-2);pointer-events:none;
+  filter:drop-shadow(0 3px 7px rgba(0,0,0,.75))}
+.pod .medal{position:absolute;left:50%;bottom:-23px;transform:translateX(-50%);
+  width:46px;height:46px;border-radius:50%;padding:2px;box-shadow:0 8px 18px rgba(0,0,0,.65)}
+.pod.p1 .medal{width:60px;height:60px;bottom:-30px}
+.pod .medal img{width:100%;height:100%;border-radius:50%;background:var(--ink2)}
+.pod.p1 .medal{background:linear-gradient(160deg,var(--gold-1),var(--gold-3))}
+.pod.p2 .medal{background:linear-gradient(160deg,var(--m2a),var(--m2c))}
+.pod.p3 .medal{background:linear-gradient(160deg,var(--m3a),var(--m3c))}
+
+/* ---- identidade ---- */
+.pod-id{text-align:center;padding:0 4px}
+.pod .nm{font:800 clamp(15px,1.6cqi,23px)/1.1 var(--cond);text-transform:uppercase;
+  letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod.p1 .nm{font-size:clamp(20px,2.3cqi,32px)}
+.pod .el{font-size:11.5px;color:var(--mut);margin-top:5px}
+.pod .sc{margin-top:9px;font:800 clamp(28px,3.2cqi,48px)/.9 var(--cond);
+  font-variant-numeric:tabular-nums;color:var(--m2b)}
+.pod.p1 .sc{font-size:clamp(36px,4.2cqi,66px)}
+.pod.p3 .sc{color:var(--m3b)}
+.pod .sl{font:700 9.5px/1 var(--body);letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+.pod .ft{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+/* o chip e dado, nao enfeite: diz o main do jogador e abre o dossie do campeao */
+.pod .cchip{appearance:none;display:inline-flex;align-items:center;gap:8px;max-width:100%;
+  margin-top:11px;padding:4px 12px 4px 4px;cursor:pointer;border-radius:var(--rp);
+  background:rgba(10,13,18,.55);border:1px solid var(--line);color:var(--mut);
+  font:500 11.5px/1 var(--body);transition:.13s}
+.pod .cchip img{width:22px;height:22px;border-radius:50%;flex:0 0 auto}
+.pod .cchip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .cchip b{color:var(--txt);font-weight:600}
+.pod .cchip:hover{border-color:var(--gold-2);color:var(--txt)}
+
+/* ---- o degrau ---- */
+.pod .step{position:relative;margin-top:15px;border-radius:7px 7px 0 0;display:grid;place-items:center;
+  height:clamp(52px,5.6cqi,74px);box-shadow:var(--bevel),var(--lift);
+  background:linear-gradient(180deg,#1D232C,#12171F)}
+.pod.p2 .step{height:clamp(70px,7.4cqi,100px)}
+.pod.p1 .step{height:clamp(96px,10cqi,140px);
+  background:linear-gradient(180deg,#3A2E16,#1A1408 76%)}
+/* filete de metal no topo do degrau: mesmo filete do KPI heroi, mesmo material */
+.pod .step::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;border-radius:inherit;
+  background:linear-gradient(90deg,transparent,var(--step-m,var(--m2b)),transparent)}
+.pod.p1 .step{--step-m:var(--gold-1)}
+.pod.p3 .step{--step-m:var(--m3b)}
+.pod .step::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:var(--glass);pointer-events:none}
+/* numeral entalhado: baixa opacidade de proposito -- e relevo, nao rotulo */
+.pod .step .rn{font:800 clamp(30px,4.4cqi,78px)/1 var(--cond);letter-spacing:.05em;
+  color:rgba(233,237,242,.09);text-shadow:0 1px 0 rgba(255,255,255,.05)}
+.pod.p1 .step .rn{color:rgba(200,170,110,.30)}
+/* entrada unica, do 3o degrau para o 1o -- o campeao chega por ultimo */
+.podium3 .pod{animation:fadeUp .5s var(--e) both}
+.pod.p3{animation-delay:.04s} .pod.p2{animation-delay:.12s} .pod.p1{animation-delay:.22s}
+
+/* ====================================================== AS DUAS SALAS
+   Fama e Vergonha sao O MESMO componente. O que muda entre as duas salas e
+   --acc (e o eyebrow, que e texto). Duplicar o componente seria assinar o
+   compromisso de manter dois; aqui o modificador troca a cor da luz, da
+   moldura, da gravacao e da barra de uma vez so.
+   Cada sala tem 6 premios: 3 colunas = 2 filas fechadas, sem orfao embaixo. */
+.hall{--acc:var(--gold-2); --acc-1:var(--gold-1); --acc-3:var(--gold-3);
+  position:relative;isolation:isolate;overflow:hidden;border-radius:var(--r);
+  background:linear-gradient(180deg,var(--ink2),var(--ink));
+  border:1px solid color-mix(in srgb,var(--acc) 30%,var(--line));
+  padding:clamp(22px,2.8vw,34px) clamp(16px,2.2vw,32px) clamp(26px,3vw,36px)}
+.hall-shame{--acc:var(--red); --acc-1:#F8CBCD; --acc-3:#7E2226}
+/* a luz da sala entra pelo alto, na cor da sala -- e o que faz o teto existir */
+.hall::before{content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(118% 74% at 50% 0%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 64%)}
+/* vinheta + textura: sem elas o fundo fica chapado e a moldura nao tem em que pousar */
+.hall::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:var(--glass),radial-gradient(120% 100% at 50% 40%,transparent 46%,rgba(10,13,18,.66) 100%)}
+.hall-head{text-align:center;max-width:74ch;margin:0 auto clamp(20px,2.4vw,32px)}
+.hall-head .eyebrow{display:block;margin-bottom:11px;color:color-mix(in srgb,var(--acc) 68%,var(--dim))}
+.hall .poster-title{font-size:clamp(26px,3.4cqi,50px)}
+/* a gravacao usa a rampa da propria sala: ouro na fama, cobre queimado na vergonha */
+.hall .poster-title.engraved{background:linear-gradient(180deg,var(--acc-1),var(--acc) 55%,var(--acc-3))}
+.hall .rule{max-width:340px;margin:14px auto 0;
+  background:linear-gradient(90deg,transparent,var(--acc-3) 18%,var(--acc) 50%,var(--acc-3) 82%,transparent)}
+.hall .poster-note{margin-top:11px}
+
+/* 1220px e o teto da parede: em 3 colunas de 1700px cada quadro passaria de
+   550px e a loading art (308px de largura) viraria borrao ampliado. */
+.awards{display:grid;gap:clamp(14px,1.6vw,22px);grid-template-columns:1fr;
+  max-width:1220px;margin-inline:auto}
+@container content (min-width:620px){.awards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container content (min-width:960px){.awards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ---- o quadro: janela com a arte em cima, placa gravada embaixo ----
+   A janela tem aspect-ratio proprio em vez de "o que sobrar da altura": assim a
+   pintura nao vira uma tira fina quando o texto do premio cresce. O flex:1 deixa
+   a janela absorver a folga quando a fila iguala as alturas. */
+.aw{--rot:0deg;position:relative;display:flex;flex-direction:column;overflow:hidden;
+  border-radius:12px;transform:rotate(var(--rot));
+  background:linear-gradient(180deg,#10141B,var(--ink));
+  border:1px solid color-mix(in srgb,var(--acc) 38%,var(--line));
+  box-shadow:var(--bevel),var(--lift);transition:box-shadow .22s var(--e),border-color .22s var(--e)}
+/* a segunda linha da moldura (o passe-partout). Vive no ::after porque o ::before
+   ja e do fallback .noart -- disputar com ele apagaria um dos dois. */
+.aw::after{content:"";position:absolute;inset:5px;z-index:3;pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--acc) 22%,transparent);border-radius:8px}
+.aw:hover{border-color:var(--acc);box-shadow:0 0 44px -18px var(--acc),var(--bevel),var(--lift)}
+.aw:hover .art{transform:scale(1.05)}
+.aw .art{transition:transform .32s var(--e)}
+/* .artbox da a janela o contrato de camadas e o fallback: se o ddragon nao
+   responder, o FBART marca ESTA janela com .noart e ela vira gradiente solido. */
+.aw-win{flex:1 1 auto;aspect-ratio:16/10}
+/* a arte e retrato e a janela e larga: o corte alto pega o rosto, nao o joelho */
+.aw-win .art{object-position:center 14%;background-position:center 14%}
+/* etiqueta de metal com o nome do premio, no alto. Texto NUNCA encosta em arte
+   crua: a etiqueta traz o proprio fundo. */
+.aw-tag{display:flex;align-items:center;justify-content:center;gap:8px;position:relative;z-index:2;
+  padding:10px 12px;background:linear-gradient(180deg,rgba(8,11,16,.96),rgba(8,11,16,.72));
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 34%,transparent)}
+.aw-tag .ic svg{width:14px;height:14px;stroke:var(--acc);fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;display:block}
+.aw-tag .t{font:800 13px/1 var(--cond);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--acc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* z-index:2 porque o disco sobe por cima da janela; o -30px e essa sobreposicao */
+.aw-in{position:relative;z-index:2;text-align:center;padding:0 clamp(12px,1.6vw,18px) 15px}
+
+/* o retrato da PESSOA em disco de metal -- a arte e do campeao, a medalha e dela */
+.aw-disc{width:58px;height:58px;margin:-30px auto 0;border-radius:50%;padding:2px;
+  background:linear-gradient(160deg,var(--acc-1),var(--acc) 46%,var(--acc-3));
+  box-shadow:0 10px 22px rgba(0,0,0,.7),var(--bevel)}
+.aw-disc img{width:100%;height:100%;border-radius:50%;background:var(--ink2)}
+/* a placa gravada: nome em relevo, metrica em letra miuda */
+.aw-plate{margin-top:12px;padding:9px 12px;border-radius:7px;
+  background:linear-gradient(180deg,#161B23,#0C1015);
+  border:1px solid color-mix(in srgb,var(--acc) 20%,var(--line));box-shadow:var(--bevel)}
+.aw-plate .nm{font:800 clamp(17px,1.6cqi,23px)/1 var(--cond);text-transform:uppercase;
+  letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:linear-gradient(180deg,var(--acc-1),var(--acc) 58%,var(--acc-3));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
+.aw-plate .d{font-size:11px;color:var(--mut);margin-top:5px}
+/* o numero e placar: condensado, tabular, e a unidade nao rouba o olho */
+.aw-sc{margin-top:12px;display:flex;align-items:baseline;justify-content:center;gap:8px}
+.aw-sc b{font:800 clamp(30px,3.4cqi,44px)/.9 var(--cond);font-variant-numeric:tabular-nums;
+  color:var(--txt)}
+.aw-sc span{font:600 10.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.aw-m{margin-top:12px}
+.aw-m .track{height:6px;border-radius:var(--rp);background:rgba(255,255,255,.09);overflow:hidden}
+.aw-m .track i{display:block;height:100%;border-radius:var(--rp);
+  background:linear-gradient(90deg,var(--acc-3),var(--acc))}
+.aw-m .cap{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--dim);margin-top:7px}
+.aw-m .cap b{color:var(--mut);font-variant-numeric:tabular-nums}
+.aw-f{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;
+  margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
+.aw-f .lbl{font-size:10px;color:var(--dim)}
+.aw-f .ru{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);min-width:0}
+.aw-f .ru img{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
+.aw-f .ru span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ZOEIRA MEDIDA: na sala da vergonha os quadros impares estao tortos na parede.
+   1.2deg e o suficiente para o olho notar e pouco para nao virar piada de festa. */
+.hall-shame .aw:nth-child(odd){--rot:-1.2deg}
+/* entrada unica, quadro a quadro. O keyframe carrega o --rot porque `transform:none`
+   no fim da animacao endireitaria os quadros tortos. */
+.hall .aw{animation:fadeUpRot .5s var(--e) both}
+.hall .aw:nth-child(2){animation-delay:.05s} .hall .aw:nth-child(3){animation-delay:.1s}
+.hall .aw:nth-child(4){animation-delay:.15s} .hall .aw:nth-child(5){animation-delay:.2s}
+.hall .aw:nth-child(6){animation-delay:.25s}
+
+/* ================================================= A SALA DOS RECORDES
+   Terceira sala, mesmo componente .hall: a parede, a luz e a gravacao ja
+   existem, aqui so entra o mobiliario. Duas escalas de peca, porque os
+   recordes NAO sao todos do mesmo tipo -- pentakill, roubo sem smite e jogo
+   sem morrer nao tem "segundo lugar", ou aconteceu ou nao aconteceu, e por
+   isso viram vitrine larga com a arte do campeao. O resto e ranking de uma
+   coluna so e cabe num cartao pequeno. Trinta cartoes de uma vez nao seriam
+   uma sala, seriam um deposito: dai as abas por grupo. */
+.relics{display:grid;gap:clamp(12px,1.5vw,20px);grid-template-columns:1fr;
+  max-width:1220px;margin:0 auto clamp(22px,2.6vw,32px)}
+@container content (min-width:760px){.relics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* justify-content:flex-end empurra o texto para a base: a arte respira em cima
+   e o scrim so precisa escurecer a metade de baixo. */
+.rel{display:flex;flex-direction:column;justify-content:flex-end;min-height:230px;
+  padding:16px;border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--gold-2) 34%,var(--line));
+  box-shadow:var(--bevel),var(--lift);transition:border-color .2s var(--e)}
+.rel:hover{border-color:var(--gold-2)}
+.rel .art{background-position:center 24%;object-position:center 24%}
+.rel .tag{font:800 11.5px/1.2 var(--cond);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold-2)}
+.rel .big{margin-top:9px;font:800 clamp(38px,4.2cqi,58px)/.86 var(--cond);
+  font-variant-numeric:tabular-nums;color:var(--gold-1)}
+.rel .big small{display:block;margin-top:9px;font:600 10.5px/1.3 var(--body);
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.rel .who{display:flex;align-items:center;gap:9px;margin-top:13px;padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.12)}
+.rel .who img{width:30px;height:30px;border-radius:50%;flex:0 0 auto;border:1px solid var(--line)}
+.rel .who .n{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel .who .c{font-size:10.5px;color:var(--mut);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel .lg{font-size:11.5px;color:var(--mut);margin-top:10px}
+/* VITRINE VAGA: o recorde sem dono continua pendurado dizendo que ninguem
+   conseguiu. Sumir com ele esconderia metade da historia da fila. */
+.rel.vaga{border-style:dashed;border-color:var(--line2);background:var(--card2)}
+.rel.vaga .tag{color:var(--mut)}
+.rel.vaga .big{color:var(--dim)}
+
+.rtabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;
+  margin-bottom:clamp(16px,2vw,24px)}
+.rtab{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;cursor:pointer;
+  border-radius:var(--rp);background:var(--card2);border:1px solid var(--line);
+  color:var(--mut);font:700 11px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;
+  transition:color .16s,background .16s,border-color .16s}
+.rtab b{font-variant-numeric:tabular-nums;color:var(--dim)}
+.rtab:hover{color:var(--txt);border-color:#2C3540}
+.rtab[aria-pressed="true"]{color:var(--ink);background:var(--tone);border-color:var(--tone)}
+.rtab[aria-pressed="true"] b{color:rgba(10,13,18,.6)}
+
+/* 4 colunas fecham fila exata nos tres grupos; 2 e 1 nos degraus de baixo. */
+.rgrid{display:grid;gap:clamp(10px,1.2vw,16px);grid-template-columns:1fr;
+  max-width:1220px;margin-inline:auto}
+/* display:grid venceria o [hidden] do HTML -- sem esta linha as tres abas
+   apareceriam empilhadas de uma vez. */
+.rgrid[hidden]{display:none}
+@container content (min-width:560px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container content (min-width:1040px){.rgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.rc{display:flex;flex-direction:column;padding:14px;border-radius:11px;
+  background:linear-gradient(180deg,#10141B,var(--ink));border:1px solid var(--line);
+  transition:border-color .16s,transform .16s}
+.rc[data-champ]{cursor:pointer}
+.rc:hover{border-color:color-mix(in srgb,var(--tone) 55%,var(--line));transform:translateY(-2px)}
+.rc .tt{font:800 11px/1.3 var(--cond);letter-spacing:.15em;text-transform:uppercase;color:var(--tone)}
+.rc .vl{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.rc .vl b{font:800 clamp(26px,2.4cqi,34px)/.88 var(--cond);font-variant-numeric:tabular-nums;
+  color:var(--txt)}
+.rc .vl span{min-width:0;font-size:10.5px;color:var(--dim);overflow-wrap:anywhere}
+.rc .pl2{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:11px;
+  border-top:1px solid var(--line2)}
+.rc .pl2 img{width:26px;height:26px;border-radius:50%;flex:0 0 auto}
+.rc .pl2 .n{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc .pl2 .c{font-size:10.5px;color:var(--dim);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc.vazio{border-style:dashed;background:var(--card2)}
+.rc.vazio .vl b,.rc.vazio .pl2 .n{color:var(--dim)}
+
+/* Toda animacao do site e de ENTRADA, disparada uma vez. Nada pisca enquanto se le. */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeUpRot{from{opacity:0;transform:translateY(14px) rotate(var(--rot))}
+  to{opacity:1;transform:rotate(var(--rot))}}
+@keyframes sweep{from{transform:translateX(-130%)}to{transform:translateX(130%)}}
+@keyframes arcDraw{from{stroke-dashoffset:var(--dash,1000)}to{stroke-dashoffset:0}}
+@keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+/* ====================================================== VIDA (ENTRADA)
+   A secao nasce visivel no HTML: quem liga o movimento e o JS, marcando .rv.
+   Se o script falhar ou o IntersectionObserver nao existir, o painel continua
+   legivel -- nada de conteudo dependendo de animacao para aparecer.
+   So opacity e transform: nenhuma propriedade que force layout. */
+.rv{opacity:0;transform:translateY(18px);
+  transition:opacity .5s var(--e),transform .5s var(--e)}
+.rv.in{opacity:1;transform:none}
+/* enquanto a secao nao entrou, as animacoes dos filhos ficam no primeiro quadro:
+   e isso que faz a barra crescer QUANDO voce chega nela, e nao antes. */
+.rv:not(.in) *{animation-play-state:paused}
+/* cascata de 40ms nos blocos repetidos -- o --i vem do JS, na ordem do DOM.
+   `backwards` e nao `both`: com `both` o transform:none do ultimo quadro ficaria
+   grudado no elemento e mataria a elevacao do :hover, que tambem e transform. */
+.rv .stg{animation:fadeUp .46s var(--e) backwards;animation-delay:calc(var(--i,0)*40ms + 70ms)}
+/* um unico brilho atravessa a moldura do campeao, na entrada. Nunca em laco. */
+.rv .pod.p1 .artbox::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  transform:translateX(-130%);
+  background:linear-gradient(105deg,transparent 38%,rgba(240,230,210,.28) 50%,transparent 62%)}
+.rv.in .pod.p1 .artbox::after{animation:sweep 1.1s var(--e) .55s both}
+@media(prefers-reduced-motion:reduce){
+  /* com o transition desligado la em cima, opacity:0 congelaria a pagina inteira */
+  .rv,.rv .stg{opacity:1!important;transform:none!important}
+}
+
+/* ============================================== PÁGINA CAMPEÕES: O ARSENAL
+   A pagina era uma tabela de 5 colunas num campo vazio. O arsenal poe a arte na
+   frente e a tabela vira o apendice detalhado, no fim. 12 cartoes fecham fila
+   exata em 3, 2 e 1 coluna -- nunca sobra orfao. */
+.cgrid{display:grid;gap:clamp(12px,1.5vw,20px);grid-template-columns:1fr;
+  max-width:1320px;margin-inline:auto}
+@container content (min-width:640px){.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container content (min-width:1020px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ccard{position:relative;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;
+  border-radius:12px;background:linear-gradient(180deg,#10141B,var(--ink));
+  border:1px solid var(--line);box-shadow:var(--bevel),var(--lift);
+  transition:border-color .2s var(--e),box-shadow .2s var(--e),transform .2s var(--e)}
+.ccard:hover,.ccard:focus-visible{border-color:var(--gold-2);transform:translateY(-3px);
+  box-shadow:0 0 44px -20px var(--gold-2),var(--bevel),var(--lift);outline:0}
+.ccard:hover .art{transform:scale(1.05)}
+.cc-win{aspect-ratio:16/8.4}
+.cc-win .art{transition:transform .32s var(--e);object-position:center 18%;background-position:center 18%}
+/* a posicao no arsenal e dado: o numero fica gravado no canto da arte */
+.cc-rk{position:absolute;top:9px;right:11px;z-index:2;font:800 22px/1 var(--cond);
+  color:rgba(240,230,210,.55);text-shadow:0 2px 6px rgba(0,0,0,.8);font-variant-numeric:tabular-nums}
+.cc-in{position:relative;z-index:2;padding:0 15px 15px;text-align:center}
+.cc-ic{width:52px;height:52px;margin:-26px auto 0;border-radius:14px;padding:2px;
+  background:linear-gradient(160deg,var(--gold-1),var(--gold-3));box-shadow:0 9px 20px rgba(0,0,0,.7)}
+.cc-ic img{width:100%;height:100%;border-radius:12px;background:var(--ink2)}
+.cc-nm{margin-top:9px;font:800 clamp(17px,1.5cqi,22px)/1 var(--cond);text-transform:uppercase;
+  letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-tt{font-size:11px;color:var(--dim);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;
+  padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
+.cc-st .k{font:600 9px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.cc-st .v{font:800 19px/1 var(--cond);margin-top:6px;font-variant-numeric:tabular-nums}
+.cc-tr{height:5px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;margin-top:11px}
+.cc-tr i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
+.cc-tr i.lo{background:var(--red)}
+.cc-pl{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;
+  font-size:10.5px;color:var(--dim)}
+.cc-pl .ims{display:flex}
+.cc-pl .ims img{width:21px;height:21px;border-radius:50%;border:2px solid #10141B}
+.cc-pl .ims img+img{margin-left:-8px}
+/* tudo que abre o dossie se comporta como botao, inclusive pelo teclado */
+.champ[data-champ],.aw[data-champ],tr[data-champ]{cursor:pointer}
+[data-champ]:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+
+/* ================================================== O DOSSIÊ DO CAMPEÃO
+   O <dialog> nativo ja traz Esc, foco preso e backdrop -- reimplementar isso a
+   mao seria trocar tres comportamentos corretos por tres bugs. */
+/* o dialogo vive no top layer, FORA de .content: sem container proprio nenhuma
+   @container e nenhum cqi daqui pra baixo resolveria */
+.dossie{border:0;padding:0;background:none;color:var(--txt);width:min(1060px,94vw);
+  max-height:min(92vh,940px);overflow:auto;border-radius:var(--r);overscroll-behavior:contain;
+  container-type:inline-size;container-name:ds}
+.dossie::backdrop{background:rgba(6,8,12,.8)}
+.dossie[open]{animation:fadeUp .3s var(--e) both}
+.ds{background:linear-gradient(180deg,var(--ink2),var(--ink));overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--gold-2) 28%,var(--line));border-radius:var(--r)}
+/* o hero e mais baixo que 16/9: aqui a arte e cabecalho, nao o assunto */
+.ds-hero{aspect-ratio:16/6}
+@container ds (max-width:700px){.ds-hero{aspect-ratio:16/9}}
+.ds-hero .art{object-position:center 20%;background-position:center 20%}
+.ds-x{position:absolute;top:10px;right:10px;z-index:4;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;border:1px solid var(--line);
+  background:rgba(10,13,18,.72);color:var(--mut);font:400 20px/1 var(--body);transition:.13s}
+.ds-x:hover{border-color:var(--gold-2);color:var(--txt)}
+.ds-ttl{position:absolute;z-index:3;left:0;right:0;bottom:0;display:flex;align-items:flex-end;gap:14px;
+  padding:clamp(14px,2vw,24px)}
+.ds-ttl .ic{width:clamp(54px,7cqi,76px);height:clamp(54px,7cqi,76px);flex:0 0 auto;border-radius:16px;
+  padding:2px;background:linear-gradient(160deg,var(--gold-1),var(--gold-3));box-shadow:var(--lift)}
+.ds-ttl .ic img{width:100%;height:100%;border-radius:14px;background:var(--ink2)}
+.ds-ttl .tx{min-width:0}
+.ds-ttl .eyebrow{display:block;margin-bottom:7px}
+.ds-ttl .poster-title{font-size:clamp(26px,4.6cqi,46px)}
+.ds-sub{margin-top:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.ds-tag{font:700 9.5px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold-2);
+  background:var(--gold-s);border-radius:var(--rp);padding:4px 9px}
+/* duas colunas: a UDA a esquerda, a ficha do campeao a direita */
+.ds-body{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(16px,2vw,26px);
+  padding:clamp(16px,2.2vw,26px)}
+@container ds (min-width:820px){.ds-body{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}}
+.ds-h{font:700 10px/1 var(--body);letter-spacing:.24em;text-transform:uppercase;color:var(--gold-3);
+  margin-bottom:12px}
+.ds-uda{min-width:0}
+.ds-num{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.ds-num>div{background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:11px 13px}
+.ds-num .k{font:600 9.5px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.ds-num .v{font:800 26px/1 var(--cond);margin-top:8px;font-variant-numeric:tabular-nums}
+.ds-num .v small{font:600 12px/1 var(--cond);opacity:.6;margin-left:2px}
+.ds-lst{margin-top:16px}
+.ds-pl{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+.ds-pl:last-child{border-bottom:0}
+.ds-pl img{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);flex:0 0 auto}
+.ds-pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-pl .st{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.ds-best{margin-top:14px;padding:12px 14px;border-radius:var(--rs);
+  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-2)}
+.ds-best .l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.ds-best .v{font-size:13px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+.ds-best .s{font-size:11.5px;color:var(--mut);margin-top:3px}
+/* ---- as habilidades ---- */
+.ds-sk{min-width:0}
+.ds-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2)}
+.ds-row:last-child{border-bottom:0}
+.ds-ib{position:relative;flex:0 0 auto;width:52px;height:52px;border-radius:11px;padding:1px;
+  background:linear-gradient(160deg,var(--gold-3),var(--gold-4));box-shadow:var(--bevel)}
+.ds-ib img{width:100%;height:100%;border-radius:10px;background:var(--ink2)}
+.ds-row.pas .ds-ib{border-radius:50%;padding:2px;background:linear-gradient(160deg,var(--gold-1),var(--gold-3))}
+.ds-row.pas .ds-ib img{border-radius:50%}
+/* a tecla e o rotulo real da habilidade: sem ela a lista vira quatro icones soltos */
+.ds-key{position:absolute;left:-5px;bottom:-5px;width:20px;height:20px;border-radius:6px;
+  display:grid;place-items:center;font:800 11px/1 var(--cond);color:var(--ink);
+  background:linear-gradient(160deg,var(--gold-1),var(--gold-2));box-shadow:0 3px 8px rgba(0,0,0,.6)}
+.ds-tx{min-width:0}
+.ds-tx .n{font:600 13.5px/1.2 var(--body)}
+.ds-tx .d{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.45}
+.ds-note{font-size:11.5px;color:var(--dim);margin-top:14px;padding-top:12px;border-top:1px solid var(--line2)}
 
 /* =========================================================== DIVERSOS */
 .empty{padding:44px 24px;text-align:center;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
@@ -466,6 +1073,10 @@ const h=(s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const nf=(v,d=1)=>(v==null||isNaN(v))?"—":Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const ni=(v)=>(v==null||isNaN(v))?"—":Math.round(v).toLocaleString("pt-BR");
 const sg=(v,d=1)=>(v>0?"+":"")+nf(v,d);
+/* quantas casas o texto ja formatado tem -- e assim que a contagem animada sabe
+   reproduzir o MESMO formato de um valor que chegou pronto do payload. Aceita
+   virgula E ponto: os premios vem do kpi.py com ponto decimal. */
+const decDe=(s)=>{const m=/[.,](\d{1,2})$/.exec(String(s??"")); return m?m[1].length:0;};
 const DD=DATA?DATA.ddragon:"15.1.1", CIDX=DATA?DATA.championIndex:{};
 const FB=' onerror="this.style.visibility=\'hidden\'" loading="lazy" ';
 /* Os icones vem embutidos no proprio arquivo (DATA.icons). O CDN fica so como
@@ -477,6 +1088,36 @@ const iconImg=(id)=>PACK.profile[String(id||29)]
   ||`https://ddragon.leagueoflegends.com/cdn/${DD}/img/profileicon/${id||29}.png`;
 const crestImg=(t)=>PACK.crest[(t||"unranked").toLowerCase()]
   ||`https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${(t||"unranked").toLowerCase()}.svg`;
+
+/* ------------------------------------------------ arte pesada (CDN ddragon)
+   Icone pequeno continua embutido no arquivo (PACK); splash e loading art sao
+   dezenas de MB e viriam a MAIS por jogador -- num arquivo unico isso e inviavel,
+   e o painel mora no GitHub Pages, entao o CDN da Riot resolve. Estas URLs NAO
+   levam versao: o ddragon serve a arte fora do caminho versionado.
+   CIDX ja traz a chave exata do ddragon (MonkeyKing, Fiddlesticks, Nunu, Renata,
+   Belveth...); o replace so entra se um campeao novo ainda nao estiver no indice,
+   e nesse caso o FBART cobre a falha. */
+const CKEY=(id,nm)=>CIDX[String(id)]||String(nm||"").replace(/[^A-Za-z]/g,"");
+const ART="https://ddragon.leagueoflegends.com/cdn/img/champion/";
+const artLoad=(id,nm,sk=0)=>`${ART}loading/${CKEY(id,nm)}_${sk}.jpg`;   /* 308x560  ~56KB */
+const artWide=(id,nm,sk=0)=>`${ART}centered/${CKEY(id,nm)}_${sk}.jpg`;  /* 1280x720 ~121KB */
+const artSplash=(id,nm,sk=0)=>`${ART}splash/${CKEY(id,nm)}_${sk}.jpg`;  /* 1215x717 ~154KB */
+/* aspas dentro de url() derrubam a declaracao inteira; a chave vem do CIDX, mas
+   o fallback por nome nao e confiavel o bastante para pular o escape. */
+const cssUrl=(u)=>u?`url("${String(u).replace(/"/g,"%22")}")`:"none";
+/* Icone de habilidade e de passiva sao 64x64 (~6KB) e vem do caminho VERSIONADO
+   do ddragon -- ao contrario da splash, que mora fora da versao. */
+const spellImg=(f)=>`https://ddragon.leagueoflegends.com/cdn/${DD}/img/spell/${f}`;
+const passImg=(f)=>`https://ddragon.leagueoflegends.com/cdn/${DD}/img/passive/${f}`;
+/* ficha enxuta de cada campeao (nome, titulo, tags, Q/W/E/R e passiva), montada
+   no kpi.py so para os campeoes que o grupo jogou */
+const CDET=(DATA&&DATA.champDetails)||{};
+/* champions ja sai ordenado por partidas em kpi.py, entao [0] e o main do jogador */
+const main1=(p)=>(p&&p.champions&&p.champions[0])||null;
+/* FB esconde o proprio <img>; FBART marca o PAI, para a falha virar o gradiente
+   de .noart. Sempre alt="" -- e arte decorativa, o leitor de tela deve ignorar. */
+const FBART=' alt="" loading="lazy" decoding="async"'
+  +' onerror="(this.closest(\'.artbox,.stage-layers\')||this.parentElement).classList.add(\'noart\')"';
 const TIER={IRON:"Ferro",BRONZE:"Bronze",SILVER:"Prata",GOLD:"Ouro",PLATINUM:"Platina",EMERALD:"Esmeralda",
   DIAMOND:"Diamante",MASTER:"Mestre",GRANDMASTER:"Grão-Mestre",CHALLENGER:"Desafiante",UNRANKED:"Sem elo"};
 function eloTxt(r){
@@ -551,94 +1192,225 @@ const noData=(t,m)=>`<div class="empty"><h3>${t}</h3><p>${m}</p></div>`;
 
 /* ============================================================ GRÁFICOS */
 
-/* barras com topo arredondado + linha, como o "Health Report" da referência */
+/* Vocabulario unico dos SVG. Antes cada funcao repetia #232A33/#5D6673/#3A4453
+   crus, entao mexer no design system nao mexia em grafico nenhum. E as margens
+   eram diferentes em cada um (PL 48/58/60/50), o que desalinhava as colunas de
+   rotulo de um card para o de baixo. */
+const GX={grid:"var(--line)",eixo:"#3A4453",lab:"var(--dim)",lab2:"var(--mut)",
+  PL:56,PR:24,PT:24,PB:48,fs:11,fsx:10.5};
+/* ids de gradiente precisam ser unicos: serieChart e desenhado duas vezes na
+   mesma pagina e dois <linearGradient id="fade"> se atropelariam */
+let gseq=0; const uid=p=>`${p}${++gseq}`;
+/* eixo Y padrao: mesma grade, mesma cor de rotulo, mesma distancia em todos */
+const eixoY=(vals,Y,x0,x1,fmt,destaque)=>vals.map(v=>{
+  /* tolerancia relativa: o dominio e calculado com float, entao o "zero" da
+     gridline quase nunca e exatamente 0 */
+  const d=destaque!=null&&Math.abs(v-destaque)<1e-6*(Math.abs(v)+Math.abs(destaque)+1);
+  return `<line x1="${x0}" y1="${Y(v)}" x2="${x1}" y2="${Y(v)}" stroke="${d?GX.eixo:GX.grid}"
+    stroke-dasharray="${d?"5 4":"3 5"}"/>
+  <text x="${x0-12}" y="${Y(v)+4}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="end">${fmt(v)}</text>`;
+}).join("");
+
+/* barras semanais + linha dourada. A escala nao e mais 0-100 fixa: com o grupo
+   oscilando entre 45% e 58% o grafico virava um bloco reto. */
 function barLine(trend){
   if(!trend||trend.length<2) return noData("POUCOS DADOS","Ainda não há semanas suficientes.");
-  const W=1080,H=340,PL=48,PR=24,PT=20,PB=44,iw=W-PL-PR,ih=H-PT-PB,n=trend.length;
-  const bw=Math.min(46,iw/n*.55), X=i=>PL+iw*(i+.5)/n, Y=v=>PT+ih-(v/100)*ih;
-  const g=[0,25,50,75,100].map(v=>`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}"
-    stroke="#232A33" stroke-dasharray="${v===0?"0":"3 5"}"/>
-    <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${v}%</text>`).join("");
-  const melhor=Math.max(...trend.map(t=>t.winrate));
+  const W=1080,H=340,PL=GX.PL,PR=GX.PR,PT=GX.PT,PB=GX.PB,iw=W-PL-PR,ih=H-PT-PB,n=trend.length;
+  const wrs=trend.map(t=>t.winrate);
+  const y0=Math.max(0,Math.min(35,Math.min(...wrs)-6)),y1=Math.min(100,Math.max(65,Math.max(...wrs)+6));
+  const bw=Math.max(14,Math.min(64,iw/n*.72)), X=i=>PL+iw*(i+.5)/n, Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
+  const passo=(y1-y0)/4;
+  const g=eixoY([0,1,2,3,4].map(i=>y0+passo*i),Y,PL,W-PR,v=>nf(v,0)+"%");
+  /* a faixa do empate: 50% e o unico valor que importa nesse grafico, e antes era
+     uma gridline igual as outras */
+  const faixa=(y0<50&&y1>50)?`<rect x="${PL}" y="${Y(52)}" width="${iw}" height="${Y(48)-Y(52)}"
+    fill="var(--gold-2)" opacity=".05"/>
+    <line x1="${PL}" y1="${Y(50)}" x2="${W-PR}" y2="${Y(50)}" stroke="${GX.eixo}" stroke-dasharray="5 4"/>
+    <text x="${W-PR-4}" y="${Y(50)-7}" fill="${GX.lab}" font-size="10" text-anchor="end">empate</text>`:"";
+  const melhor=Math.max(...wrs),pior=Math.min(...wrs);
+  const gd=uid("gwk");
   const bars=trend.map((d,i)=>{
-    const y=Y(d.winrate),hh=PT+ih-y, dest=d.winrate===melhor;
-    const t=tip(`Semana ${h(d.week)}`,[
-      ["Aproveitamento",nf(d.winrate,1)+"%","var(--teal)"],
+    const y=Math.min(Y(d.winrate),PT+ih-3),hh=Math.max(PT+ih-y,3), dest=d.winrate===melhor;
+    const c=d.winrate>=50?"var(--teal)":"var(--red)";
+    const t=tip(`Semana ${h(rotSemana(d.week))}`,[
+      ["Aproveitamento",nf(d.winrate,1)+"%",c],
       ["Partidas",ni(d.games)],
       ["Vitórias",`${ni(d.wins)}V ${ni(d.games-d.wins)}D`],
-    ],dest?"melhor semana do período":null);
+    ],dest?"melhor semana do período":d.winrate===pior?"pior semana do período":null);
     return `<g${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}" fill="transparent"/>
-      <rect x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${Math.max(hh,3)}" rx="7"
-      fill="${dest?"var(--teal)":"var(--barneutral)"}"/></g>`;
+      <rect class="gbar" style="animation-delay:${(i*32)}ms" x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${hh}" rx="7"
+      fill="${c}" fill-opacity="${dest?".95":".55"}" stroke="${dest?"var(--gold-2)":"none"}" stroke-width="${dest?1.4:0}"/></g>`;
   }).join("");
   const path=trend.map((d,i)=>`${i?"L":"M"}${X(i)},${Y(d.winrate)}`).join(" ");
+  const area=`${path} L${X(n-1)},${PT+ih} L${X(0)},${PT+ih} Z`;
   const step=Math.ceil(n/12);
-  const xl=trend.map((d,i)=>i%step===0?`<text x="${X(i)}" y="${H-16}" fill="#5D6673" font-size="10.5" text-anchor="middle">${d.week.replace(/^\d{4}-/,"")}</text>`:"").join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${bars}
-    <path d="${path}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" opacity=".85"/>
-    ${trend.map((d,i)=>`<circle cx="${X(i)}" cy="${Y(d.winrate)}" r="3" fill="var(--gold)"/>`).join("")}${xl}</svg>`;
+  /* i===n-1 no filtro: a semana mais recente e a que mais importa e era justamente
+     a que ficava sem rotulo quando (n-1) nao caia no passo */
+  const xl=trend.map((d,i)=>(i%step===0||i===n-1)
+    ?`<text x="${X(i)}" y="${H-18}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${h(rotSemana(d.week))}</text>`:"").join("");
+  const iM=wrs.indexOf(melhor);
+  const nota=`<g class="gfade" style="animation-delay:.5s"><circle cx="${X(iM)}" cy="${Y(melhor)}" r="5.5" fill="none" stroke="var(--gold-2)" stroke-width="1.6"/>
+    <text x="${X(iM)}" y="${Math.max(PT+12,Y(melhor)-14)}" fill="var(--gold-1)" font-size="11" font-weight="600" text-anchor="middle">${nf(melhor,0)}%</text></g>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"><defs>
+    <linearGradient id="${gd}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--gold-2)" stop-opacity=".26"/>
+      <stop offset="1" stop-color="var(--gold-2)" stop-opacity="0"/></linearGradient></defs>
+    ${g}${faixa}<path class="gfade" d="${area}" fill="url(#${gd})" stroke="none"/>${bars}
+    <path class="gfade" style="animation-delay:.25s" d="${path}" fill="none" stroke="var(--gold-2)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${trend.map((d,i)=>`<circle class="gfade" style="animation-delay:.3s" cx="${X(i)}" cy="${Y(d.winrate)}" r="3" fill="var(--gold-1)"/>`).join("")}
+    ${nota}${xl}
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/></svg>`;
+}
+/* "2026-W07" nao diz nada a ninguem: vira a segunda-feira daquela semana.
+   O formato vem de strftime %W (kpi.py:616), onde a semana 01 comeca na PRIMEIRA
+   segunda do ano -- nao e semana ISO, entao a conta e essa e nao a do ISO 8601. */
+function rotSemana(w){
+  const m=/^(\d{4})-W?(\d{1,2})$/.exec(String(w||""));
+  if(!m) return String(w||"");
+  const k=+m[2],jan1=new Date(Date.UTC(+m[1],0,1));
+  const d=new Date(jan1);
+  if(k>0) d.setUTCDate(1+((8-jan1.getUTCDay())%7)+(k-1)*7);
+  return `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}`;
 }
 
-/* medidor em meia-lua, como o "Stress Level" */
-function gauge(valor,rotulo,pill,tone){
-  const W=260,H=165,cx=130,cy=134,R=94,T=18;
-  const p=Math.max(0,Math.min(100,valor))/100;
-  const pt=(f)=>[cx+Math.cos(Math.PI*(1-f))*R, cy-Math.sin(Math.PI*(1-f))*R];
-  // large-arc-flag SEMPRE 0: o medidor varre no maximo 180 graus, entao nenhum
-  // trecho dele e "arco maior". Com 1 acima de 50% o traco saia partido em dois.
-  const arc=(f0,f1,col)=>{const[a,b]=pt(f0),[c,d]=pt(f1);
-    return `<path d="M${a},${b} A${R},${R} 0 0 1 ${c},${d}" fill="none" stroke="${col}" stroke-width="${T}" stroke-linecap="round"/>`;};
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:260px;margin:0 auto">
-    ${arc(0,1,"var(--barneutral)")}${p>.008?arc(0,p,tone||"var(--teal)"):""}
-    <text x="${cx}" y="${cy-16}" fill="var(--txt)" font-size="34" font-weight="700" text-anchor="middle"
-      style="font-family:var(--disp)">${nf(valor,1)}%</text>
-    <text x="${cx}" y="${cy+6}" fill="#5D6673" font-size="12" text-anchor="middle">${h(rotulo)}</text></svg>
-    ${pill?`<div style="text-align:center;margin-top:10px">${pill}</div>`:""}`;
+/* Medidor de 240 graus (-210 a 30), componente reutilizavel.
+   O viewBox e o bounding box REAL do traco -- na meia-lua antiga sobravam 31px
+   em cima e 22px embaixo, o numero de 34px caia 15px abaixo do centro optico do
+   vao e a pilula era um <div> irmao que descolava do arco. Aqui tudo (valor,
+   rotulo, ticks, marca do 50% e pilula) mora dentro do mesmo SVG, entao nada
+   pode desalinhar em relacao ao resto. */
+function gauge(o){
+  const R=90,T=17,cx=112,cy=113,W=224,H=196,A0=150,SW=240;
+  const val=Math.max(0,Math.min(100,o.valor||0)),p=val/100;
+  const cor=o.tone||"var(--teal)";
+  const rad=a=>a*Math.PI/180;
+  const pt=(f,r)=>[+(cx+Math.cos(rad(A0+SW*f))*r).toFixed(2),+(cy+Math.sin(rad(A0+SW*f))*r).toFixed(2)];
+  const arc=(f0,f1,col,w,cls,st)=>{const[a,b]=pt(f0,R),[c,d]=pt(f1,R);
+    return `<path ${cls||""} ${st||""} d="M${a},${b} A${R},${R} 0 ${SW*(f1-f0)>180?1:0} 1 ${c},${d}"
+      fill="none" stroke="${col}" stroke-width="${w||T}" stroke-linecap="round"/>`;};
+  /* ticks a cada 10%, por fora da faixa; o do 50% e mais longo e dourado porque
+     e o limiar que a pilula anuncia */
+  let ticks="";
+  for(let k=0;k<=10;k++){const f=k/10,meio=k===5;
+    const[x1,y1]=pt(f,R+T/2+(meio?2:3)),[x2,y2]=pt(f,R+T/2+(meio?12:7));
+    ticks+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${meio?"var(--gold-2)":GX.grid}"
+      stroke-width="${meio?2.4:1.4}" stroke-linecap="round"/>`;}
+  /* marca grossa atravessando a faixa no 50%, tracejada 5 4 como a linha de
+     empate dos outros graficos -- e a mesma ideia, tem que ter o mesmo desenho */
+  const[m1x,m1y]=pt(.5,R-T/2-1),[m2x,m2y]=pt(.5,R+T/2+1);
+  const marca=`<line x1="${m1x}" y1="${m1y}" x2="${m2x}" y2="${m2y}" stroke="${GX.eixo}" stroke-width="3" stroke-dasharray="5 4"/>`;
+  /* 0 e 100 numa linha so, embaixo das pontas: ficam dentro do viewBox e o olho
+     le os dois extremos de uma vez. O 50 vai POR DENTRO do arco, senao sairia
+     por cima da borda de cima. */
+  const yb=cy+R*.5+T/2+23,xb=R*Math.cos(rad(30));
+  const[,l5y]=pt(.5,R-T/2-14);
+  const rots=`<text x="${(cx-xb).toFixed(1)}" y="${yb.toFixed(1)}" fill="${GX.lab}" font-size="10.5" text-anchor="middle">0</text>
+    <text x="${(cx+xb).toFixed(1)}" y="${yb.toFixed(1)}" fill="${GX.lab}" font-size="10.5" text-anchor="middle">100</text>
+    <text x="${cx}" y="${(l5y+12).toFixed(1)}" fill="var(--gold-3)" font-size="10.5" font-weight="600" text-anchor="middle">50</text>`;
+  const gd=uid("gg"),dash=(R*rad(SW*p)).toFixed(1);
+  /* comprimento exato do arco no dasharray: a varredura de entrada e o traco se
+     desenhando do 0 ate o valor, nao um fade */
+  const vArc=p>.004?arc(0,p,`url(#${gd})`,T,'class="gdraw"',
+    `style="--dash:${dash};stroke-dasharray:${dash} ${(2*Math.PI*R).toFixed(1)}"`):"";
+  const pilula=o.pill?`<g class="gfade" style="animation-delay:.4s" transform="translate(${cx},${cy+40})">
+      <rect x="-62" y="0" width="124" height="23" rx="11.5" fill="${cor}" fill-opacity=".14" stroke="${cor}" stroke-opacity=".42"/>
+      <text x="0" y="15.6" fill="${cor}" font-size="11.5" font-weight="600" text-anchor="middle">${h(o.pill)}</text></g>`:"";
+  return `<svg class="gauge" viewBox="0 0 ${W} ${H}" role="img"${o.tip||""}>
+    <defs><linearGradient id="${gd}" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="${cor}" stop-opacity=".55"/>
+      <stop offset="1" stop-color="${cor}" stop-opacity="1"/></linearGradient></defs>
+    ${arc(0,1,"var(--barneutral)")}${vArc}${ticks}${marca}${rots}
+    <text x="${cx}" y="${cy-6}" fill="var(--txt)" font-size="42" font-weight="700" text-anchor="middle"
+      style="font-family:var(--cond);font-variant-numeric:tabular-nums">${nf(val,1)}<tspan font-size="22" fill="${GX.lab2}">%</tspan></text>
+    <text x="${cx}" y="${cy+20}" fill="${GX.lab}" font-size="12.5" text-anchor="middle">${h(o.rotulo)}</text>
+    ${pilula}</svg>`;
 }
 
 function scatter(players){
   const pool=players.filter(p=>p.rank!=null);
   if(pool.length<2) return noData("SEM JOGADORES","Ninguém atingiu o mínimo de partidas nesta fila.");
-  const W=1080,H=420,PL=60,PR=26,PT=22,PB=50,iw=W-PL-PR,ih=H-PT-PB;
+  const W=1080,H=430,PL=GX.PL,PR=GX.PR,PT=GX.PT,PB=60,iw=W-PL-PR,ih=H-PT-PB;
   const xs=pool.map(p=>p.stats.deaths_10min),ys=pool.map(p=>p.stats.dmg_min);
-  const x0=Math.min(...xs)*.86,x1=Math.max(...xs)*1.1,y0=Math.min(...ys)*.86,y1=Math.max(...ys)*1.1;
+  /* padding ADITIVO: o multiplicativo antigo (min*.86, max*1.1) jogava fora ~35%
+     do plot justamente quando o grupo era parecido, que e o caso normal */
+  const esp=(a)=>{const mn=Math.min(...a),mx=Math.max(...a),d=(mx-mn)||Math.abs(mn)*.1||1;
+    return [mn-d*.14,mx+d*.14];};
+  const[x0,x1]=esp(xs),[y0,y1]=esp(ys);
   const X=v=>PL+((v-x0)/(x1-x0||1))*iw, Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
   const mx=xs.reduce((a,b)=>a+b,0)/xs.length,my=ys.reduce((a,b)=>a+b,0)/ys.length;
   let g="";
   for(let i=0;i<=4;i++){const vy=y0+(y1-y0)*i/4,vx=x0+(x1-x0)*i/4;
-    g+=`<line x1="${PL}" y1="${Y(vy)}" x2="${W-PR}" y2="${Y(vy)}" stroke="#232A33" stroke-dasharray="3 5"/>
-      <text x="${PL-12}" y="${Y(vy)+4}" fill="#5D6673" font-size="11" text-anchor="end">${(vy/1000).toFixed(1)}k</text>
-      <text x="${X(vx)}" y="${H-22}" fill="#5D6673" font-size="11" text-anchor="middle">${vx.toFixed(1)}</text>`;}
-  g+=`<line x1="${X(mx)}" y1="${PT}" x2="${X(mx)}" y2="${PT+ih}" stroke="#3A4453" stroke-dasharray="4 4"/>
-      <line x1="${PL}" y1="${Y(my)}" x2="${W-PR}" y2="${Y(my)}" stroke="#3A4453" stroke-dasharray="4 4"/>`;
-  const pts=pool.map(p=>{const cx=X(p.stats.deaths_10min),cy=Y(p.stats.dmg_min);
+    g+=`<line x1="${PL}" y1="${Y(vy)}" x2="${W-PR}" y2="${Y(vy)}" stroke="${GX.grid}" stroke-dasharray="3 5"/>
+      <text x="${PL-12}" y="${Y(vy)+4}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="end">${(vy/1000).toFixed(1)}k</text>
+      <line x1="${X(vx)}" y1="${PT}" x2="${X(vx)}" y2="${PT+ih}" stroke="${GX.grid}" stroke-dasharray="3 5"/>
+      <line x1="${X(vx)}" y1="${PT+ih}" x2="${X(vx)}" y2="${PT+ih+5}" stroke="${GX.eixo}"/>
+      <text x="${X(vx)}" y="${PT+ih+20}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">${vx.toFixed(1)}</text>`;}
+  /* os quatro quadrantes pintados e nomeados: o significado do grafico estava so
+     no tooltip, e o titulo do card ("Carrega ou alimenta?") promete o contrario */
+  const q=(x,y,w,hh,c,op)=>`<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="${c}" opacity="${op}"/>`;
+  const fant=(x,y,txt,c,an)=>`<text x="${x}" y="${y}" fill="${c}" opacity=".26" font-size="26" font-weight="800"
+    text-anchor="${an}" style="font-family:var(--cond);letter-spacing:.1em" pointer-events="none">${txt}</text>`;
+  const quad=q(PL,PT,X(mx)-PL,Y(my)-PT,"var(--teal)",.055)
+    +q(X(mx),Y(my),PL+iw-X(mx),PT+ih-Y(my),"var(--red)",.055)
+    +fant(PL+12,PT+30,"CARREGA","var(--teal)","start")
+    +fant(PL+iw-12,PT+ih-14,"ALIMENTA","var(--red)","end")
+    +fant(PL+iw-12,PT+30,"KAMIKAZE",GX.lab2,"end")
+    +fant(PL+12,PT+ih-14,"PACIFISTA",GX.lab2,"start");
+  /* medias rotuladas na propria linha: antes eram dois tracos sem legenda */
+  g+=`<line x1="${X(mx)}" y1="${PT}" x2="${X(mx)}" y2="${PT+ih}" stroke="${GX.eixo}" stroke-dasharray="4 4"/>
+      <line x1="${PL}" y1="${Y(my)}" x2="${W-PR}" y2="${Y(my)}" stroke="${GX.eixo}" stroke-dasharray="4 4"/>
+      <text x="${X(mx)+6}" y="${PT+12}" fill="${GX.lab2}" font-size="10.5">média: ${nf(mx,2)} mortes/10min</text>
+      <text x="${PL+6}" y="${Y(my)-6}" fill="${GX.lab2}" font-size="10.5">média: ${ni(my)} de dano/min</text>`;
+  /* so os extremos ganham nome fixo: 14 rotulos soltos viravam borrao no centro */
+  const dist=p=>Math.hypot((p.stats.deaths_10min-mx)/((x1-x0)||1),(p.stats.dmg_min-my)/((y1-y0)||1));
+  const nomeia=new Set([...pool].sort((a,b)=>dist(b)-dist(a)).slice(0,6).map(p=>p.puuid));
+  const mxG=Math.max(...pool.map(p=>p.stats.games));
+  const pts=pool.map((p,i)=>{const cx=X(p.stats.deaths_10min),cy=Y(p.stats.dmg_min);
     const bom=p.stats.dmg_min>=my&&p.stats.deaths_10min<=mx,ruim=p.stats.dmg_min<my&&p.stats.deaths_10min>mx;
-    const c=bom?"var(--teal)":ruim?"var(--red)":"var(--gold)";
+    const c=bom?"var(--teal)":ruim?"var(--red)":"var(--gold-2)";
+    const r=(5.5+Math.sqrt(p.stats.games/Math.max(1,mxG))*5).toFixed(1);
     const t=tip(h(p.gameName),[
       ["Dano por minuto",ni(p.stats.dmg_min),c],
       ["Mortes a cada 10 min",nf(p.stats.deaths_10min,2)],
       ["KDA",nf(p.stats.kda,2)],
       ["Aproveitamento",nf(p.stats.winrate,1)+"%"],
+      ["Partidas",ni(p.stats.games)],
       ["UDA Score",nf(p.score,1)],
     ],bom?"carrega: dano alto e morre pouco":ruim?"alimenta: dano baixo e morre muito":"meio-termo");
-    return `<g${t}><circle cx="${cx}" cy="${cy}" r="7" fill="${c}" fill-opacity=".9" stroke="var(--bg)" stroke-width="2"/>
-      <circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/>
-      <text x="${cx}" y="${cy-13}" fill="#8A94A3" font-size="11" text-anchor="middle">${h(short(p.gameName).slice(0,12))}</text></g>`;}).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${pts}
-    <text x="${PL+iw/2}" y="${H-4}" fill="#5D6673" font-size="11" text-anchor="middle">mortes a cada 10 minutos →</text>
-    <text x="14" y="${PT+ih/2}" fill="#5D6673" font-size="11" text-anchor="middle" transform="rotate(-90 14 ${PT+ih/2})">dano por minuto →</text></svg>`;
+    return `<g${t}><circle class="gpop" style="animation-delay:${(i*40)}ms" cx="${cx}" cy="${cy}" r="${r}" fill="${c}" fill-opacity=".9" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="${cx}" cy="${cy}" r="${+r+9}" fill="transparent"/>
+      ${nomeia.has(p.puuid)?`<text x="${cx}" y="${cy-(+r)-7}" fill="${GX.lab2}" font-size="11" text-anchor="middle" pointer-events="none">${h(short(p.gameName).slice(0,12))}</text>`:""}</g>`;}).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${quad}${g}${pts}
+    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+ih}" stroke="${GX.eixo}"/>
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/>
+    <text x="${PL+iw/2}" y="${H-14}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">mortes a cada 10 minutos →</text>
+    <text x="20" y="${PT+ih/2}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle" transform="rotate(-90 20 ${PT+ih/2})">dano por minuto →</text></svg>`;
 }
 
 function radar(entry,labels){
   const keys=Object.keys(entry.radar||{});
   if(!keys.length) return `<div style="color:var(--dim);font-size:12px;display:grid;place-items:center;height:196px;text-align:center">sem partidas<br>suficientes</div>`;
-  const S=196,C=S/2,R=64,n=keys.length;
-  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [C+Math.cos(a)*r,C+Math.sin(a)*r];};
+  /* viewBox 256x236 e nao 196x196: com R=64 e rotulo em R+18 tres dos sete nomes
+     ("Participacao", "Visao/min", "Sobrevivencia") saiam PARA FORA do quadrado e
+     apareciam cortados nos 14 cartoes. O centro nao e S/2 -- e o centro do
+     desenho mais a folga de rotulo. */
+  const SW=256,SH=236,CX=SW/2,CY=112,R=64,n=keys.length;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [CX+Math.cos(a)*r,CY+Math.sin(a)*r];};
   let rings="",axes="",labs="";
-  [.25,.5,.75,1].forEach(f=>{rings+=`<polygon points="${keys.map((_,i)=>pt(i,R*f).join(",")).join(" ")}" fill="none" stroke="#232A33"/>`;});
-  keys.forEach((k,i)=>{const[x,y]=pt(i,R);axes+=`<line x1="${C}" y1="${C}" x2="${x}" y2="${y}" stroke="#1E252E"/>`;
-    const[lx,ly]=pt(i,R+18),an=Math.abs(lx-C)<6?"middle":(lx>C?"start":"end");
-    labs+=`<text x="${lx}" y="${ly+3}" fill="#5D6673" font-size="9.5" text-anchor="${an}">${h((labels[k]||k).slice(0,12))}</text>`;});
+  /* o anel de 50 E a media do grupo (kpi.py: 50 + 19*z) e tinha a mesma cor dos
+     outros tres -- a referencia mais importante do grafico estava invisivel */
+  [.25,.5,.75,1].forEach(f=>{const meio=f===.5;
+    rings+=`<polygon points="${keys.map((_,i)=>pt(i,R*f).join(",")).join(" ")}" fill="none"
+      stroke="${meio?"var(--gold-3)":GX.grid}" stroke-dasharray="${meio?"4 3":"0"}"/>`;});
+  /* nome curto no eixo, nome inteiro no tooltip. O .slice(0,12) de antes cortava
+     "Sobrevivencia" no meio e imprimia "Sobrevivenci" nos 14 cartoes. */
+  const CURTO={Participacao:"Particip.",Sobrevivencia:"Sobrev.",
+    "Participação":"Particip.","Sobrevivência":"Sobrev."};
+  keys.forEach((k,i)=>{const[x,y]=pt(i,R);axes+=`<line x1="${CX}" y1="${CY}" x2="${x}" y2="${y}" stroke="var(--line2)"/>`;
+    const[lx,ly]=pt(i,R+17),meio=Math.abs(lx-CX)<6,an=meio?"middle":(lx>CX?"start":"end");
+    const nome=labels[k]||k;
+    labs+=`<text x="${lx.toFixed(1)}" y="${(ly+(meio?(ly<CY?-2:9):3.4)).toFixed(1)}" fill="${GX.lab}" font-size="10"
+      text-anchor="${an}">${h(CURTO[nome]||nome)}</text>`;});
   const poly=keys.map((k,i)=>pt(i,R*Math.max(.06,entry.radar[k]/100)).join(",")).join(" ");
   const BRUTO={winrate:s=>nf(s.winrate,1)+"%",kda:s=>nf(s.kda,2),kp:s=>nf(s.kp,0)+"%",
     dmg_min:s=>ni(s.dmg_min),cs_min:s=>nf(s.cs_min,1),vision_min:s=>nf(s.vision_min,2),
@@ -650,9 +1422,15 @@ function radar(entry,labels){
       ["Posição no grupo",v>=50?`${v} de 100 — acima da média`:`${v} de 100 — abaixo da média`],
     ],"50 = média exata da UDA nesta métrica");
     return `<g${t}><circle cx="${x}" cy="${y}" r="9" fill="transparent"/>
-      <circle cx="${x}" cy="${y}" r="2.8" fill="var(--teal)"/></g>`;}).join("");
-  return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:196px">${rings}${axes}
-    <polygon points="${poly}" fill="rgba(10,200,185,.18)" stroke="var(--teal)" stroke-width="1.8"/>${dots}${labs}</svg>`;
+      <circle cx="${x}" cy="${y}" r="2.8" fill="${v>=50?"var(--teal)":"var(--red)"}"/></g>`;}).join("");
+  const gd=uid("rd");
+  return `<svg class="rdr" viewBox="0 0 ${SW} ${SH}" role="img">
+    <defs><radialGradient id="${gd}" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="var(--teal)" stop-opacity=".36"/>
+      <stop offset="1" stop-color="var(--teal)" stop-opacity=".07"/></radialGradient></defs>
+    ${rings}${axes}
+    <polygon class="gfade" points="${poly}" fill="url(#${gd})" stroke="var(--teal)" stroke-width="1.8" stroke-linejoin="round"/>${dots}${labs}
+    <text x="${CX}" y="${SH-8}" fill="var(--gold-3)" font-size="9.5" text-anchor="middle">anel tracejado = média da UDA</text></svg>`;
 }
 
 const CORES=["#0AC8B9","#C8AA6E","#4C8DFF","#E5484D","#A78BFA","#F59E0B","#34D399","#F472B6",
@@ -675,31 +1453,47 @@ function serieChart(series,opts){
   const use=visiveis(series).filter(s=>s.pontos&&s.pontos.length>1);
   if(!use.length) return noData("NENHUM JOGADOR SELECIONADO",
     "Escolha pelo menos um jogador nos chips acima para desenhar a evolução.");
-  const W=1080,PL=58,PR=142,PT=20,PB=42,H=o.H,iw=W-PL-PR,ih=H-PT-PB;
+  const W=1080,PL=GX.PL,PR=142,PT=GX.PT,PB=GX.PB,H=o.H,iw=W-PL-PR,ih=H-PT-PB;
   const maxN=Math.max(...use.map(s=>s.pontos.length));
   const all=use.flatMap(s=>s.pontos.map(p=>p[o.campo]));
   let y0=Math.min(...all),y1=Math.max(...all);
   if(o.zero!=null){y0=Math.min(y0,o.zero);y1=Math.max(y1,o.zero);}
   const pad=(y1-y0)*.12||1;y0-=pad;y1+=pad;
+  /* ancora o dominio no zero quando ele existe: sem isso a gridline do meio caia a
+     3px da linha do zero e as duas apareciam coladas -- a cara de "desalinhado" */
+  /* ancora o dominio para que o zero caia EXATAMENTE numa das 5 gridlines: antes a
+     linha extra do zero parava a poucos pixels de uma gridline e as duas apareciam
+     coladas -- e a cara de "desalinhado". O passo so cresce (nunca encolhe), senao
+     o dominio apertaria e a serie sairia desenhada fora do plot. */
+  if(o.zero!=null){const a=o.zero-y0,b=y1-o.zero;let st=(a+b)/4||1,ka=0;
+    for(let i=0;i<40;i++){ka=Math.ceil(a/st);if(ka+Math.ceil(b/st)<=4) break;st*=1.06;}
+    y0=o.zero-ka*st;y1=o.zero+(4-ka)*st;}
   const X=i=>PL+(maxN===1?iw/2:i*iw/(maxN-1)),Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
-  let g=[0,1,2,3,4].map(i=>{const v=y0+(y1-y0)*i/4;
-    return `<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="#232A33" stroke-dasharray="3 5"/>
-      <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${o.yFmt(v)}</text>`;}).join("");
-  if(o.zero!=null) g+=`<line x1="${PL}" y1="${Y(o.zero)}" x2="${W-PR}" y2="${Y(o.zero)}" stroke="#3A4453"/>`;
-
+  const cl=uid("clip"),gd=uid("fade");
+  let g=eixoY([0,1,2,3,4].map(i=>y0+(y1-y0)*i/4),Y,PL,W-PR,o.yFmt,o.zero);
+  /* listras a cada 5 partidas: dao ritmo horizontal e ajudam a contar sem eixo */
+  let faixas="";
+  for(let i=0;i<maxN;i+=10){const x=X(i),x2=X(Math.min(i+5,maxN-1));
+    if(x2>x) faixas+=`<rect x="${x}" y="${PT}" width="${x2-x}" height="${ih}" fill="rgba(255,255,255,.014)"/>`;}
+  const uma=use.length===1;
   const ls=use.map((s,k)=>{const c=corDe(s.puuid,k);
     const d=s.pontos.map((p,i)=>`${i?"L":"M"}${X(i)},${Y(p[o.campo])}`).join(" ");
-    const u=s.pontos[s.pontos.length-1];
-    return {c,s,path:`<path d="${d}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" opacity=".92"/>
-      <circle cx="${X(s.pontos.length-1)}" cy="${Y(u[o.campo])}" r="3.6" fill="${c}"/>`,
+    const u=s.pontos[s.pontos.length-1],ux=X(s.pontos.length-1),uy=Y(u[o.campo]);
+    /* area so quando ha UMA serie: com 14 linhas empilhadas o gradiente viraria sopa */
+    const area=uma?`<path class="gfade" d="${d} L${ux},${PT+ih} L${X(0)},${PT+ih} Z" fill="url(#${gd})"/>`:"";
+    return {c,s,path:`${area}<path d="${d}" fill="none" stroke="${c}" stroke-width="${uma?2.6:2}" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>
+      <circle cx="${ux}" cy="${uy}" r="6.5" fill="${c}" fill-opacity=".2"/>
+      <circle cx="${ux}" cy="${uy}" r="3.6" fill="${c}" stroke="var(--card)" stroke-width="1.2"/>`,
       leg:{n:short(s.gameName),c,v:u[o.campo]}};});
 
-  /* faixa invisível por índice: mostra todos os jogadores naquele ponto */
+  /* faixa invisível por índice: mostra todos os jogadores naquele ponto.
+     O clipPath e o que impede a ultima faixa (bw/2 alem do plot) de cobrir a
+     legenda e roubar o hover do ponto mais recente, que e o que mais importa. */
   const bandas=Array.from({length:maxN},(_,i)=>{
     const bw=iw/Math.max(1,maxN-1);
     const linhas=ls.filter(l=>l.s.pontos[i]!=null)
-      .map(l=>[short(l.s.gameName),o.yFmt(l.s.pontos[i][o.campo])+o.unidade,l.c])
-      .sort((a,b)=>parseFloat(String(b[1]).replace(",","."))-parseFloat(String(a[1]).replace(",",".")));
+      .map(l=>[short(l.s.gameName),o.yFmt(l.s.pontos[i][o.campo])+o.unidade,l.c,l.s.pontos[i][o.campo]])
+      .sort((a,b)=>b[3]-a[3]).map(l=>l.slice(0,3));
     if(!linhas.length) return "";
     const t=tip(`Partida ${i+1}`,linhas,o.eixo);
     return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
@@ -707,9 +1501,20 @@ function serieChart(series,opts){
 
   const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
     `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
-     <text x="16" y="0" fill="#8A94A3" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${ls.map(l=>l.path).join("")}${bandas}${leg}
-    <text x="${PL+iw/2}" y="${H-6}" fill="#5D6673" font-size="11" text-anchor="middle">${h(o.eixo)}</text></svg>`;
+     <text x="16" y="0" fill="${GX.lab2}" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
+  /* eixo X: antes nao existia nenhum numero de partida, so a legenda de texto */
+  const passoX=Math.max(1,Math.ceil(maxN/10));
+  let xl="";
+  for(let i=0;i<maxN;i+=passoX) xl+=`<text x="${X(i)}" y="${PT+ih+20}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${i+1}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"><defs>
+    <clipPath id="${cl}"><rect x="${PL}" y="${PT}" width="${iw}" height="${ih}"/></clipPath>
+    <linearGradient id="${gd}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${ls[0]?ls[0].c:"var(--teal)"}" stop-opacity=".30"/>
+      <stop offset="1" stop-color="${ls[0]?ls[0].c:"var(--teal)"}" stop-opacity="0"/></linearGradient></defs>
+    ${faixas}${g}<g clip-path="url(#${cl})">${ls.map(l=>l.path).join("")}</g>
+    <g clip-path="url(#${cl})">${bandas}</g>${leg}${xl}
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/>
+    <text x="${PL+iw/2}" y="${H-16}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">${h(o.eixo)}</text></svg>`;
 }
 
 function corridaMensal(meses){
@@ -722,70 +1527,187 @@ function corridaMensal(meses){
   if(!series.length) return noData("SEM SÉRIE",
     selJog.size?"Nenhum dos jogadores escolhidos tem dois meses seguidos com partidas suficientes."
                :"Ninguém tem partidas suficientes em dois meses seguidos.");
-  const W=1080,H=400,PL=58,PR=142,PT=20,PB=44,iw=W-PL-PR,ih=H-PT-PB,n=meses.length;
-  const X=i=>PL+(n===1?iw/2:i*iw/(n-1)),Y=v=>PT+ih-((v-1)/98)*ih;
-  let g=[10,30,50,70,90].map(v=>`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}"
-    stroke="${v===50?"#3A4453":"#232A33"}" stroke-dasharray="${v===50?"5 4":"3 5"}"/>
-    <text x="${PL-12}" y="${Y(v)+4}" fill="#5D6673" font-size="11" text-anchor="end">${v}</text>`).join("");
+  const W=1080,H=400,PL=GX.PL,PR=142,PT=GX.PT,PB=GX.PB,iw=W-PL-PR,ih=H-PT-PB,n=meses.length;
+  /* dominio adaptativo. O 1-99 fixo era o pior desalinhamento da pagina: o Score e
+     normalizado contra o proprio grupo, entao ninguem sai de ~35..65 e as 14 linhas
+     se amontoavam num terco da altura, com dois tercos de plot permanentemente vazio. */
+  const todos=series.flatMap(s=>s.pontos.map(p=>p.y));
+  const y0=Math.max(1,Math.floor(Math.min(...todos)-4)),y1=Math.min(99,Math.ceil(Math.max(...todos)+4));
+  const X=i=>PL+(n===1?iw/2:i*iw/(n-1)),Y=v=>PT+ih-((v-y0)/((y1-y0)||1))*ih;
+  const passo=(y1-y0)/4;
+  let g=eixoY([0,1,2,3,4].map(i=>y0+passo*i),Y,PL,W-PR,v=>nf(v,0),(y0<50&&y1>50)?50:null);
+  /* coluna por mes: os rotulos de mes flutuavam sem nada que os ligasse aos pontos */
+  g+=meses.map((m,i)=>`<line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih+5}" stroke="${GX.grid}"/>`).join("");
+  /* quem lidera cada mes ganha marca dourada -- o grafico se chama "a corrida" e
+     nao mostrava o primeiro lugar em lugar nenhum */
+  const lider=meses.map((m,i)=>{let melhor=null;
+    series.forEach(s=>{const p=s.pontos.find(x=>x.i===i);
+      if(p&&(!melhor||p.y>melhor.y)) melhor=p;});
+    return melhor?`<circle class="gpop" style="animation-delay:${i*70}ms" cx="${X(i)}" cy="${Y(melhor.y)}" r="7.5" fill="none" stroke="var(--gold-2)" stroke-width="1.6"/>`:"";}).join("");
+  const cl=uid("cmc");
   const ls=series.map((s,k)=>{const c=corDe(s.puuid,k);
-    return {c,s,g:`<path d="${s.pontos.map((p,i)=>`${i?"L":"M"}${X(p.i)},${Y(p.y)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2" opacity=".92"/>
+    return {c,s,g:`<path d="${s.pontos.map((p,i)=>`${i?"L":"M"}${X(p.i)},${Y(p.y)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>
       ${s.pontos.map(p=>`<circle cx="${X(p.i)}" cy="${Y(p.y)}" r="3.4" fill="${c}"/>`).join("")}`,
       leg:{n:short(s.gameName),c,v:s.pontos[s.pontos.length-1].y}};});
   const bandas=meses.map((m,i)=>{
     const bw=iw/Math.max(1,n-1);
+    /* ordena pelo numero BRUTO: parseFloat("52,3 · 3º · 12 jogos") parava na
+       virgula do decimal brasileiro e devolvia 52 para todo mundo */
     const linhas=ls.map(l=>{const p=l.s.pontos.find(x=>x.i===i);
-      return p?[short(l.s.gameName),`${nf(p.y,1)} · ${p.rank}º · ${p.games} jogos`,l.c]:null;})
-      .filter(Boolean).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+      return p?[short(l.s.gameName),`${nf(p.y,1)} · ${p.rank}º · ${p.games} jogos`,l.c,p.y]:null;})
+      .filter(Boolean).sort((a,b)=>b[3]-a[3]).map(l=>l.slice(0,3));
     if(!linhas.length) return "";
     const t=tip(h(m.mes),linhas,"Score recalculado só com as partidas do mês");
     return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
       <line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih}"/></g>`;}).join("");
   const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
     `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
-     <text x="16" y="0" fill="#8A94A3" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${g}${ls.map(l=>l.g).join("")}${bandas}${leg}
-    ${meses.map((m,i)=>`<text x="${X(i)}" y="${H-16}" fill="#5D6673" font-size="10.5" text-anchor="middle">${h(m.mes)}</text>`).join("")}</svg>`;
+     <text x="16" y="0" fill="${GX.lab2}" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">
+    <defs><clipPath id="${cl}"><rect x="${PL}" y="${PT}" width="${iw}" height="${ih}"/></clipPath></defs>
+    ${g}<g clip-path="url(#${cl})">${ls.map(l=>l.g).join("")}${lider}</g>
+    <g clip-path="url(#${cl})">${bandas}</g>${leg}
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/>
+    ${meses.map((m,i)=>`<text x="${X(i)}" y="${PT+ih+22}" fill="${GX.lab}" font-size="${GX.fsx}"
+      text-anchor="${i===n-1?"end":i===0?"start":"middle"}">${h(m.mes)}</text>`).join("")}
+    <text x="${PL+iw/2}" y="${H-16}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">anel dourado = líder do mês</text></svg>`;
 }
 
 function heatmap(mapa){
   if(!mapa||!mapa.celulas) return noData("SEM DADOS","Sem partidas para montar o mapa.");
   const DIAS=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-  const W=1080,H=290,PL=50,PT=30,cw=(W-PL-18)/24,ch=30,max=Math.max(1,...mapa.celulas.flat());
+  /* margens simetricas (PL na esquerda, PL/2+8 na direita nao: os dois lados agora
+     sao os mesmos GX) e H fechado no conteudo: antes sobravam 52px de buraco preto
+     no fundo do viewBox, que no card full-width viravam 74px reais. */
+  const W=1080,PL=GX.PL,PR=GX.PR,PT=34,cw=(W-PL-PR)/24,ch=34,GH=7*ch,LEG=42,H=PT+GH+LEG;
+  const max=Math.max(1,...mapa.celulas.flat());
+  /* escala perceptual: com sqrt um sabado de pico deixa de apagar todo o resto */
+  const inten=v=>v===0?0:.14+Math.sqrt(v/max)*.8;
   let cells="";
   const DIASL=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
+  let pk=null;
   mapa.celulas.forEach((l,d)=>l.forEach((v,hh)=>{
-    const f=v===0?"#1A2028":`rgba(10,200,185,${.1+v/max*.85})`;
+    if(v===max&&!pk) pk={d,hh};
+    const f=v===0?"var(--line2)":`rgba(10,200,185,${inten(v).toFixed(3)})`;
     const t=tip(`${DIASL[d]}, ${String(hh).padStart(2,"0")}h`,[
       ["Partidas",ni(v),v?"var(--teal)":null],
       ["Fatia do total",nf(v/mapa.total*100,1)+"%"],
     ],v===max?"é o horário de pico de vocês":v===0?"nunca jogaram nesse horário":null);
-    cells+=`<rect${t} x="${PL+hh*cw+1.5}" y="${PT+d*ch+1.5}" width="${cw-3}" height="${ch-3}" rx="6" fill="${f}"/>`;
-    if(v>max*.6) cells+=`<text x="${PL+hh*cw+cw/2}" y="${PT+d*ch+ch/2+4}" fill="#062B29" font-size="10" font-weight="700" text-anchor="middle" pointer-events="none">${v}</text>`;}));
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${cells}
-    ${DIAS.map((d,i)=>`<text x="${PL-12}" y="${PT+i*ch+ch/2+4}" fill="#8A94A3" font-size="11" text-anchor="end">${d}</text>`).join("")}
-    ${[0,3,6,9,12,15,18,21].map(hh=>`<text x="${PL+hh*cw+cw/2}" y="${PT-11}" fill="#5D6673" font-size="10.5" text-anchor="middle">${String(hh).padStart(2,"0")}h</text>`).join("")}</svg>`;
+    cells+=`<rect${t} x="${(PL+hh*cw+1.5).toFixed(1)}" y="${PT+d*ch+1.5}" width="${(cw-3).toFixed(1)}" height="${ch-3}" rx="6" fill="${f}"
+      stroke="${v===0?"var(--line)":"none"}" stroke-width=".6"/>`;
+    /* texto branco com opacidade pelo valor: o #062B29 quase preto so era legivel
+       nas celulas de pico e sumia justamente nas medianas */
+    if(v>max*.34) cells+=`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${PT+d*ch+ch/2+4}" fill="var(--ink)" fill-opacity="${(.45+inten(v)*.5).toFixed(2)}"
+      font-size="10.5" font-weight="700" text-anchor="middle" pointer-events="none">${v}</text>`;}));
+  const anel=pk?`<rect x="${(PL+pk.hh*cw+1.5).toFixed(1)}" y="${PT+pk.d*ch+1.5}" width="${(cw-3).toFixed(1)}" height="${ch-3}" rx="6"
+    fill="none" stroke="var(--gold-2)" stroke-width="1.8" pointer-events="none"/>`:"";
+  /* legenda de escala no espaco que antes era morto */
+  const gd=uid("hm"),lx=PL,ly=PT+GH+20,lw=190;
+  const legenda=`<defs><linearGradient id="${gd}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="rgba(10,200,185,.14)"/><stop offset="1" stop-color="rgba(10,200,185,.94)"/></linearGradient></defs>
+    <rect x="${lx}" y="${ly}" width="${lw}" height="10" rx="5" fill="url(#${gd})"/>
+    <text x="${lx-8}" y="${ly+9}" fill="${GX.lab}" font-size="10" text-anchor="end">0</text>
+    <text x="${lx+lw+8}" y="${ly+9}" fill="${GX.lab}" font-size="10">${max} partidas</text>
+    <text x="${W-PR}" y="${ly+9}" fill="var(--gold-3)" font-size="10" text-anchor="end">anel dourado = horário de pico</text>`;
+  /* separadores de manha/tarde/noite: dao leitura ao eixo de 24 colunas */
+  const div=[6,12,18].map(hh=>`<line x1="${(PL+hh*cw).toFixed(1)}" y1="${PT-4}" x2="${(PL+hh*cw).toFixed(1)}" y2="${PT+GH}"
+    stroke="${GX.eixo}" stroke-opacity=".55"/>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${cells}${anel}${div}
+    ${DIAS.map((d,i)=>`<text x="${PL-12}" y="${PT+i*ch+ch/2+4}" fill="${GX.lab2}" font-size="11" text-anchor="end">${d}</text>`).join("")}
+    ${[0,2,4,6,8,10,12,14,16,18,20,22].map(hh=>`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${PT-12}" fill="${GX.lab}" font-size="10" text-anchor="middle">${String(hh).padStart(2,"0")}</text>`).join("")}
+    <text x="${W-PR}" y="${PT-12}" fill="${GX.lab}" font-size="10" text-anchor="end">hora</text>
+    ${legenda}</svg>`;
 }
 
 /* ========================================================= COMPONENTES */
 const stat=(tone,icon,k,v,unit)=>`<div class="stat ${tone}"><div class="ic">${svg(icon)}</div>
   <div style="min-width:0"><div class="k">${k}</div><div class="v">${v}${unit?`<small>${unit}</small>`:""}</div></div></div>`;
 
+/* sparkline de 60x18. Existe pra o KPI herói mostrar de onde o número veio sem
+   virar mais um gráfico pra manter: uma linha, uma área, nenhum eixo. */
+function spark(serie){
+  const s=(serie||[]).filter(v=>v!=null&&!isNaN(v));
+  if(s.length<3) return "";
+  const W=60,H=18,n=s.length,mn=Math.min(...s),mx=Math.max(...s),rg=(mx-mn)||1;
+  const X=i=>(i/(n-1)*(W-2)+1).toFixed(1), Y=v=>(H-2-(v-mn)/rg*(H-4)).toFixed(1);
+  const d=s.map((v,i)=>`${i?"L":"M"}${X(i)},${Y(v)}`).join("");
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+    <path class="ar" d="${d}L${W-1},${H} L1,${H} Z"/><path class="ln" d="${d}"/></svg>`;
+}
+
+/* o data-count vive no <span> do numero, e nao no .v: a contagem reescreve o
+   texto do proprio elemento, e no .v isso levaria a unidade junto */
+const heroKpi=(o)=>`<div class="kpi-hero" style="--acc:${o.acc}"${o.tip||""}>
+  <div class="top"><div class="ic">${svg(o.icon)}</div><div class="k">${o.k}</div></div>
+  <div class="v"><span data-count="${o.raw}" data-dec="${o.dec}">${o.v}</span>${o.unit?`<small>${o.unit}</small>`:""}</div>
+  <div class="foot"><div class="sub">${o.sub}</div>${spark(o.serie)}</div></div>`;
+
+const tickKpi=(icon,k,v,unit,t)=>`<div class="kpi-tick"${t||""}>
+  <div class="k">${svg(icon)}<span>${k}</span></div>
+  <div class="v">${v}${unit?`<small>${unit}</small>`:""}</div></div>`;
+
 function statRow(g){
-  const t=g.team, mk=t.multikills||{};
+  const t=g.team, mk=t.multikills||{}, tr=g.trend||[];
+  const semanas=tr.length>2?`${tr.length} semanas`:"";
+  /* distribuicao entre os jogadores: a sparkline do KDA e do dano nao inventa uma
+     serie temporal que o payload nao tem -- mostra o espalhamento do grupo */
+  const espalha=f=>g.players.filter(p=>p.stats.games>0).map(p=>f(p.stats)).sort((a,b)=>a-b);
+  const nJog=espalha(s=>s.kda).length;
+  const bom=t.winrate>=50;
   return `<div class="stats">
-    ${stat("teal",I.grid,"Partidas analisadas",ni(t.uniqueMatches),`de ${ni(t.games)} participações`)}
-    ${stat(t.winrate>=50?"teal":"red",I.target,"Aproveitamento",nf(t.winrate,1)+"%",`${ni(t.wins)}V ${ni(t.losses)}D`)}
-    ${stat("gold",I.sword,"KDA do grupo",nf(t.kda,2),`${nf(t.kills,1)}/${nf(t.deaths,1)}/${nf(t.assists,1)}`)}
-    ${stat("blue",I.clock,"Partida média",nf(t.avg_minutes,0),"min")}
-    ${stat("red",I.skull,"Mortes totais",ni(t.total_deaths),`${nf(t.deaths_10min,2)} /10min`)}
-    ${stat("teal",I.bolt,"Participação em abates",nf(t.kp,0)+"%","dos abates do time")}
-    ${stat("gold",I.target,"Dano por minuto",ni(t.dmg_min),`${nf(t.dmg_share,0)}% do time`)}
-    ${stat("blue",I.grid,"CS por minuto",nf(t.cs_min,1),`${nf(t.cs_game,0)} por jogo`)}
-    ${stat("teal",I.clock,"Visão por minuto",nf(t.vision_min,2),`${nf(t.wards_game,1)} sentinelas/jogo`)}
-    ${stat("gold",I.award,"Multikills",ni(mk.double+mk.triple+mk.quadra+mk.penta),
-       `${mk.triple} triplos · ${mk.quadra} quádruplos · ${mk.penta} pentas`)}
-    ${stat("blue",I.heart,"Cura e escudo",ni(t.heal_shield_game),"por partida, em aliados")}
-    ${stat("red",I.skull,"Rendições",nf(t.surrender_rate,0)+"%","das partidas terminaram em WW")}
+    ${heroKpi({acc:bom?"var(--gold-2)":"var(--red)",icon:I.target,k:"Aproveitamento",
+      raw:t.winrate,dec:1,v:nf(t.winrate,1),unit:"%",
+      sub:`${ni(t.wins)}V · ${ni(t.losses)}D`,serie:tr.map(d=>d.winrate),
+      tip:tip("Aproveitamento do grupo",[
+        ["Vitórias",ni(t.wins),"var(--teal)"],["Derrotas",ni(t.losses),"var(--red)"],
+        ["Partidas",ni(t.games)],
+      ],semanas?`a linha é o aproveitamento semana a semana · ${semanas}`:null)})}
+    ${heroKpi({acc:"var(--teal)",icon:I.sword,k:"KDA do grupo",
+      raw:t.kda,dec:2,v:nf(t.kda,2),unit:"",
+      sub:`${nf(t.kills,1)} / ${nf(t.deaths,1)} / ${nf(t.assists,1)} por partida`,
+      serie:espalha(s=>s.kda),
+      tip:tip("KDA do grupo",[
+        ["Abates por partida",nf(t.kills,2)],["Mortes por partida",nf(t.deaths,2),"var(--red)"],
+        ["Assistências",nf(t.assists,2)],
+      ],`a linha é o KDA de cada um dos ${nJog} jogadores, do pior ao melhor`)})}
+    ${heroKpi({acc:"var(--gold-2)",icon:I.bolt,k:"Dano por minuto",
+      raw:t.dmg_min,dec:0,v:ni(t.dmg_min),unit:"",
+      sub:`${nf(t.dmg_share,0)}% do dano do time`,serie:espalha(s=>s.dmg_min),
+      tip:tip("Dano em campeões por minuto",[
+        ["Fatia do time",nf(t.dmg_share,1)+"%","var(--gold)"],
+        ["Dano sofrido/min",ni(t.dmg_taken_min)],
+      ],`a linha é o dano/min de cada um dos ${nJog} jogadores, do menor ao maior`)})}
+    ${heroKpi({acc:"var(--blue)",icon:I.grid,k:"Partidas analisadas",
+      raw:t.uniqueMatches,dec:0,v:ni(t.uniqueMatches),unit:"",
+      sub:`${ni(t.games)} participações no total`,serie:tr.map(d=>d.games),
+      tip:tip("Partidas analisadas",[
+        ["Partidas distintas",ni(t.uniqueMatches),"var(--blue)"],
+        ["Participações",ni(t.games)],["Duração média",nf(t.avg_minutes,0)+" min"],
+      ],semanas?`a linha é o volume de partidas por semana · ${semanas}`:null)})}
+
+    ${tickKpi(I.clock,"Partida média",nf(t.avg_minutes,0),"min",
+      tip("Duração média",[["Minutos por partida",nf(t.avg_minutes,1)]],"tempo médio até o Nexus cair"))}
+    ${tickKpi(I.skull,"Mortes totais",ni(t.total_deaths),"",
+      tip("Mortes totais",[["Total",ni(t.total_deaths),"var(--red)"],
+        ["A cada 10 min",nf(t.deaths_10min,2)]],"somando todas as participações do grupo"))}
+    ${tickKpi(I.bolt,"Particip. em abates",nf(t.kp,0),"%",
+      tip("Participação em abates",[["Média do grupo",nf(t.kp,1)+"%"]],
+        "fatia dos abates do time em que vocês entraram"))}
+    ${tickKpi(I.grid,"CS por minuto",nf(t.cs_min,1),"",
+      tip("Farm",[["CS por minuto",nf(t.cs_min,2)],["CS por jogo",ni(t.cs_game)]],
+        "referência: 7/min já é farm de gente séria"))}
+    ${tickKpi(I.eye,"Visão por minuto",nf(t.vision_min,2),"",
+      tip("Visão",[["Pontuação/min",nf(t.vision_min,2)],["Sentinelas/jogo",nf(t.wards_game,1)]],
+        "quanto do mapa vocês enxergam"))}
+    ${tickKpi(I.award,"Multikills",ni(mk.double+mk.triple+mk.quadra+mk.penta),"",
+      tip("Multikills",[["Duplos",ni(mk.double)],["Triplos",ni(mk.triple)],
+        ["Quádruplos",ni(mk.quadra)],["Pentas",ni(mk.penta),"var(--gold)"]],
+        mk.penta?"tem penta na conta":"nenhum penta ainda"))}
+    ${tickKpi(I.heart,"Cura e escudo",ni(t.heal_shield_game),"",
+      tip("Cura e escudo",[["Por partida",ni(t.heal_shield_game)]],"o que foi parar em aliados"))}
+    ${tickKpi(I.skull,"Rendições",nf(t.surrender_rate,0),"%",
+      tip("Rendições",[["Fatia das partidas",nf(t.surrender_rate,1)+"%","var(--red)"]],
+        "terminaram em WW antes do Nexus"))}
   </div>`;
 }
 
@@ -793,13 +1715,16 @@ function statRow(g){
 function barrasHoriz(itens,campoNome,campoQtd,campoWr,campoShare){
   if(!itens||!itens.length) return noData("SEM DADOS","Nada para mostrar nesta fila.");
   const max=Math.max(...itens.map(i=>i[campoQtd]));
-  return `<div>${itens.map(i=>`<div class="hbar"${tip(h(i[campoNome]),[
+  /* a cor da barra deixa de ser teal chapado e passa a sair do aproveitamento:
+     volume na largura, resultado na cor, no MESMO objeto */
+  return `<div>${itens.map((i,k)=>`<div class="hbar"${tip(h(i[campoNome]),[
       ["Partidas",ni(i[campoQtd])],
       ["Fatia do total",nf(i[campoShare],1)+"%"],
       ["Aproveitamento",nf(i[campoWr],1)+"%",i[campoWr]>=50?"var(--teal)":"var(--red)"],
-    ])}>
+    ],`a régua ao fundo marca 25/50/75% de ${ni(max)} partidas`)}>
     <div class="hn">${h(i[campoNome])}</div>
-    <div class="ht"><i style="width:${i[campoQtd]/max*100}%"></i></div>
+    <div class="ht" style="--bc:${i[campoWr]>=50?"var(--teal)":"var(--red)"}">
+      <i style="width:${(i[campoQtd]/max*100).toFixed(1)}%;animation-delay:${k*45}ms"></i></div>
     <div class="hq">${ni(i[campoQtd])}</div>
     <div class="hs">${nf(i[campoShare],0)}%</div>
     <span class="pill ${i[campoWr]>=50?"t":"r"}">${nf(i[campoWr],0)}%</span>
@@ -828,11 +1753,49 @@ function feedRecentes(list){
     </div>`).join("")}</div></div>`).join("")}</div>`;
 }
 
+/* Loureiro do 1o lugar. Gerado a partir de UM bezier espelhado, em vez de 18
+   elipses escritas na mao: mexer no arco nao obriga a redesenhar folha por folha. */
+function laurel(){
+  const A=[60,116],B=[6,84],C=[31,10];
+  const at=t=>[(1-t)*(1-t)*A[0]+2*(1-t)*t*B[0]+t*t*C[0],
+               (1-t)*(1-t)*A[1]+2*(1-t)*t*B[1]+t*t*C[1]];
+  let fl="";
+  for(let i=0;i<9;i++){
+    const t=.09+i*.101,p=at(t),q=at(t+.02);
+    const dx=q[0]-p[0],dy=q[1]-p[1],m=Math.hypot(dx,dy)||1;
+    /* a folha sai para FORA do talo (normal), senao vira colar de contas */
+    const x=p[0]+dy/m*5.4, y=p[1]-dx/m*5.4, a=Math.atan2(dy,dx)*180/Math.PI+26;
+    fl+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="9" ry="3.6"
+      transform="rotate(${a.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+  }
+  const ramo=`<path d="M${A[0]} ${A[1]}Q${B[0]} ${B[1]} ${C[0]} ${C[1]}" fill="none"
+    stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".78"/>${fl}`;
+  return `<svg class="laurel" viewBox="0 0 120 120" aria-hidden="true" fill="currentColor">
+    <g>${ramo}</g><g transform="translate(120,0) scale(-1,1)">${ramo}</g></svg>`;
+}
+
+const ROMANO={1:"I",2:"II",3:"III"};
+const podHead=(g)=>`<div class="pod-head">
+  <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
+  <h2 class="poster-title engraved">O Pódio</h2>
+  <hr class="rule">
+  <p class="poster-note">os três maiores UDA Score da fila — mínimo de
+    ${DATA.minGames} partidas para entrar no ranking</p></div>`;
+
+/* Secao de palco, fora da grade de cards: as 4 camadas da fase 2 (arte / luz /
+   vinheta / conteudo) e tres degraus de altura real. A ordem do DOM e 1-2-3; quem
+   troca para 2-1-3 na tela e o `order` do CSS. */
 function podio(g){
   const top=g.podium.map(id=>g.players.find(p=>p.puuid===id)).filter(Boolean);
-  if(!top.length) return noData("SEM RANKING",`Ninguém atingiu o mínimo de ${DATA.minGames} partidas nesta fila.`);
-  const ord=[top[1],top[0],top[2]].filter(Boolean);
-  return `<div class="podium">${ord.map(p=>{const e=eloTxt(p.ranks.solo),s=p.stats;
+  const palco=(dentro,fundo)=>`<section class="stage stage-layers">
+    ${fundo?`<img class="sl-art" src="${fundo}"${FBART}>`:""}
+    <div class="sl-light"></div><div class="sl-vig"></div>
+    ${podHead(g)}${dentro}</section>`;
+  if(!top.length) return palco(noData("SEM RANKING",
+    `Ninguém atingiu o mínimo de ${DATA.minGames} partidas nesta fila.`),"");
+  const campeao=main1(top[0]);
+  return palco(`<div class="podium3">${top.map(p=>{
+    const e=eloTxt(p.ranks.solo),s=p.stats,c=main1(p);
     const t=tip(h(p.gameName),[
       ["UDA Score",nf(p.score,1)+` · ${p.rank}º`,"var(--gold)"],
       ["Aproveitamento",`${nf(s.winrate,1)}% (${s.wins}V ${s.losses}D)`],
@@ -841,13 +1804,27 @@ function podio(g){
       ["Dano por minuto",ni(s.dmg_min)],
       ["Elo",e.name+(e.sub?` · ${e.sub}`:"")],
     ],"o Score compara contra o próprio grupo, não contra o servidor");
-    return `<div class="pod p${p.rank}"${t}><div class="rk">${p.rank}º</div>
-      <img class="av" src="${iconImg(p.icon)}"${FB}>
-      <div class="nm">${h(short(p.gameName))}</div>
-      <div class="el">${h(e.name)}</div>
-      <div class="sc">${nf(p.score,1)}</div><div class="sl">UDA Score</div>
-      <div class="ft"><span class="pill ${s.winrate>=50?"t":"r"}">${nf(s.winrate,0)}% WR</span>
-        <span class="pill n">${nf(s.kda,2)} KDA</span></div></div>`;}).join("")}</div>`;
+    return `<article class="pod p${p.rank}"${t}>
+      <div class="pod-por">
+        <div class="artbox">
+          ${c?`<img class="art" src="${artLoad(c.championId,c.champion)}"${FBART}>`:""}
+          <div class="scrim"></div></div>
+        ${p.rank===1?laurel():""}
+        <div class="medal"><img src="${iconImg(p.icon)}"${FB}></div>
+      </div>
+      <div class="pod-id">
+        <div class="nm${p.rank===1?" engraved":""}">${h(short(p.gameName))}</div>
+        <div class="el">${h(e.name)}${e.sub?` · ${h(e.sub)}`:""}</div>
+        <div class="sc" data-count="${p.score}" data-dec="1">${nf(p.score,1)}</div><div class="sl">UDA Score</div>
+        <div class="ft"><span class="pill ${s.winrate>=50?"t":"r"}">${nf(s.winrate,0)}% WR</span>
+          <span class="pill n">${nf(s.kda,2)} KDA</span></div>
+        ${c?`<button class="cchip" type="button" data-champ="${c.championId}"
+          title="${h(c.champion)} · ${c.games} partidas"><img src="${champImg(c.championId,c.champion)}"${FB}>
+          <span><b>${h(c.champion)}</b> · ${c.games} jogos</span></button>`:""}
+      </div>
+      <div class="step"><span class="rn">${ROMANO[p.rank]||p.rank}</span></div>
+    </article>`;}).join("")}</div>`,
+    campeao?artWide(campeao.championId,campeao.champion):"");
 }
 
 function afundados(g){
@@ -951,26 +1928,55 @@ const AWICON={carregador:I.bolt,assassino:I.sword,imortal:I.heart,farmador:I.gri
   sentinela:I.eye,presenca:I.users,doador:I.skull,cego:I.eye,fantasma:I.user,
   turista:I.grid,azarado:I.target,figurante:I.bolt};
 
-function awards(l,bad){
+/* Os dois halls são UMA sala só, construída duas vezes: o mesmo componente
+   .hall, o mesmo quadro .aw, trocando --acc pela classe e o texto do eyebrow.
+   Cada prêmio é um quadro pendurado: a arte é o campeão mais jogado do
+   premiado (vem pronta do kpi.py), o retrato dele é o disco de metal e o nome
+   fica na placa gravada. Na sala da vergonha os ímpares estão tortos. */
+function hall(g,bad){
+  const l=bad?g.awardsBad:g.awardsGood;
   if(!l||!l.length) return "";
-  return `<div class="awards">${l.map(a=>{
-    const edge=a.edge==null?null:Math.round(a.edge);
-    return `<div class="aw ${bad?"bad":""}">
-      <div class="aw-h"><div class="ic">${svg(AWICON[a.key]||I.award)}</div><div class="t">${h(a.title)}</div></div>
-      <div class="aw-b">
-        <img src="${iconImg(a.icon)}"${FB}>
-        <div class="who"><div class="p">${h(a.player)}</div><div class="d">${h(a.desc)}</div></div>
-        <div class="big"><div class="n2">${h(a.value)}</div><div class="u">${h(a.unit)}</div></div>
-      </div>
-      <div class="aw-m">
-        <div class="track"><i style="width:${Math.max(6,Math.min(100,a.fill??100))}%"></i></div>
-        <div class="cap"><span>média do grupo <b>${h(a.avg??"—")}</b></span>
-          ${edge!=null?`<span><b>${edge>0?"+":""}${edge}%</b> ${edge>=0?"acima":"abaixo"}</span>`:""}</div>
-      </div>
-      ${a.runnersUp&&a.runnersUp.length?`<div class="aw-f"><span class="lbl">seguido por</span>
-        ${a.runnersUp.map(r=>`<span class="ru"><img src="${iconImg(r.icon)}"${FB}>
-          <span>${h(short(r.player))} ${h(r.value)}</span></span>`).join("")}</div>`:""}
-    </div>`;}).join("")}</div>`;
+  return `<section class="hall${bad?" hall-shame":""}">
+    <div class="hall-head">
+      <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
+      <h2 class="poster-title engraved">${bad?"Hall da Vergonha":"Hall da Fama"}</h2>
+      <hr class="rule">
+      <p class="poster-note">${bad
+        ? "o pior de cada métrica — alguém tinha que ser, e a régua é o próprio grupo"
+        : "o melhor de cada métrica, e quanto ele está à frente da média do grupo"}</p>
+    </div>
+    <div class="awards">${l.map(a=>{
+      const edge=a.edge==null?null:Math.round(a.edge);
+      const t=tip(h(a.title),[
+        [bad?"Lanterna":"Campeão",h(a.player)],
+        ["Marca",`${h(a.value)} ${h(a.unit)}`],
+        ["Média do grupo",h(a.avg??"—")],
+        edge!=null?["Distância da média",`${edge>0?"+":""}${edge}%`]:null,
+      ].filter(Boolean),a.champion?`ilustração: ${h(a.champion)} — clique para o dossiê dele`:"");
+      /* o quadro abre o dossie do campeao ilustrado: a arte deixa de ser enfeite */
+      const dc=a.championId?` data-champ="${a.championId}" tabindex="0" role="button"
+        aria-label="Abrir dossiê de ${h(a.champion||"")}"`:"";
+      return `<article class="aw"${dc}${t}>
+        <div class="aw-tag"><span class="ic">${svg(AWICON[a.key]||I.award)}</span>
+          <span class="t">${h(a.title)}</span></div>
+        <div class="aw-win artbox${a.championId?"":" noart"}">
+          ${a.championId?`<img class="art" src="${artLoad(a.championId,a.champion)}"${FBART}>`:""}
+          <div class="scrim"></div></div>
+        <div class="aw-in">
+          <div class="aw-disc"><img src="${iconImg(a.icon)}"${FB}></div>
+          <div class="aw-plate"><div class="nm">${h(short(a.player))}</div>
+            <div class="d">${h(a.desc)}</div></div>
+          <div class="aw-sc"><b data-count="${a.raw??""}" data-dec="${decDe(a.value)}">${h(a.value)}</b><span>${h(a.unit)}</span></div>
+          <div class="aw-m">
+            <div class="track"><i style="width:${Math.max(6,Math.min(100,a.fill??100))}%"></i></div>
+            <div class="cap"><span>média do grupo <b>${h(a.avg??"—")}</b></span>
+              ${edge!=null?`<span><b>${edge>0?"+":""}${edge}%</b> ${edge>=0?"acima":"abaixo"}</span>`:""}</div>
+          </div>
+          ${a.runnersUp&&a.runnersUp.length?`<div class="aw-f"><span class="lbl">seguido por</span>
+            ${a.runnersUp.map(r=>`<span class="ru"><img src="${iconImg(r.icon)}"${FB}>
+              <span>${h(short(r.player))} ${h(r.value)}</span></span>`).join("")}</div>`:""}
+        </div>
+      </article>`;}).join("")}</div></section>`;
 }
 
 function playerCard(p,labels){
@@ -1010,7 +2016,8 @@ function playerCard(p,labels){
       ${p.worstGame?`<div class="bwc"><img src="${champImg(p.worstGame.championId,p.worstGame.champion)}"${FB}>
         <div><div class="l">Pior partida</div><div class="v bad">${p.worstGame.k}/${p.worstGame.d}/${p.worstGame.a} · ${h(p.worstGame.champion)}</div></div></div>`:""}
     </div>`:""}
-    <div class="champs">${p.champions.map(c=>`<div class="champ"><img src="${champImg(c.championId,c.champion)}"${FB}>
+    <div class="champs">${p.champions.map(c=>`<div class="champ" data-champ="${c.championId}"
+      tabindex="0" role="button" title="Dossiê de ${h(c.champion)}"><img src="${champImg(c.championId,c.champion)}"${FB}>
       <span class="cn">${h(c.champion)}</span><span class="cg">${c.games} jogo${c.games>1?"s":""}</span>
       <span class="cw ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</span><span class="ck">${nf(c.kda,2)} KDA</span></div>`).join("")
       ||`<div style="color:var(--dim);font-size:12px">sem dados</div>`}</div></div>`;
@@ -1020,13 +2027,13 @@ const ROTAS={TOP:"Topo",JUNGLE:"Selva",MIDDLE:"Meio",BOTTOM:"Atirador",UTILITY:"
 function championTable(l){
   if(!l.length) return noData("SEM CAMPEÕES","Nenhum campeão atingiu 3 partidas nesta fila.");
   return `<div class="tbox"><table><thead><tr><th class="l">Campeão</th><th>Jogos</th><th>Pilotos</th><th>Vitórias</th><th>KDA</th></tr></thead>
-    <tbody>${l.map(c=>`<tr${tip(h(c.champion),[
+    <tbody>${l.map(c=>`<tr data-champ="${c.championId}" tabindex="0" role="button"${tip(h(c.champion),[
       ["Partidas",ni(c.games)],
       ["Resultado",`${c.wins}V ${c.losses}D`],
       ["Aproveitamento",nf(c.winrate,1)+"%",c.winrate>=50?"var(--teal)":"var(--red)"],
       ["KDA médio",nf(c.kda,2)],
       ["Pilotos",`${c.pilots} membro${c.pilots>1?"s":""} do grupo`],
-    ],c.pilots>1?"mais de uma pessoa joga esse campeão":"exclusividade de um membro")}>
+    ],"clique para abrir o dossiê do campeão")}>
       <td class="l"><div class="pl"><img src="${champImg(c.championId,c.champion)}"${FB} style="width:32px;height:32px;border-radius:9px">
       <div class="a">${h(c.champion)}</div></div></td>
       <td><span class="num">${c.games}</span></td><td><span class="num" style="color:var(--mut)">${c.pilots}</span></td>
@@ -1035,15 +2042,84 @@ function championTable(l){
       <td><span class="num ${cl(c.kda,3)}">${nf(c.kda,2)}</span></td></tr>`).join("")}</tbody></table></div>`;
 }
 
-function recordes(r){
-  const it=[["Maior massacre",r.bestKda,x=>`${nf(x.kda,2)}`,"var(--teal)"],
-            ["Maior dano numa partida",r.mostDamage,x=>ni(x.dmg),"var(--gold)"],
-            ["A vergonha máxima",r.mostDeaths,x=>`${x.d}`,"var(--red)"]].filter(([,v])=>v);
-  if(!it.length) return noData("SEM RECORDES","Sem partidas nesta fila.");
-  return it.map(([lb,g,fv,cor])=>`<div class="rec"><img src="${champImg(g.championId,g.champion)}"${FB}>
-    <div style="min-width:0"><div class="lb">${lb}</div><div class="t1">${h(g.player)} · ${h(g.champion)}</div>
-    <div class="t2">${g.k}/${g.d}/${g.a} · ${h(g.queue)} · ${g.minutes} min</div></div>
-    <div class="vv" style="color:${cor}">${fv(g)}</div></div>`).join("");
+/* ================================================= A SALA DOS RECORDES
+   O payload traz ~30 recordes por fila, cada um com dono, campeao e a partida
+   exata em que aconteceu. Tres sao RELIQUIAS e ficam fora das abas: nao existe
+   "quase pentakill". */
+const RELIQUIAS=["penta","rouboSemSmite","semMorte"];
+const RGRUPO=[["gloria","Glória","var(--gold-2)"],
+              ["vergonha","Vergonha","var(--red)"],
+              ["curiosidade","Curiosidade","var(--blue)"]];
+/* o valor ja vem arredondado do kpi.py -- inteiro quando a metrica e contagem,
+   com casa decimal quando e taxa. O formatador segue o dado. */
+const recVal=(v)=>v==null?"—":(Number.isInteger(v)?ni(v):nf(v,1));
+const recCtx=(r)=>[r.champion,r.queue,r.minutes!=null?`${r.minutes} min`:null]
+  .filter(Boolean).map(h).join(" · ");
+const recTip=(r,cor)=>r.valor==null
+  ? tip(h(r.titulo),[["Situação","ainda ninguém"]],h(r.legenda))
+  : tip(h(r.titulo),[["Marca",`${recVal(r.valor)} ${h(r.unidade)}`,cor],
+      ["Dono",h(r.player)],["Campeão",h(r.champion)],
+      ["Partida",`${r.k}/${r.d}/${r.a} · ${r.minutes} min`],
+      ["Fila",h(r.queue)],["Quando",ago(r.quando)]],h(r.legenda));
+
+function reliquia(r){
+  const vaga=r.valor==null;
+  return `<article class="rel artbox${vaga?" vaga":""}"${recTip(r,"var(--gold)")}>
+    ${vaga?"":`<img class="art" src="${artWide(r.championId,r.champion)}"${FBART}><div class="scrim"></div>`}
+    <div class="tag">${h(r.titulo)}</div>
+    <div class="big"><span data-count="${vaga?"":r.valor}" data-dec="${decDe(recVal(r.valor))}">${recVal(r.valor)}</span>
+      <small>${h(r.unidade)}</small></div>
+    ${vaga?`<div class="lg">Ainda ninguém. ${h(r.legenda)}</div>`
+      :`<div class="who"><img src="${iconImg(r.icon)}"${FB}>
+        <div style="min-width:0"><div class="n">${h(short(r.player))}</div>
+        <div class="c">${recCtx(r)}</div></div></div>
+      <div class="lg">${h(r.legenda)}</div>`}
+  </article>`;
+}
+
+function cartaoRec(r,cor){
+  const vaga=r.valor==null;
+  /* o cartao com dono abre o dossie do campeao da jogada: a mesma porta que o
+     hall e a tabela ja usam, pelo mesmo delegado de clique */
+  const dc=vaga?"":` data-champ="${r.championId}" tabindex="0" role="button"`;
+  return `<article class="rc${vaga?" vazio":""}" style="--tone:${cor}"${dc}${recTip(r,cor)}>
+    <div class="tt">${h(r.titulo)}</div>
+    <div class="vl"><b data-count="${vaga?"":r.valor}" data-dec="${decDe(recVal(r.valor))}">${recVal(r.valor)}</b>
+      <span>${h(r.unidade)}</span></div>
+    ${vaga?`<div class="pl2"><div class="n">ainda ninguém</div></div>`
+      :`<div class="pl2"><img src="${iconImg(r.icon)}"${FB}>
+        <div style="min-width:0"><div class="n">${h(short(r.player))}</div>
+        <div class="c">${recCtx(r)}</div></div></div>`}
+  </article>`;
+}
+
+function recordes(g){
+  const l=g.records||[];
+  if(!l.length) return "";
+  const rel=RELIQUIAS.map(k=>l.find(r=>r.key===k)).filter(Boolean);
+  const resto=l.filter(r=>RELIQUIAS.indexOf(r.key)<0);
+  const abas=RGRUPO.map(([k,rot,cor])=>[k,rot,cor,resto.filter(r=>r.grupo===k)])
+    .filter(a=>a[3].length);
+  if(!rel.length&&!abas.length) return "";
+  const ativo=abas.length?abas[0][0]:"";
+  const feitos=l.filter(r=>r.valor!=null).length;
+  return `<section class="hall">
+    <div class="hall-head">
+      <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
+      <h2 class="poster-title engraved">A Sala dos Recordes</h2>
+      <hr class="rule">
+      <p class="poster-note">${feitos===l.length
+        ? `todas as ${ni(l.length)} marcas desta fila já têm dono — agora é só tentar quebrá-las`
+        : `${ni(feitos)} das ${ni(l.length)} marcas têm dono nesta fila — as outras continuam
+           penduradas na parede esperando alguém`}</p>
+    </div>
+    ${rel.length?`<div class="relics">${rel.map(reliquia).join("")}</div>`:""}
+    ${abas.length?`<div class="rtabs">${abas.map(a=>
+      `<button class="rtab" type="button" data-rec="${a[0]}" style="--tone:${a[2]}"
+        aria-pressed="${a[0]===ativo}">${h(a[1])}<b>${a[3].length}</b></button>`).join("")}</div>
+    ${abas.map(a=>`<div class="rgrid" data-recg="${a[0]}"${a[0]===ativo?"":" hidden"}>
+      ${a[3].map(r=>cartaoRec(r,a[2])).join("")}</div>`).join("")}`:""}
+  </section>`;
 }
 
 function comparacao(list){
@@ -1072,7 +2148,7 @@ function matriz(m){
   const cor=w=>w>=50?`background:rgba(10,200,185,${.1+(w-50)/50*.6})`:`background:rgba(229,72,77,${.1+(50-w)/50*.6})`;
   const cur=n=>short(n).slice(0,10);
   return `<div class="tbox" style="padding:16px"><table class="mx"><thead><tr><th class="mx-corner"></th>
-    ${m.order.map(p=>`<th class="mx-h"><span>${h(cur(m.names[p]))}</span></th>`).join("")}</tr></thead><tbody>
+    ${m.order.map(p=>`<th class="mx-h"><img src="${iconImg(m.icons[p])}"${FB}><span>${h(cur(m.names[p]))}</span></th>`).join("")}</tr></thead><tbody>
     ${m.order.map(a=>`<tr><th class="mx-r"><img src="${iconImg(m.icons[a])}"${FB}><span>${h(cur(m.names[a]))}</span></th>
       ${m.order.map(b=>{if(a===b) return `<td class="mx-c mx-self">—</td>`;
         const c=m.cells[a+"|"+b];
@@ -1105,6 +2181,169 @@ const confrontos=(l)=>!l.length?noData("SEM CONFRONTOS","Vocês nunca caíram em
     <span class="st">${c.games} duelo${c.games>1?"s":""}</span>
     <span class="pill n" style="font-size:13px">${c.aWins} – ${c.bWins}</span></div>`).join("");
 
+/* ==================================================== O DOSSIÊ DO CAMPEÃO */
+const PAPEL={Fighter:"Lutador",Mage:"Mago",Assassin:"Assassino",Marksman:"Atirador",
+  Support:"Suporte",Tank:"Tanque"};
+
+/* O recorte da UDA para um campeao. E ELE que separa o dossie de uma wiki: ao
+   lado da arte e das habilidades vem quem pilota e com que resultado. */
+function udaChamp(id){
+  const g=grupo(); if(!g) return null;
+  const k=String(id);
+  const ag=(g.champions||[]).find(c=>String(c.championId)===k)||null;
+  const pilotos=(g.players||[]).map(p=>{
+    const c=(p.champions||[]).find(x=>String(x.championId)===k);
+    return c?{p,c}:null;}).filter(Boolean).sort((a,b)=>b.c.games-a.c.games);
+  /* as unicas partidas NOMINAIS do payload sao os destaques de cada jogador e o
+     feed recente: a melhor sai da maior KDA entre elas, nao de um ranking que o
+     payload nao carrega */
+  let melhor=null;
+  const ver=(o)=>{const kd=o.kda!=null?o.kda:(o.k+o.a)/Math.max(1,o.d);
+    if(!melhor||kd>melhor.kda) melhor=Object.assign({},o,{kda:kd});};
+  (g.players||[]).forEach(p=>[p.bestGame,p.worstGame].forEach(w=>{
+    if(w&&String(w.championId)===k) ver(Object.assign({},w,{player:p.gameName}));}));
+  (g.recent||[]).forEach(m=>(m.players||[]).forEach(r=>{
+    if(String(r.championId)===k) ver(Object.assign({},r,
+      {player:r.gameName,queue:m.queue,minutes:m.minutes}));}));
+  return {ag,pilotos,melhor};
+}
+
+function dossieHTML(id){
+  const d=CDET[String(id)]||null, u=udaChamp(id)||{ag:null,pilotos:[],melhor:null};
+  const ag=u.ag, nome=(d&&d.name)||(ag&&ag.champion)||"Campeão";
+  const hab=[];
+  if(d&&d.passive) hab.push({s:"P",c:" pas",img:passImg(d.passive.icone),
+    n:d.passive.nome,r:d.passive.resumo});
+  ((d&&d.spells)||[]).forEach(x=>hab.push({s:x.slot,c:"",img:spellImg(x.icone),n:x.nome,r:x.resumo}));
+  return `<div class="ds">
+    <div class="ds-hero artbox">
+      <img class="art" src="${artWide(id,nome)}"${FBART}>
+      <div class="scrim"></div>
+      <button class="ds-x" type="button" aria-label="Fechar">&times;</button>
+      <div class="ds-ttl">
+        <span class="ic"><img src="${champImg(id,nome)}"${FB}></span>
+        <div class="tx"><span class="eyebrow">Dossiê do campeão</span>
+          <h2 class="poster-title engraved">${h(nome)}</h2>
+          <div class="ds-sub">${d&&d.title?`<span>${h(d.title)}</span>`:""}
+            ${(((d&&d.tags)||[])).map(t=>`<span class="ds-tag">${h(PAPEL[t]||t)}</span>`).join("")}</div>
+        </div>
+      </div>
+    </div>
+    <div class="ds-body">
+      <div class="ds-uda">
+        <div class="ds-h">A UDA com ${h(nome)}</div>
+        ${ag?`<div class="ds-num">
+          <div><div class="k">Partidas</div><div class="v">${ni(ag.games)}</div></div>
+          <div><div class="k">Aproveitamento</div>
+            <div class="v ${cl(ag.winrate,50)}">${nf(ag.winrate,1)}<small>%</small></div></div>
+          <div><div class="k">KDA médio</div><div class="v ${cl(ag.kda,3)}">${nf(ag.kda,2)}</div></div>
+          <div><div class="k">Resultado</div>
+            <div class="v">${ag.wins}<small>V</small> ${ag.losses}<small>D</small></div></div>
+        </div>`:`<p style="font-size:12.5px;color:var(--mut);margin:0">Ninguém do grupo alcançou o
+          mínimo de partidas com ${h(nome)} nesta fila.</p>`}
+        ${u.pilotos.length?`<div class="ds-lst"><div class="ds-h">Quem mais pilota</div>
+          ${u.pilotos.slice(0,5).map(x=>`<div class="ds-pl"><img src="${iconImg(x.p.icon)}"${FB}>
+            <span class="nm">${h(short(x.p.gameName))}</span>
+            <span class="st">${x.c.games} jogo${x.c.games>1?"s":""} · ${nf(x.c.winrate,0)}% · ${nf(x.c.kda,2)} KDA</span>
+          </div>`).join("")}</div>`:""}
+        ${u.melhor?`<div class="ds-best"><div class="l">Melhor partida registrada</div>
+          <div class="v">${u.melhor.k}/${u.melhor.d}/${u.melhor.a} · ${nf(u.melhor.kda,2)} KDA</div>
+          <div class="s">${h(short(u.melhor.player||""))}${u.melhor.queue?` · ${h(u.melhor.queue)}`:""}${u.melhor.minutes?` · ${u.melhor.minutes} min`:""}</div>
+        </div>`:""}
+      </div>
+      <div class="ds-sk">
+        <div class="ds-h">Habilidades</div>
+        ${hab.length?hab.map(x=>`<div class="ds-row${x.c}">
+          <span class="ds-ib"><img src="${x.img}"${FB}><span class="ds-key">${h(x.s)}</span></span>
+          <div class="ds-tx"><div class="n">${h(x.n)}</div><div class="d">${h(x.r)}</div></div>
+        </div>`).join(""):`<p style="font-size:12.5px;color:var(--mut);margin:0">Sem ficha de
+          habilidades para este campeão.</p>`}
+        <div class="ds-note">Arte, ícones e descrições: Data Dragon, patch ${h(DD)}.
+          Os números ao lado são só das partidas da UDA na fila selecionada.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* O <dialog> nativo ja entrega Esc, foco preso e backdrop -- refazer isso a mao
+   seria trocar tres comportamentos corretos por tres bugs. Um so no documento,
+   preenchido na hora: o painel e redesenhado a cada troca de pagina. */
+const DLG=document.createElement("dialog");
+DLG.className="dossie"; DLG.setAttribute("aria-label","Dossiê do campeão");
+document.body.appendChild(DLG);
+DLG.addEventListener("click",e=>{ if(e.target===DLG) DLG.close(); });  /* clique no fundo */
+function abrirDossie(id){
+  if(!id) return;
+  DLG.innerHTML=dossieHTML(id);
+  DLG.scrollTop=0;
+  if(DLG.showModal) DLG.showModal(); else DLG.setAttribute("open","");
+}
+/* delegado: nada precisa ser religado quando desenhar() troca o #app inteiro */
+document.addEventListener("click",e=>{
+  if(!e.target.closest) return;
+  if(e.target.closest(".ds-x")){ DLG.close(); return; }
+  const alvo=e.target.closest("[data-champ]");
+  if(alvo) abrirDossie(alvo.getAttribute("data-champ"));
+});
+/* quem nao e <button> (linha de tabela, quadro do hall) precisa da tecla no braco */
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ") return;
+  const alvo=e.target.closest&&e.target.closest("[data-champ]");
+  if(alvo&&alvo.tagName!=="BUTTON"){ e.preventDefault(); abrirDossie(alvo.getAttribute("data-champ")); }
+});
+
+/* --------------------------------------------------------- O ARSENAL
+   A pagina Campeoes era uma tabela de 5 colunas num campo vazio. O arsenal poe a
+   arte na frente; a tabela vira o apendice detalhado, no fim da pagina. 12
+   cartoes fecham fila exata em 3, 2 e 1 coluna -- nunca sobra orfao. */
+function arsenal(g){
+  const l=(g.champions||[]).slice(0,12);
+  if(!l.length) return "";
+  const pilotosDe=(id)=>(g.players||[]).map(p=>{
+      const c=(p.champions||[]).find(x=>x.championId===id);
+      return c?{icon:p.icon,nome:p.gameName,games:c.games}:null;})
+    .filter(Boolean).sort((a,b)=>b.games-a.games);
+  return `<section class="hall">
+    <div class="hall-head">
+      <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
+      <h2 class="poster-title engraved">O Arsenal</h2>
+      <hr class="rule">
+      <p class="poster-note">os doze campeões mais jogados do grupo — clique em qualquer um para
+        abrir o dossiê, com as habilidades e o recorte da UDA</p>
+    </div>
+    <div class="cgrid">${l.map((c,i)=>{
+      const d=CDET[String(c.championId)], pl=pilotosDe(c.championId);
+      const papeis=((d&&d.tags)||[]).map(x=>PAPEL[x]||x).join(" · ");
+      const t=tip(h(c.champion),[
+        ["Partidas",ni(c.games)],
+        ["Resultado",`${c.wins}V ${c.losses}D`],
+        ["Aproveitamento",nf(c.winrate,1)+"%",c.winrate>=50?"var(--teal)":"var(--red)"],
+        ["KDA médio",nf(c.kda,2)],
+        ["Pilotos",`${c.pilots} do grupo`],
+      ],"clique para abrir o dossiê");
+      return `<article class="ccard" data-champ="${c.championId}" tabindex="0" role="button"
+        aria-label="Abrir dossiê de ${h(c.champion)}"${t}>
+        <div class="cc-win artbox">
+          <img class="art" src="${artWide(c.championId,c.champion)}"${FBART}>
+          <div class="scrim"></div><span class="cc-rk">${i+1}</span></div>
+        <div class="cc-in">
+          <span class="cc-ic"><img src="${champImg(c.championId,c.champion)}"${FB}></span>
+          <div class="cc-nm">${h(c.champion)}</div>
+          <div class="cc-tt">${h(d&&d.title?d.title:papeis)}</div>
+          <div class="cc-st">
+            <div><div class="k">Jogos</div><div class="v">${c.games}</div></div>
+            <div><div class="k">Vitórias</div><div class="v ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</div></div>
+            <div><div class="k">KDA</div><div class="v ${cl(c.kda,3)}">${nf(c.kda,2)}</div></div>
+          </div>
+          <div class="cc-tr"><i class="${c.winrate<50?"lo":""}"
+            style="width:${Math.max(3,Math.min(100,c.winrate))}%"></i></div>
+          ${pl.length?`<div class="cc-pl"><span class="ims">${pl.slice(0,4).map(x=>
+            `<img src="${iconImg(x.icon)}"${FB}>`).join("")}</span>
+            <span>${c.pilots} piloto${c.pilots>1?"s":""} · ${h(short(pl[0].nome))} lidera</span></div>`:""}
+        </div>
+      </article>`;}).join("")}</div></section>`;
+}
+
 /* ============================================================= PÁGINAS */
 const PAGES=[
   {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O panorama do grupo na fila selecionada"},
@@ -1122,30 +2361,40 @@ const filas=()=>DATA.groups.filter(g=>g.key!=="squad");
 function pVisao(){
   const g=grupo(); if(!g||!g.players.length) return vazio();
   const t=g.team, acima=t.winrate>=50;
+  /* o podio ja vem como <section> de palco: e ele que abre a pagina depois dos KPIs */
+  /* as tres salas ficam juntas -- fama, vergonha e recordes sao o mesmo
+     componente e ler uma depois da outra e o que faz elas parecerem um predio.
+     O medidor desceu para junto das distribuicoes: o aproveitamento ja e o
+     primeiro KPI heroi, aqui em cima ele apareceria duas vezes seguidas. */
   return `<section>${statRow(g)}</section>
-    <section><div class="grid g23">
-      <div class="card">${chead(I.award,"O pódio",`mínimo de ${DATA.minGames} partidas para entrar no ranking`,"gold")}
-        ${podio(g)}</div>
-      <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
-        ${gauge(t.winrate,`${ni(t.wins)}V · ${ni(t.losses)}D`,
-          `<span class="pill ${acima?"t":"r"}">${acima?"Acima de 50%":"Abaixo de 50%"}</span>`,
-          acima?"var(--teal)":"var(--red)")}</div>
-    </div></section>
+    ${podio(g)}
     ${afundados(g)?`<section>${afundados(g)}</section>`:""}
-    <section><div class="sh-plain">${chead(I.award,"Hall da fama",
-      "o melhor de cada métrica, e quanto ele está à frente da média do grupo","gold")}</div>
-      ${awards(g.awardsGood,false)}</section>
-    <section><div class="sh-plain">${chead(I.skull,"Hall da vergonha","alguém tinha que ser","red")}</div>
-      ${awards(g.awardsBad,true)}</section>
-    <section><div class="grid g23">
-      <div class="card">${chead(I.bolt,"Carrega ou alimenta?","dano por minuto contra mortes a cada 10 minutos")}
-        ${scatter(g.players)}
-        <div class="legend"><span><i style="background:var(--teal)"></i>dano acima da média, morrendo pouco</span>
-        <span><i style="background:var(--gold)"></i>meio-termo</span>
-        <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div>
-      <div class="card">${chead(I.award,"Recordes","","gold")}${recordes(g.records)}</div>
-    </div></section>
-    <section><div class="grid g2">
+    ${hall(g,false)}
+    ${hall(g,true)}
+    ${recordes(g)}
+    <section><div class="card">${chead(I.bolt,"Carrega ou alimenta?","dano por minuto contra mortes a cada 10 minutos")}
+      ${scatter(g.players)}
+      <div class="legend"><span><i style="background:var(--teal)"></i>dano acima da média, morrendo pouco</span>
+      <span><i style="background:var(--gold)"></i>meio-termo</span>
+      <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div></section>
+    <section><div class="grid g3">
+      <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
+        ${gauge({valor:t.winrate,rotulo:`${ni(t.wins)}V · ${ni(t.losses)}D`,
+          pill:acima?"Acima de 50%":"Abaixo de 50%",
+          tone:acima?"var(--teal)":"var(--red)",
+          tip:tip("Aproveitamento do grupo",[
+            ["Vitórias",ni(t.wins),"var(--teal)"],["Derrotas",ni(t.losses),"var(--red)"],
+            ["Partidas",ni(t.games)],["KDA",nf(t.kda,2)],
+          ],"a marca dourada no topo do arco é o empate: 50%")})}
+        ${(()=>{const tr=g.trend||[];if(!tr.length) return "";
+          const mb=tr.reduce((a,b)=>b.winrate>a.winrate?b:a);
+          return `<div class="gmeta">
+            <div><div class="k">Partidas</div><div class="v">${ni(t.uniqueMatches)}</div></div>
+            <div><div class="k">KDA do grupo</div><div class="v">${nf(t.kda,2)}</div></div>
+            <div${tip("Melhor semana",[["Aproveitamento",nf(mb.winrate,1)+"%","var(--teal)"],
+              ["Partidas",ni(mb.games)],["Semana de",rotSemana(mb.week)]])}>
+              <div class="k">Melhor semana</div><div class="v">${nf(mb.winrate,0)}%</div></div>
+          </div>`;})()}</div>
       <div class="card">${chead(I.user,"Rotas do grupo","quanto vocês jogam de cada uma, e com que aproveitamento")}
         ${barrasHoriz(g.roles,"role","games","winrate","share")}</div>
       <div class="card">${chead(I.grid,"Filas","distribuição das partidas")}
@@ -1243,7 +2492,49 @@ function pJogadores(){
 
 function pCampeoes(){
   const g=grupo(); if(!g||!g.players.length) return vazio();
-  return `<section>${championTable(g.champions)}</section>`;
+  const l=g.champions||[];
+  if(!l.length) return `<section>${championTable(l)}</section>`;
+  const jogos=l.reduce((s,c)=>s+c.games,0), top=l[0];
+  /* 5 partidas e o piso para "melhor/pior aproveitamento": abaixo disso a lista
+     vira uma fila de 100% com tres jogos de sorte */
+  const ok=l.filter(c=>c.games>=5);
+  const melhor=ok.length?ok.reduce((a,b)=>b.winrate>a.winrate?b:a):null;
+  const pior=ok.length?ok.reduce((a,b)=>b.winrate<a.winrate?b:a):null;
+  const wrs=l.map(c=>c.winrate).sort((a,b)=>a-b);
+  const exc=l.filter(c=>c.pilots===1).length;
+  return `<section><div class="stats">
+      ${heroKpi({acc:"var(--gold-2)",icon:I.sword,k:"Campeões do grupo",
+        raw:l.length,dec:0,v:ni(l.length),unit:"",
+        sub:`${ni(jogos)} partidas somadas · ${exc} de piloto único`,
+        serie:l.map(c=>c.games).slice().reverse(),
+        tip:tip("Campeões do grupo",[["Com 3+ partidas",ni(l.length)],
+          ["Partidas somadas",ni(jogos)],["Jogados por uma pessoa só",ni(exc)]],
+          "a linha é o volume de cada campeão, do menos ao mais jogado")})}
+      ${heroKpi({acc:"var(--teal)",icon:I.award,k:"O mais jogado",
+        raw:top.games,dec:0,v:ni(top.games),unit:"",
+        sub:`${top.champion} · ${top.pilots} piloto${top.pilots>1?"s":""}`,
+        serie:l.slice(0,10).map(c=>c.games).slice().reverse(),
+        tip:tip(top.champion,[["Partidas",ni(top.games)],
+          ["Resultado",`${top.wins}V ${top.losses}D`],
+          ["Aproveitamento",nf(top.winrate,1)+"%"],["KDA médio",nf(top.kda,2)]],
+          "o campeão que mais aparece nas partidas do grupo")})}
+      ${melhor?heroKpi({acc:"var(--teal)",icon:I.target,k:"Melhor aproveitamento",
+        raw:melhor.winrate,dec:0,v:nf(melhor.winrate,0),unit:"%",
+        sub:`${melhor.champion} · ${melhor.games} jogos`,serie:wrs,
+        tip:tip(melhor.champion,[["Aproveitamento",nf(melhor.winrate,1)+"%","var(--teal)"],
+          ["Partidas",ni(melhor.games)],["KDA médio",nf(melhor.kda,2)]],
+          "mínimo de 5 partidas para entrar nesta conta")}):""}
+      ${pior?heroKpi({acc:"var(--red)",icon:I.skull,k:"O que mais afunda",
+        raw:pior.winrate,dec:0,v:nf(pior.winrate,0),unit:"%",
+        sub:`${pior.champion} · ${pior.games} jogos`,serie:wrs,
+        tip:tip(pior.champion,[["Aproveitamento",nf(pior.winrate,1)+"%","var(--red)"],
+          ["Partidas",ni(pior.games)],["KDA médio",nf(pior.kda,2)]],
+          "e mesmo assim ninguém para de escolher")}):""}
+    </div></section>
+    ${arsenal(g)}
+    <section><div class="card flush" style="padding:22px 24px 0">
+      ${chead(I.grid,"Todos os campeões","a lista completa, ordenada por partidas — clique numa linha para o dossiê")}</div>
+      <div style="margin-top:-6px">${championTable(l)}</div></section>`;
 }
 
 function pRegras(){
@@ -1347,6 +2638,65 @@ function desenhar(){
   $("#app").innerHTML=RENDER[page]();
   if($("#tbl")) ligarTabela();
   ligarSeletor();
+  ligarRecordes();
+  vida();
+}
+
+/* ================================================================= VIDA
+   O painel estava parado porque tudo nascia pronto e nada reagia a chegada do
+   leitor. Aqui ha UM observador so, uma animacao de ENTRADA por elemento e
+   nenhum laco infinito: o site precisa parecer vivo quando voce chega, nao ficar
+   piscando enquanto voce le. */
+const REDUZ=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+/* o numero grande e placar: ele roda ate o valor real e para. tabular-nums no CSS
+   ja garante que a largura nao dance durante a contagem. */
+function contar(el){
+  const alvo=parseFloat(el.getAttribute("data-count"));
+  if(isNaN(alvo)) return;
+  const dec=parseInt(el.getAttribute("data-dec")||"0",10)||0;
+  const fim=el.textContent;   /* o valor final ja veio formatado -- e ele que fica */
+  /* a contagem tem de falar o mesmo idioma do valor final: se ele usa ponto
+     decimal, o intermediario nao pode trocar de cara no ultimo quadro */
+  const ponto=dec>0&&/\.\d{1,2}$/.test(fim);
+  el.setAttribute("data-done","1");
+  const dur=760, t0=performance.now();
+  const passo=(t)=>{
+    const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);
+    if(k>=1){ el.textContent=fim; return; }
+    const s=dec>0?nf(alvo*e,dec):ni(alvo*e);
+    el.textContent=ponto?s.replace(/\./g,"").replace(",","."):s;
+    requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+
+function revelar(s){
+  s.classList.add("in");
+  s.querySelectorAll("[data-count]").forEach(n=>{
+    if(!n.getAttribute("data-done")) contar(n);});
+}
+let OBS=null, obsVivo=false;
+function vida(){
+  if(REDUZ||!("IntersectionObserver" in window)) return;  /* tudo ja esta no estado final */
+  if(!OBS) OBS=new IntersectionObserver(es=>es.forEach(x=>{
+    if(!x.isIntersecting) return;
+    obsVivo=true; OBS.unobserve(x.target); revelar(x.target);
+  }),{rootMargin:"0px 0px -6% 0px",threshold:.05});
+  OBS.disconnect();   /* desenhar() destroi o #app inteiro: nada a observar do quadro anterior */
+  const secs=[];
+  document.querySelectorAll("#app > section").forEach(s=>{
+    secs.push(s); s.classList.add("rv");
+    /* stagger so em bloco REPETIDO. Podio e halls ja tem cascata propria no CSS
+       e entrariam em conflito se ganhassem outra por cima. */
+    s.querySelectorAll(".stats>*,.grid>*,.sunk>*,.pcards>*,.cgrid>*")
+      .forEach((c,i)=>{c.classList.add("stg"); c.style.setProperty("--i",i);});
+    OBS.observe(s);
+  });
+  /* REDE DE SEGURANCA: nenhum conteudo pode depender de uma animacao para existir.
+     Se o observador nao responder (aba que nao compoe quadros, motor antigo,
+     zoom estranho), passado o prazo o painel inteiro aparece do mesmo jeito. */
+  setTimeout(()=>{ if(!obsVivo) secs.forEach(revelar); },1200);
 }
 
 function ligarSeletor(){
@@ -1359,6 +2709,17 @@ function ligarSeletor(){
     else if(selJog.has(id)) selJog.delete(id);
     else selJog.add(id);
     desenhar();
+  });
+}
+
+/* Trocar de aba e so mostrar outra grade. Os numeros ja contaram quando a sala
+   entrou na tela: recontar do zero a cada clique viraria piscada. */
+function ligarRecordes(){
+  const abas=[...document.querySelectorAll("[data-rec]")];
+  abas.forEach(b=>b.onclick=()=>{
+    abas.forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    document.querySelectorAll("[data-recg]").forEach(gr=>{
+      gr.hidden=gr.dataset.recg!==b.dataset.rec;});
   });
 }
 

@@ -33,6 +33,10 @@ def main() -> int:
     settings = config.load_settings(require_key=not args.build)
     window = args.days if args.days is not None else settings.window_days
     conn = store.connect(config.DB_PATH)
+    # store.connect ja migrou o schema; o backfill le o raw ja gravado e so roda
+    # uma vez por versao. Vale nos dois modos: no --build e a unica chance de
+    # preencher as colunas novas das partidas antigas.
+    store.backfill(conn)
 
     try:
         if not args.build:

@@ -82,9 +82,9 @@ WEIGHT_PROFILES = {
 }
 
 METRIC_LABELS = {
-    "winrate": "Vitorias", "kda": "KDA", "kp": "Participacao",
-    "dmg_min": "Dano/min", "cs_min": "CS/min", "vision_min": "Visao/min",
-    "survival": "Sobrevivencia",
+    "winrate": "Vitórias", "kda": "KDA", "kp": "Participação",
+    "dmg_min": "Dano/min", "cs_min": "CS/min", "vision_min": "Visão/min",
+    "survival": "Sobrevivência",
 }
 
 
@@ -654,21 +654,250 @@ def _champion_table(rows: list[sqlite3.Row], min_games: int = 3) -> list[dict]:
     return out[:30]
 
 
+# ------------------------------------------------------- sala dos recordes
+
+# Recorde de taxa so vale em jogo longo: 5 desvios/min num jogo de 6 minutos
+# nao e recorde, e ruido de amostra rendida cedo.
+JOGO_LONGO = 1200
+
+
+def _dur(seg: int):
+    return lambda r: r["game_duration"] >= seg
+
+
+def _por_min(campo: str):
+    return lambda r: _safe_div(r[campo] or 0, r["game_duration"] / 60.0)
+
+
+# key, titulo, grupo, unidade, legenda, calculo, filtro, casas, maior-e-melhor.
+# Ordem importa: as tres reliquias (penta, intocavel, roubo sem smite) vem
+# primeiro para o front poder destacar o topo da lista de gloria.
+REC_PARTIDA: list[tuple] = [
+    ("penta", "O Pentakill", "gloria", "pentakill",
+     "Cinco caixões de uma vez só. O troféu mais raro desta sala.",
+     lambda r: r["penta_kills"] or 0, None, 0, True),
+    ("semMorte", "O Intocável", "gloria", "abates e assistências",
+     "Partida inteira sem ver a tela cinza. Ninguém conseguiu encostar.",
+     lambda r: (r["kills"] or 0) + (r["assists"] or 0),
+     lambda r: r["deaths"] == 0 and r["game_duration"] >= JOGO_LONGO, 0, True),
+    ("rouboSemSmite", "Roubo Sem Smite", "gloria", "objetivo roubado",
+     "Roubou o objetivo do time inimigo sem nem gastar smite. Puro deboche.",
+     lambda r: r["epic_steals_no_smite"] or 0, None, 0, True),
+    ("sequencia", "Sequência Imparável", "gloria", "abates seguidos",
+     "Abate atrás de abate sem morrer uma vez. Fila de espera no respawn inimigo.",
+     lambda r: r["largest_spree"] or 0, None, 0, True),
+    ("soloKills", "Rei do 1v1", "gloria", "solo kills",
+     "Abate que não dá pra dividir crédito com ninguém. O mais honesto que existe.",
+     lambda r: r["solo_kills"] or 0, None, 0, True),
+    ("critico", "Crítico Devastador", "gloria", "de dano num golpe só",
+     "Um único ataque que apagou a barra de vida inteira do coitado.",
+     lambda r: r["largest_crit"] or 0, None, 0, True),
+    ("maquinaDano", "Máquina de Dano", "gloria", "de dano por minuto",
+     "O time inimigo não teve um minuto de sossego a partida toda.",
+     lambda r: r["dpm"] or 0, _dur(JOGO_LONGO), 0, True),
+    ("onipresente", "Onipresente", "gloria", "% dos abates do time",
+     "Apareceu em praticamente todo abate, num jogo em que o time matou muito.",
+     lambda r: (r["kp"] or 0) * 100,
+     lambda r: (r["team_kills"] or 0) >= 15 and r["game_duration"] >= JOGO_LONGO,
+     0, True),
+    ("vidaLonga", "Vida Longa", "gloria", "minutos seguidos vivo",
+     "Ficou vivo tanto tempo que quase esqueceu o caminho de volta pra base.",
+     lambda r: _safe_div(r["longest_alive"] or 0, 60.0), None, 1, True),
+    ("contraTodos", "Contra Todos", "gloria", "abates em desvantagem",
+     "Abates feitos em menor número. O 1v2 que sempre vira clipe no grupo.",
+     lambda r: r["outnumbered_kills"] or 0, None, 0, True),
+    ("matrix", "Modo Matrix", "gloria", "desvios por minuto",
+     "Desviou de skillshot atrás de skillshot. Parece que joga com delay negativo.",
+     _por_min("skillshots_dodged"), _dur(JOGO_LONGO), 1, True),
+    ("miraCirurgica", "Mira Cirúrgica", "gloria", "habilidades acertadas",
+     "O outro lado da moeda do Matrix: acertou quase tudo que jogou.",
+     lambda r: r["skillshots_hit"] or 0, None, 0, True),
+    ("muralha", "A Muralha", "gloria", "de dano absorvido",
+     "Segurou uma montanha de dano na cara e nem piscou.",
+     lambda r: r["self_mitigated"] or 0, None, 0, True),
+    ("anjoGuarda", "Anjo da Guarda", "gloria", "de cura nos aliados",
+     "Curou o time a noite inteira e provavelmente não ouviu nem um obrigado.",
+     lambda r: r["heals_teammates"] or 0, None, 0, True),
+
+    ("maisMortes", "Doador de Ouro Supremo", "vergonha", "mortes numa partida",
+     "Distribuiu ouro pro time inimigo feito tio generoso em festa de Natal.",
+     lambda r: r["deaths"] or 0, None, 0, True),
+    ("telaCinza", "Tempo de Tela Cinza", "vergonha", "minutos morto",
+     "Passou um bom pedaço da partida decorando o cronômetro de renascimento.",
+     lambda r: _safe_div(r["time_dead"] or 0, 60.0), None, 1, True),
+    ("meioJogoMorto", "Meio Jogo Morto", "vergonha", "% da partida morto",
+     "Não jogou a partida, assistiu. Porcentagem dói mais que número absoluto.",
+     lambda r: _safe_div(r["time_dead"] or 0, r["time_played"] or r["game_duration"]) * 100,
+     _dur(JOGO_LONGO), 1, True),
+    ("deficitFarm", "Déficit de Farm", "vergonha", "CS atrás do oponente",
+     "O oponente de rota farmou uma cidade inteira a mais. Sem exagero.",
+     lambda r: r["cs_diff"] if r["cs_diff"] is not None else 0, None, 0, False),
+    ("atrasNoPlacar", "Atrás no Placar", "vergonha", "abates de desvantagem",
+     "Chegou a ficar tão atrás no placar que dava pra ver o buraco da base.",
+     lambda r: r["max_kill_deficit"] or 0, None, 0, True),
+    ("ouroNoBolso", "Ouro no Bolso", "vergonha", "de ouro sem gastar",
+     "Acabou o jogo com a carteira estufada. Item não se compra sozinho.",
+     lambda r: (r["gold"] or 0) - (r["gold_spent"] or 0), None, 0, True),
+    ("carona", "O Carona", "vergonha", "de saldo negativo na vitória",
+     "Ganhou a partida sendo carregado no colo e ainda saiu comemorando.",
+     lambda r: (r["deaths"] or 0) - (r["kills"] or 0) - (r["assists"] or 0),
+     lambda r: r["win"] == 1 and r["game_duration"] >= JOGO_LONGO, 0, True),
+    ("cadeMid", "Cadê o Mid?", "vergonha", "pings de interrogação",
+     "Passou o jogo perguntando onde estava o inimigo em vez de olhar o mapa.",
+     lambda r: r["ping_mia"] or 0, None, 0, True),
+    ("sacoPancada", "Saco de Pancada", "vergonha", "x mais dano levado que causado",
+     "Apanhou a partida inteira e devolveu quase nada. Razão, não total: senão"
+     " só tanque apareceria aqui.",
+     lambda r: _safe_div(r["damage_taken"] or 0, max(r["damage_champions"] or 0, 1)),
+     _dur(JOGO_LONGO), 1, True),
+
+    ("spamPing", "Sinfonia de Pings", "curiosidade", "pings numa partida",
+     "Comunicação é importante. Isso aqui já é outro departamento.",
+     lambda r: r["pings_total"] or 0, None, 0, True),
+    ("dedoNervoso", "Dedo Nervoso", "curiosidade", "habilidades por minuto",
+     "Não existiu tempo de recarga que segurasse esse teclado.",
+     _por_min("spell_casts"), _dur(JOGO_LONGO), 1, True),
+    # "acionamentos" e nao "flashes" de proposito: summoner1Casts conta tecla
+    # apertada, nao flash executado. Com o cooldown minimo nem daria 10 numa
+    # partida de 39 min, e o maior valor do banco e 19 -- seria recorde mentiroso.
+    ("flashPanico", "Dedo no Flash", "curiosidade", "acionamentos do flash",
+     "Martelou a tecla do flash tantas vezes que parte foi só ansiedade.",
+     lambda r: r["flash_casts"] or 0, None, 0, True),
+    ("partidaEterna", "Partida Eterna", "curiosidade", "minutos de partida",
+     "O jogo que ninguém aguentava mais e ninguém tinha coragem de render.",
+     lambda r: _safe_div(r["game_duration"] or 0, 60.0), None, 0, True),
+    ("colecionador", "Colecionador", "curiosidade", "itens comprados",
+     "Passou mais tempo na loja do que na rota. Cada volta, uma ideia nova.",
+     lambda r: r["items_purchased"] or 0, None, 0, True),
+]
+
+GRUPO_ORDEM = {"gloria": 0, "vergonha": 1, "curiosidade": 2}
+
+
+def _rec_base(key: str, titulo: str, grupo: str, unidade: str,
+              legenda: str) -> dict[str, Any]:
+    """Vitrine vazia. Recorde sem ocorrencia sai com valor nulo de proposito:
+    'ainda ninguem' conta mais historia do que o cartao sumir da grade."""
+    return {
+        "key": key, "titulo": titulo, "grupo": grupo, "valor": None,
+        "unidade": unidade, "legenda": legenda, "player": None, "icon": None,
+        "champion": None, "championId": None, "matchId": None, "queue": None,
+        "minutes": None, "k": None, "d": None, "a": None, "quando": None,
+    }
+
+
+def _rec(key, titulo, grupo, unidade, legenda, row, valor, casas,
+         players) -> dict[str, Any]:
+    base = _rec_base(key, titulo, grupo, unidade, legenda)
+    # Zero nunca e recorde: significa que o feito nao aconteceu nesta fila.
+    if row is None or not valor:
+        return base
+    player = players[row["puuid"]]
+    base.update({
+        "valor": _r(valor, casas) if casas else int(round(valor)),
+        "player": player["gameName"], "icon": player["icon"],
+        "champion": row["champion_name"], "championId": row["champion_id"],
+        "matchId": row["match_id"],
+        "queue": QUEUE_NAMES.get(row["queue_id"], f"Fila {row['queue_id']}"),
+        "minutes": round(row["game_duration"] / 60),
+        "k": row["kills"], "d": row["deaths"], "a": row["assists"],
+        "quando": row["game_creation"],
+    })
+    return base
+
+
+def _melhor(rows: list[sqlite3.Row], calc, filtro, maior: bool):
+    alvo, valor = None, None
+    for row in rows:
+        if filtro is not None and not filtro(row):
+            continue
+        v = calc(row)
+        if v is None:
+            continue
+        if valor is None or (v > valor if maior else v < valor):
+            alvo, valor = row, v
+    return alvo, valor
+
+
+def _streak(rows: list[sqlite3.Row], vitoria: bool):
+    """Maior sequencia de vitorias (ou derrotas) de um jogador so, em ordem
+    cronologica. Devolve a partida que fechou a sequencia, pra dar contexto."""
+    por_jogador: dict[str, list[sqlite3.Row]] = defaultdict(list)
+    for row in rows:
+        por_jogador[row["puuid"]].append(row)
+    alvo, melhor = None, 0
+    for lista in por_jogador.values():
+        n = 0
+        for row in sorted(lista, key=lambda r: r["game_creation"]):
+            if bool(row["win"]) is vitoria:
+                n += 1
+                if n > melhor:
+                    alvo, melhor = row, n
+            else:
+                n = 0
+    return alvo, melhor
+
+
+def _maratona(rows: list[sqlite3.Row]):
+    """Mais partidas do mesmo jogador no mesmo dia. Dia local, nao UTC."""
+    dias: dict[tuple[str, str], list[sqlite3.Row]] = defaultdict(list)
+    for row in rows:
+        dia = time.strftime("%d/%m/%Y", time.localtime(row["game_creation"] / 1000))
+        dias[(row["puuid"], dia)].append(row)
+    if not dias:
+        return None, 0, ""
+    (_, dia), lista = max(dias.items(), key=lambda kv: len(kv[1]))
+    return max(lista, key=lambda r: r["game_creation"]), len(lista), dia
+
+
+def _build_records(rows: list[sqlite3.Row],
+                   players: dict[str, dict]) -> list[dict]:
+    """A Sala dos Recordes de uma fila. Lista fixa: todo recorde sempre sai,
+    com valor nulo quando ninguem cumpriu o feito naquela fila."""
+    validos = [r for r in rows if r["puuid"] in players]
+    saida = [
+        _rec(key, titulo, grupo, unidade, legenda,
+             *_melhor(validos, calc, filtro, maior), casas, players)
+        for key, titulo, grupo, unidade, legenda, calc, filtro, casas, maior
+        in REC_PARTIDA
+    ]
+
+    row, n = _streak(validos, True)
+    saida.append(_rec(
+        "invicto", "O Invicto", "gloria", "vitórias seguidas",
+        "Sequência de vitórias sem tropeço. A partida mostrada é a que fechou a conta.",
+        row, n, 0, players))
+    row, n = _streak(validos, False)
+    saida.append(_rec(
+        "espiral", "Espiral da Morte", "vergonha", "derrotas seguidas",
+        "Sequência de derrotas seguidas. Devia ter desligado o computador antes.",
+        row, n, 0, players))
+    row, n, dia = _maratona(validos)
+    saida.append(_rec(
+        "maratonista", "O Maratonista", "curiosidade", "partidas num dia só",
+        f"Tudo isso em {dia}. O sol nasceu, andou pelo céu e se pôs sem ser visto."
+        if dia else "Muitas partidas num dia só.",
+        row, n, 0, players))
+
+    saida.sort(key=lambda d: GRUPO_ORDEM.get(d["grupo"], 9))
+    return saida
+
+
 AWARDS_GOOD = [
     ("carregador", "O Carregador", "Maior dano por minuto", "dmg_min", True, "{v:.0f}", "dmg/min"),
-    ("assassino", "Maquina de Abate", "Mais abates por partida", "kills", True, "{v:.1f}", "abates/jogo"),
+    ("assassino", "Máquina de Abate", "Mais abates por partida", "kills", True, "{v:.1f}", "abates/jogo"),
     ("imortal", "O Imortal", "Menos mortes a cada 10 min", "deaths_10min", False, "{v:.2f}", "mortes/10min"),
     ("farmador", "O Farmador", "Maior CS por minuto", "cs_min", True, "{v:.1f}", "cs/min"),
-    ("sentinela", "A Sentinela", "Maior visao por minuto", "vision_min", True, "{v:.2f}", "visao/min"),
-    ("presenca", "Onipresente", "Maior participacao em abates", "kp", True, "{v:.0f}%", "de participacao"),
+    ("sentinela", "A Sentinela", "Maior visão por minuto", "vision_min", True, "{v:.2f}", "visão/min"),
+    ("presenca", "Onipresente", "Maior participação em abates", "kp", True, "{v:.0f}%", "de participação"),
 ]
 
 AWARDS_BAD = [
     ("doador", "Doador de Ouro", "Mais mortes por partida", "deaths", True, "{v:.1f}", "mortes/jogo"),
-    ("cego", "O Cego", "Menor visao por minuto", "vision_min", False, "{v:.2f}", "visao/min"),
-    ("fantasma", "O Fantasma", "Menor participacao em abates", "kp", False, "{v:.0f}%", "de participacao"),
+    ("cego", "O Cego", "Menor visão por minuto", "vision_min", False, "{v:.2f}", "visão/min"),
+    ("fantasma", "O Fantasma", "Menor participação em abates", "kp", False, "{v:.0f}%", "de participação"),
     ("turista", "O Turista", "Menor CS por minuto", "cs_min", False, "{v:.1f}", "cs/min"),
-    ("azarado", "O Azarado", "Pior aproveitamento", "winrate", False, "{v:.0f}%", "de vitorias"),
+    ("azarado", "O Azarado", "Pior aproveitamento", "winrate", False, "{v:.0f}%", "de vitórias"),
     ("figurante", "O Figurante", "Menor dano por minuto", "dmg_min", False, "{v:.0f}", "dmg/min"),
 ]
 
@@ -693,9 +922,15 @@ def _pick_awards(entries: list[dict], specs: list[tuple]) -> list[dict]:
         else:
             vantagem = 0.0
 
+        # O campeao mais jogado do vencedor vira a ARTE do quadro no hall. Vai
+        # pronto no payload para o front nao ter que caçar o jogador de novo.
+        main = (best.get("champions") or [None])[0]
+
         out.append({
             "key": key, "title": title, "desc": desc,
             "player": best["gameName"], "icon": best["icon"],
+            "championId": main["championId"] if main else None,
+            "champion": main["champion"] if main else None,
             "value": fmt.format(v=valor), "unit": unit,
             "raw": _r(valor, 2),
             "avg": fmt.format(v=media),
@@ -821,22 +1056,6 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
         team = _finalize(total_acc)
         team["uniqueMatches"] = total_games
 
-        worst_death_game = max(group_rows, key=lambda r: r["deaths"], default=None)
-        best_kda_game = max(
-            group_rows,
-            key=lambda r: _safe_div(r["kills"] + r["assists"], max(r["deaths"], 1)),
-            default=None,
-        )
-        most_dmg_game = max(group_rows, key=lambda r: r["damage_champions"], default=None)
-
-        def _with_player(row):
-            if row is None:
-                return None
-            rec = _game_record(row)
-            rec["player"] = players[row["puuid"]]["gameName"]
-            rec["icon"] = players[row["puuid"]]["icon"]
-            return rec
-
         groups_payload[gkey] = {
             "label": glabel,
             "players": entries,
@@ -848,11 +1067,7 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
             "duos": _build_duos(group_rows, players, min_games),
             "trend": _weekly_trend(group_rows),
             "champions": _champion_table(group_rows),
-            "records": {
-                "mostDeaths": _with_player(worst_death_game),
-                "bestKda": _with_player(best_kda_game),
-                "mostDamage": _with_player(most_dmg_game),
-            },
+            "records": _build_records(group_rows, players),
             "recent": _recent_matches(group_rows, players),
             "roles": _role_split(group_rows),
             "queues": _queue_split(group_rows),
@@ -890,7 +1105,7 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
         "SELECT value FROM meta WHERE key='last_fetch'"
     ).fetchone()
 
-    return {
+    payload = {
         "title": "UNIAO DOS AFUNDADOS",
         "platform": platform,
         "demo": demo,
@@ -906,3 +1121,10 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
         "data": groups_payload,
         "evolution": evolucao_payload,
     }
+
+    # Depois do payload montado, porque a ficha so vai para os campeoes que
+    # aparecem nele. Importado aqui, como evolucao, para nao arrastar requests
+    # em quem so quer os KPIs.
+    from . import assets as _assets
+    payload["champDetails"] = _assets.detalhes(payload, ddragon_ver)
+    return payload

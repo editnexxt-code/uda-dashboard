@@ -13,7 +13,10 @@ cabe em poucas centenas de KB.
 from __future__ import annotations
 
 import base64
+import html
 import io
+import json
+import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Iterable
@@ -26,6 +29,12 @@ TIERS = ["iron", "bronze", "silver", "gold", "platinum", "emerald",
 
 PROFILE_PX = 72
 CHAMPION_PX = 64
+
+# Um unico arquivo traz os ~170 campeoes com skills em pt-BR (2.3 MB baixados
+# uma vez); pedir champion/{Nome}.json daria 170 requisicoes para o mesmo dado.
+CHAMPION_FULL = ("https://ddragon.leagueoflegends.com/cdn/{ver}"
+                 "/data/pt_BR/championFull.json")
+RESUMO_MAX = 180
 
 
 def _coletar(node: Any, icons: set[int], champs: set[int], tiers: set[str]) -> None:
@@ -141,3 +150,85 @@ def construir(payload: dict, ddragon_ver: str, champ_index: dict[int, dict[str, 
               f"(~{tamanho / 1024 / 1024:.1f} MB em base64)"
               + (f", {faltou} nao baixaram" if faltou else ""))
     return pacote
+
+
+def _resumo(bruto: str, limite: int = RESUMO_MAX) -> str:
+    """Descricao do ddragon vem com <br> e <spellName>; a tela quer texto puro.
+
+    O corte respeita a palavra: cortar no meio de uma so ganharia 5 caracteres
+    e deixaria a frase feia em 140 campeoes de uma vez.
+    """
+    if not bruto:
+        return ""
+    texto = re.sub(r"<br\s*/?>", " ", bruto, flags=re.IGNORECASE)
+    texto = re.sub(r"<[^>]+>", "", texto)
+    texto = re.sub(r"\s+", " ", html.unescape(texto)).strip()
+    if len(texto) <= limite:
+        return texto
+    return texto[:limite].rsplit(" ", 1)[0].rstrip(" ,.;:") + "..."
+
+
+def detalhes(payload: dict, ddragon_ver: str,
+             verbose: bool = True) -> dict[str, dict[str, Any]]:
+    """Ficha de cada campeao que o grupo jogou, para o dossie.
+
+    So entra quem aparece no payload: guardar os 170 custaria o dobro sem nada
+    na tela apontar para eles. "icone" e o nome do arquivo, nao a URL -- a arte
+    vem do CDN em <img>, embutir 5 icones por campeao em base64 estouraria o HTML.
+    """
+    icons: set[int] = set()
+    champs: set[int] = set()
+    tiers: set[str] = set()
+    _coletar(payload, icons, champs, tiers)
+    if not champs:
+        return {}
+
+    bruto = _baixar(CHAMPION_FULL.format(ver=ddragon_ver),
+                    f"championFull-{ddragon_ver}.json")
+    try:
+        # Sem o ddragon o dossie fica sem skills, mas o resto do painel abre:
+        # nada aqui pode derrubar o build.
+        data = json.loads(bruto.decode("utf-8"))["data"] if bruto else {}
+    except (ValueError, KeyError, AttributeError, UnicodeDecodeError):
+        data = {}
+    if not data:
+        if verbose:
+            print("  dossie: championFull.json indisponivel, seguindo sem skills")
+        return {}
+
+    fichas: dict[str, dict[str, Any]] = {}
+    for entrada in data.values():
+        try:
+            cid = int(entrada["key"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if cid not in champs:
+            continue
+        passiva = entrada.get("passive") or {}
+        fichas[str(cid)] = {
+            "key": entrada.get("id") or "",
+            "name": entrada.get("name") or "",
+            "title": entrada.get("title") or "",
+            "tags": entrada.get("tags") or [],
+            # A ordem que o ddragon entrega ja e Q, W, E, R.
+            "spells": [
+                {
+                    "slot": slot,
+                    "nome": s.get("name") or "",
+                    "icone": (s.get("image") or {}).get("full") or "",
+                    "resumo": _resumo(s.get("description") or ""),
+                }
+                for slot, s in zip("QWER", entrada.get("spells") or [])
+            ],
+            "passive": {
+                "nome": passiva.get("name") or "",
+                "icone": (passiva.get("image") or {}).get("full") or "",
+                "resumo": _resumo(passiva.get("description") or ""),
+            },
+        }
+
+    if verbose:
+        peso = len(json.dumps(fichas, ensure_ascii=False,
+                              separators=(",", ":")).encode("utf-8"))
+        print(f"  dossie: {len(fichas)} campeoes (~{peso / 1024:.0f} KB no payload)")
+    return fichas
