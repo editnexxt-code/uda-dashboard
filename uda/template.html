@@ -388,27 +388,8 @@ table.mx{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fix
 .hbar .hq{width:46px;text-align:right;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .hbar .hs{width:40px;text-align:right;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
 
-/* feed das últimas partidas */
-.mrow{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--line2);align-items:flex-start}
-.mrow:last-child{border-bottom:0}
-.mmeta{width:132px;flex:0 0 auto}
-.mmeta .mq{font-size:12.5px;font-weight:600}
-.mmeta .md{font-size:11.5px;color:var(--dim);margin-top:3px}
-.mps{flex:1;display:flex;flex-wrap:wrap;gap:8px;min-width:0}
-.mp{display:flex;align-items:center;gap:9px;background:var(--card2);border:1px solid var(--line);
-  border-radius:var(--rs);padding:7px 11px 7px 7px;min-width:186px}
-.mp.w{border-left:3px solid var(--teal)} .mp.l{border-left:3px solid var(--red)}
-.mp img{width:30px;height:30px;border-radius:8px;flex:0 0 auto}
-.mp .mpn{flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mp .mpn em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);font-weight:400}
-.mp .mpk{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
-/* 132px fixos + gap + 186px de minimo = 334px, contra 315px uteis num iPhone:
-   o feed transbordava. Em container estreito a linha vira coluna. */
-@container content (max-width:640px){
-  .mrow{flex-direction:column;gap:8px}
-  .mmeta{width:auto}
-  .mp{min-width:0;width:100%}
-}
+/* o feed das ultimas partidas (.mfeed/.mc) mora la embaixo, depois de
+   .artbox/.art/.noart/.scrim -- a placa e feita desses componentes. */
 
 /* melhor / pior partida no cartão do jogador */
 .bw{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px}
@@ -503,8 +484,6 @@ table.mx{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fix
 .aw:hover{transform:translateY(-2px)}
 .pc{transition:border-color .16s}
 .pc:hover{border-color:#2C3540}
-.mp{transition:border-color .16s,background .16s}
-.mp:hover{background:var(--card3);border-color:#2C3540}
 .hbar{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
 .hbar:hover{background:var(--card2)}
 .lrow{transition:background .13s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
@@ -584,6 +563,162 @@ svg circle[data-tip]:hover{opacity:.75}
 .noart::before{content:"";position:absolute;inset:0;z-index:-3;
   background:linear-gradient(160deg,var(--card2),var(--ink))}
 .noart>.sl-light{opacity:.45}
+
+/* ================================= ÚLTIMAS PARTIDAS -- GRADE DE PLACAS
+   Substitui a lista de .mrow (24 faixas de largura total, 2170px -- era a secao
+   mais alta da home). Mora AQUI, e nao la em cima junto de .hbar, porque a placa
+   e feita de .artbox/.art/.noart/.scrim e precisa nascer depois deles para trocar
+   o eixo do veu e o corte da arte sem !important.
+   Tres decisoes carregam o redesenho:
+   1) LARGURA E FUNCAO DO ELENCO. 1 jogador da UDA vale 3 colunas de 12, 2-3
+      valem 6, 4-5 (partida cheia) valem a fila inteira. Uma solo queue de um
+      jogador so deixa de gastar uma faixa de 1500px. Spans sao divisores exatos
+      de 12 -- auto-fit continua proibido em bloco de N conhecido.
+   2) O RESULTADO VIROU LOMBADA. Vertical, na altura toda do cartao: a cor
+      resolve o feed num relance e NENHUM dos 24 cartoes paga uma linha de
+      cabecalho so para escrever "Vitoria" (24 titulos horizontais seriam ~700px
+      so de chrome). Como a lombada nao gasta altura, a placa fecha em ~90px.
+   3) O CARTAO SE MEDE SOZINHO. A grade de fichas responde ao container `mcard`
+      -- a largura do proprio cartao -- e nao ao span: a regra nao precisa saber
+      POR QUE o cartao ficou largo. */
+
+.mfeed-top{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;
+  padding-bottom:11px;margin-bottom:13px;border-bottom:1px solid var(--line2)}
+/* A FITA DA SESSAO: um quadradinho por partida, na ordem em que aconteceram. E o
+   unico lugar do painel onde "V D V V V" existe como FORMA e nao como texto --
+   tres vitorias seguidas sao uma historia, 24 linhas soltas nao eram. */
+.mfeed-fita{display:flex;flex-wrap:wrap;gap:3px;flex:1 1 130px;min-width:0}
+.mfeed-fita i{width:10px;height:10px;border-radius:3px;background:var(--barneutral);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45)}
+.mfeed-fita i.v{background:var(--teal)}
+.mfeed-fita i.d{background:var(--red)}
+/* duelo interno nao e V nem D: o quadrado sai partido na diagonal */
+.mfeed-fita i.x{background:linear-gradient(135deg,var(--teal) 0 50%,var(--red) 50% 100%)}
+.mfeed-lg{margin:13px 0 0;font-size:11.5px;color:var(--dim)}
+
+.mfeed{display:grid;gap:12px;grid-template-columns:repeat(12,minmax(0,1fr));
+  grid-auto-flow:dense}
+/* container estreito: uma coluna, toda placa ocupa a grade inteira. Nao existe
+   degrau intermediario de proposito: abaixo de 700 a meia placa deixaria ~150px
+   para a ficha e o nome viraria reticencia -- nome cortado e pior que espaco
+   sobrando, e o celular ganha altura de outro jeito (a placa de 1 jogador ja
+   custa uma linha de ficha, nao as quatro da faixa antiga). */
+.mfeed>.mc{grid-column:span 12}
+/* duas por fila; a partida cheia vai de borda a borda e arruma o time numa linha
+   so, como escalacao. Aqui so existem 6 e 12: ladrilha sem buraco. */
+@container content (min-width:700px){
+  .mfeed>.mc{grid-column:span 6}
+  .mfeed>.mc[data-n="4"],.mfeed>.mc[data-n="5"]{grid-column:span 12}
+}
+/* fila cheia: a partida de 1 jogador cai para 1/4 da largura -- era exatamente
+   ela que gastava uma faixa inteira na lista antiga. O degrau e 1000 e nao 1120
+   porque o container de um notebook de 1366px mede 1098: em 1120 o laptop mais
+   comum ficaria de fora do ganho por 22px. `dense` so tem trabalho daqui pra
+   cima, quando 3, 6 e 12 convivem -- ele puxa a proxima placa de 1 jogador para
+   o vao de 3 colunas que sobra depois de um 6+3. Cada placa carrega a data
+   escrita, entao um salto de posicao nao apaga a linha do tempo. */
+@container content (min-width:1000px){
+  .mfeed>.mc[data-n="1"]{grid-column:span 3}
+}
+
+.mc{--rc:var(--mut);--rl:var(--mut);
+  display:flex;min-width:0;min-height:84px;border:1px solid var(--line);
+  border-radius:var(--rs);overflow:hidden;box-shadow:var(--bevel),var(--lift);
+  container-type:inline-size;container-name:mcard;
+  transition:border-color .16s,transform .16s var(--e);
+  /* `backwards` e nao `both`: com `both` o transform:none do keyframe fica retido
+     e mata o translateY do :hover */
+  animation:fadeUp .42s var(--e) backwards;animation-delay:calc(var(--i,0)*18ms)}
+/* --rc e o token de cor (veu, regua, hover). --rl e a lombada: um degrau ACIMA,
+   porque texto quase preto sobre --red puro fica em 3,9:1 e nao passa em AA. */
+.mc.v{--rc:var(--teal);--rl:#4FE3D6}
+.mc.d{--rc:var(--red); --rl:#FF7A7E}
+.mc.x{--rc:var(--gold);--rl:#E4C88F}
+.mc:hover{transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--rc) 46%,var(--line))}
+
+.mc-rail{flex:0 0 auto;width:clamp(24px,6cqi,32px);display:grid;place-items:center;
+  overflow:hidden;
+  background:linear-gradient(180deg,var(--rl),color-mix(in srgb,var(--rl) 76%,#000));
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.28)}
+/* vertical-rl + rotate(180deg) = leitura de baixo para cima, a convencao de
+   lombada. Continua sendo texto de verdade: seleciona, traduz e e lido. */
+.mc-rail span{writing-mode:vertical-rl;transform:rotate(180deg);
+  font:800 clamp(11px,3cqi,15px)/1 var(--cond);text-transform:uppercase;
+  letter-spacing:.13em;white-space:nowrap;color:#0B0E13;
+  text-shadow:0 1px 0 rgba(255,255,255,.25)}
+
+/* .artbox aqui NAO leva .por nem .wide de proposito: a altura vem do conteudo
+   (linha de cima + fichas), nao da imagem. Sem aspect-ratio e com a arte absoluta
+   dentro de overflow:hidden, imagem que falha nao vira buraco nenhum. */
+.mc-body{flex:1;min-width:0;padding:9px 11px 10px;
+  display:flex;flex-direction:column;justify-content:center}
+/* artLoad (308x560, ~56KB) e nao artWide: a arte entra borrada e velada, metade
+   do peso resolve. center 16% porque o corte horizontal de um retrato ja e fundo. */
+.mc-body .art{filter:blur(13px) brightness(.6) saturate(1.12);
+  object-position:center 16%;background-position:center 16%}
+.mc-body.noart .art{filter:none}   /* borrar gradiente chapado so cria halo */
+/* o .scrim padrao escurece a metade de baixo (arte alta, texto no pe). Aqui o
+   texto cobre a placa inteira: veu chapado + um sopro da cor do resultado
+   entrando pela lombada. Mesma regra de ouro, outra forma. */
+.mc-body .scrim{background:
+  linear-gradient(90deg,color-mix(in srgb,var(--rc) 22%,transparent),transparent 58%),
+  linear-gradient(180deg,rgba(11,15,21,.76),rgba(11,15,21,.84))}
+
+.mc-top{display:flex;align-items:baseline;gap:8px;min-width:0;margin-bottom:7px}
+.mc-q{min-width:0;font:600 11px/1 var(--body);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mc-when{flex:0 0 auto;font:500 10.5px/1 var(--body);color:var(--mut);white-space:nowrap}
+.mc-dur{margin-left:auto;flex:0 0 auto;font:500 10.5px/1 var(--body);color:var(--dim);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ~200px e onde uma ficha para de se espremer. Quem responde e o CARTAO, nao a
+   pagina: o teto de colunas e o proprio numero de jogadores, para uma partida de
+   3 nunca abrir 5 colunas e deixar duas vazias. */
+.mc-ps{display:grid;gap:5px 10px;grid-template-columns:minmax(0,1fr)}
+@container mcard (min-width:400px){.mc-ps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container mcard (min-width:600px){
+  .mc[data-n="3"] .mc-ps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container mcard (min-width:820px){
+  .mc[data-n="4"] .mc-ps{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container mcard (min-width:1000px){
+  .mc[data-n="5"] .mc-ps{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+.mc-p{position:relative;display:flex;align-items:center;gap:8px;min-width:0;
+  padding:5px 8px 8px;border-radius:8px;background:rgba(10,13,18,.56);
+  border:1px solid transparent;transition:background .13s,border-color .13s}
+.mc-p.w{--rc:var(--teal)} .mc-p.l{--rc:var(--red)}
+.mc-p[data-champ]{cursor:pointer}
+.mc-p:hover{background:rgba(10,13,18,.74);border-color:var(--line)}
+.mc-p>img{width:26px;height:26px;border-radius:7px;flex:0 0 auto;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55)}
+/* o destaque so existe quando ha com quem comparar -- com 1 jogador seria
+   medalha de participacao, entao o JS nem marca */
+.mc-p.mvp>img{box-shadow:0 0 0 1px var(--gold-2),0 0 12px -3px var(--gold-2)}
+.mc-n{flex:1;min-width:0}
+.mc-n b{display:block;font:600 12.5px/1.15 var(--body);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-p.mvp .mc-n b{color:var(--gold-1)}
+.mc-n em{display:block;font-style:normal;font:400 10.5px/1.25 var(--body);color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-k{flex:0 0 auto;font:700 15px/1 var(--cond);font-variant-numeric:tabular-nums}
+.mc-k i{font-style:normal;color:var(--dim);margin:0 1px;font-weight:600}
+/* a morte em --mut para o par abate/assistencia saltar do numero */
+.mc-k b.d{color:var(--mut);font-weight:600}
+.mc-wl{flex:0 0 auto;font:800 10px/1 var(--cond);letter-spacing:.08em;
+  padding:3px 5px;border-radius:5px}
+.mc-wl.w{background:var(--teal-s);color:var(--teal)}
+.mc-wl.l{background:var(--red-s);color:var(--red)}
+/* REGUA DE DANO: informacao nova com ZERO altura nova -- ela e o proprio filete
+   de base da ficha. 100% e o maior dano DAQUELA partida; um teto global faria a
+   Lux de 20min competir com o Shaco de 40 e nao diria nada. */
+.mc-p::after{content:"";position:absolute;left:8px;right:8px;bottom:3px;height:2px;
+  border-radius:2px;background:linear-gradient(90deg,
+    var(--rc) var(--dw,0%),rgba(255,255,255,.08) var(--dw,0%))}
+/* na partida de 1 jogador da UDA a regua compararia o cara com ele mesmo e daria
+   100% sempre -- barra cheia que nao diz nada e pior que barra nenhuma */
+.mc[data-n="1"] .mc-p::after{display:none}
+.mc[data-n="1"] .mc-p{padding-bottom:6px}
 
 /* ============================================================== O PÓDIO
    O problema antigo era geometrico, nao decorativo: tres cards iguais em
@@ -709,8 +844,14 @@ svg circle[data-tip]:hover{opacity:.75}
 .hall-head{text-align:center;max-width:74ch;margin:0 auto clamp(20px,2.4vw,32px)}
 .hall-head .eyebrow{display:block;margin-bottom:11px;color:color-mix(in srgb,var(--acc) 68%,var(--dim))}
 .hall .poster-title{font-size:clamp(26px,3.4cqi,50px)}
-/* a gravacao usa a rampa da propria sala: ouro na fama, cobre queimado na vergonha */
-.hall .poster-title.engraved{background:linear-gradient(180deg,var(--acc-1),var(--acc) 55%,var(--acc-3))}
+/* a gravacao usa a rampa da propria sala: ouro na fama, cobre queimado na vergonha.
+   background-IMAGE, nunca o atalho background: o atalho reseta background-clip para
+   border-box, e como esta regra tem especificidade maior que .engraved ela ganhava --
+   o gradiente pintava a caixa inteira e a letra transparente sumia. Era uma barra
+   dourada solida no lugar de "Hall da Fama", "Hall da Vergonha", "A Sala dos
+   Recordes" e "O Arsenal". */
+.hall .poster-title.engraved{
+  background-image:linear-gradient(180deg,var(--acc-1),var(--acc) 55%,var(--acc-3))}
 .hall .rule{max-width:340px;margin:14px auto 0;
   background:linear-gradient(90deg,transparent,var(--acc-3) 18%,var(--acc) 50%,var(--acc-3) 82%,transparent)}
 .hall .poster-note{margin-top:11px}
@@ -1748,26 +1889,106 @@ function barrasHoriz(itens,campoNome,campoQtd,campoWr,campoShare){
   </div>`).join("")}</div>`;
 }
 
+/* --------------------------------------------------- ÚLTIMAS PARTIDAS
+   A lista antiga gastava uma faixa de largura TOTAL por partida -- inclusive nas
+   de 1 jogador da UDA -- e a secao virava a mais alta da home. Aqui cada partida
+   e uma PLACA e a QUANTIDADE DE GENTE VIRA LARGURA: o data-n manda no span da
+   grade (ver o bloco "grade de placas" no CSS). O JS so decide tres coisas: o
+   LADO da partida (v/d/x), o data-n, e quem e a estrela -- de quem e a arte. */
 function feedRecentes(list){
   if(!list||!list.length) return noData("SEM PARTIDAS","Nada recente nesta fila.");
-  const quando=(ms)=>{const d=Math.floor((Date.now()-ms)/86400000);
-    return d===0?"hoje":d===1?"ontem":`há ${d} dias`;};
-  return `<div>${list.map(m=>`<div class="mrow">
-    <div class="mmeta"><div class="mq">${h(m.queue)}</div>
-      <div class="md">${quando(m.date)} · ${m.minutes} min</div></div>
-    <div class="mps">${m.players.map(p=>`<div class="mp ${p.win?"w":"l"}"${tip(
-      `${h(p.gameName)} · ${h(p.champion)}`,[
-        ["Resultado",p.win?"Vitória":"Derrota",p.win?"var(--teal)":"var(--red)"],
-        ["KDA",`${p.k} / ${p.d} / ${p.a} = ${nf(p.kda,2)}`],
-        ["Dano em campeões",ni(p.dmg)],
-        ["Farm",`${ni(p.cs)} CS`],
-        ["Rota",p.role||"—"],
-      ],`${h(m.queue)} · ${m.minutes} min`)}>
-      <img src="${champImg(p.championId,p.champion)}"${FB}>
-      <div class="mpn">${h(short(p.gameName))}${p.role?`<em>${h(p.role)}</em>`:""}</div>
-      <div class="mpk">${p.k}/${p.d}/${p.a}</div>
-      <span class="pill ${p.win?"t":"r"}" style="font-size:10px;padding:3px 8px">${p.win?"V":"D"}</span>
-    </div>`).join("")}</div></div>`).join("")}</div>`;
+  /* partida sem jogador da UDA nao tem placa possivel */
+  const jogos=list.filter(m=>m&&m.players&&m.players.length);
+  if(!jogos.length) return noData("SEM PARTIDAS","Nada recente nesta fila.");
+
+  const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const quando=(ms)=>{
+    const d=new Date(ms), dd=Math.floor((Date.now()-ms)/86400000);
+    const hh=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return dd<=0?`hoje ${hh}`:dd===1?`ontem ${hh}`:dd<7?`há ${dd} dias`
+      :`${d.getDate()} ${MES[d.getMonth()]}`;
+  };
+  /* win e por TIME e nao por partida: da para ter UDA nos DOIS lados. Por isso o
+     terceiro estado "x" -- a placa nao escolhe um lado que nao existe. */
+  const lado=(m)=>{const v=m.players.filter(p=>p.win).length;
+    return v===m.players.length?"v":v===0?"d":"x";};
+  const ROT={v:"Vitória",d:"Derrota",x:"Duelo"};
+  const COR={v:"var(--teal)",d:"var(--red)",x:"var(--gold)"};
+  const soma=(ps,f)=>ps.reduce((t,p)=>t+(Number(p[f])||0),0);
+  /* a arte da placa e de quem mais rendeu entre os da UDA -- desempate por abates */
+  const estrela=(ps)=>ps.reduce((a,b)=>((b.kda||0)>(a.kda||0)
+    ||((b.kda||0)===(a.kda||0)&&(b.k||0)>(a.k||0)))?b:a,ps[0]);
+
+  const ficha=(p,m,dmax,duelo,dest)=>`<div class="mc-p ${p.win?"w":"l"}${dest?" mvp":""}"
+    style="--dw:${((p.dmg||0)/dmax*100).toFixed(1)}%"${p.championId
+      ?` data-champ="${p.championId}" tabindex="0" role="button"`:""}${tip(
+    `${h(p.gameName)} · ${h(p.champion)}`,[
+      ["Resultado",p.win?"Vitória":"Derrota",p.win?"var(--teal)":"var(--red)"],
+      ["KDA",`${p.k} / ${p.d} / ${p.a} = ${nf(p.kda,2)}`],
+      ["Dano em campeões",m.players.length>1
+        ?`${ni(p.dmg)} · ${nf((p.dmg||0)/dmax*100,0)}% do maior de vocês na partida`
+        :ni(p.dmg)],
+      ["Farm",`${ni(p.cs)} CS · ${nf(p.cs/(m.minutes||1),1)}/min`],
+      ["Rota",p.role||"—"],
+    ],`${h(m.queue)} · ${m.minutes} min${dest?" · destaque da partida":""}`)}>
+    <img src="${champImg(p.championId,p.champion)}"${FB}>
+    <div class="mc-n"><b>${h(short(p.gameName))}</b>
+      <em>${p.role?h(p.role)+" · ":""}${h(p.champion)}</em></div>
+    ${duelo?`<span class="mc-wl ${p.win?"w":"l"}">${p.win?"V":"D"}</span>`:""}
+    <div class="mc-k">${p.k}<i>/</i><b class="d">${p.d}</b><i>/</i>${p.a}</div>
+  </div>`;
+
+  const placa=(m,i)=>{
+    const ps=m.players, n=Math.min(ps.length,5), s=lado(m), est=estrela(ps);
+    const v=ps.filter(p=>p.win).length;
+    /* regua de dano normalizada pela PROPRIA partida */
+    const dmax=Math.max(1,...ps.map(p=>Number(p.dmg)||0));
+    /* o mesmo balao serve a lombada e a linha de cima: as duas falam da partida */
+    const t=tip(h(m.queue),[
+      ["Resultado",s==="x"?`${v}V ${ps.length-v}D · UDA dos dois lados`:ROT[s],COR[s]],
+      ["Quando",quando(m.date)],
+      ["Duração",`${m.minutes} min`],
+      ["Da UDA em campo",`${ps.length} de 5`],
+      ["KDA somado",`${soma(ps,"k")} / ${soma(ps,"d")} / ${soma(ps,"a")}`],
+      ["Dano somado",ni(soma(ps,"dmg"))],
+    ],`arte de ${h(est.champion)} — quem mais rendeu entre vocês nesta partida`);
+    return `<article class="mc ${s}" data-n="${n}" style="--i:${Math.min(i,12)}">
+      <div class="mc-rail"${t}><span>${ROT[s]}</span></div>
+      <div class="mc-body artbox">
+        <img class="art" src="${artLoad(est.championId,est.champion)}"${FBART}>
+        <div class="scrim"></div>
+        <div class="mc-top"${t}>
+          <span class="mc-q">${h(m.queue)}</span>
+          <span class="mc-when">${quando(m.date)}</span>
+          <span class="mc-dur">${m.minutes}′</span></div>
+        <div class="mc-ps">${ps.map(p=>ficha(p,m,dmax,s==="x",ps.length>1&&p===est)).join("")}</div>
+      </div>
+    </article>`;
+  };
+
+  /* cabecalho: o placar do proprio recorte. A fita le da PRIMEIRA a ultima
+     partida (as placas descem da mais nova), senao a sequencia conta a historia
+     de tras para frente. */
+  const lados=jogos.map(lado);
+  const c={v:0,d:0,x:0}; lados.forEach(s=>c[s]++);
+  const wr=(c.v+c.d)?c.v/(c.v+c.d)*100:0;
+  const fita=lados.slice().reverse().map(s=>`<i class="${s}"></i>`).join("");
+  return `<div class="mfeed-top">
+      <span class="eyebrow">${ni(jogos.length)} partidas</span>
+      <span class="mfeed-fita"${tip("A fita da sessão",[
+        ["Vitórias",ni(c.v),"var(--teal)"],["Derrotas",ni(c.d),"var(--red)"],
+      ].concat(c.x?[["Duelos internos",ni(c.x),"var(--gold)"]]:[]),
+      "da partida mais antiga à esquerda até a mais recente à direita")}>${fita}</span>
+      <span class="pill t">${c.v}V</span><span class="pill r">${c.d}D</span>
+      ${c.x?`<span class="pill g">${c.x} duelo${c.x>1?"s":""}</span>`:""}
+      <span class="pill n"${tip("Aproveitamento do recorte",[
+        ["Vitórias",ni(c.v),"var(--teal)"],["Derrotas",ni(c.d),"var(--red)"],
+      ],c.x?"os duelos internos ficam de fora da conta: alguém da UDA ia ganhar de qualquer jeito":"")}>${nf(wr,0)}%</span>
+    </div>
+    <div class="mfeed">${jogos.map(placa).join("")}</div>
+    <p class="mfeed-lg">da mais recente para a mais antiga · a largura da placa é
+      quanta gente da UDA entrou na partida · o filete sob cada ficha é o dano dela
+      contra o maior dano daquela partida</p>`;
 }
 
 /* Loureiro do 1o lugar. Gerado a partir de UM bezier espelhado, em vez de 18
@@ -2418,7 +2639,7 @@ function pVisao(){
         ${barrasHoriz(g.queues,"queue","matches","winrate","share")}</div>
     </div></section>
     <section><div class="card">${chead(I.clock,"Últimas partidas",
-      "as mais recentes do grupo — passe o mouse para ver dano e CS")}
+      "uma placa por partida — clique num campeão para abrir o dossiê")}
       ${feedRecentes(g.recent)}</div></section>`;
 }
 
