@@ -575,9 +575,12 @@ svg circle[data-tip]:hover{opacity:.75}
 /* Fallback: FBART marca o PAI com .noart em vez de sumir com o elemento, entao a
    falha vira um gradiente solido e nunca um buraco de layout. Serve tanto para
    <img class="art"> quanto para <div class="art" style="background-image:...">. */
-.noart .art{background-image:linear-gradient(160deg,var(--card2),var(--ink))!important;
+/* .sl-art (fundo do palco do podio) precisa entrar nas duas regras: sem ela, a
+   unica arte que sobrava era a maior de todas -- 1048x1036 de imagem quebrada. */
+.noart .art,.noart .sl-art{
+  background-image:linear-gradient(160deg,var(--card2),var(--ink))!important;
   filter:none}
-.noart img.art{display:none}
+.noart img.art,.noart img.sl-art{display:none}
 .noart::before{content:"";position:absolute;inset:0;z-index:-3;
   background:linear-gradient(160deg,var(--card2),var(--ink))}
 .noart>.sl-light{opacity:.45}
@@ -1118,6 +1121,20 @@ const main1=(p)=>(p&&p.champions&&p.champions[0])||null;
    de .noart. Sempre alt="" -- e arte decorativa, o leitor de tela deve ignorar. */
 const FBART=' alt="" loading="lazy" decoding="async"'
   +' onerror="(this.closest(\'.artbox,.stage-layers\')||this.parentElement).classList.add(\'noart\')"';
+
+/* Rede de seguranca para o onerror ACIMA: uma CSP com nonce deixa este <script>
+   rodar mas bloqueia atributo de evento inline. Sem isto, num visualizador assim
+   a arte do CDN falha, .noart nunca e aplicado, e o navegador desenha o icone de
+   imagem quebrada esticado em width:100%/height:100% -- a "imagem gigante".
+   'error' de <img> nao borbulha, dai o capture. classList.add e idempotente,
+   entao rodar junto com o atributo inline nao faz mal. */
+document.addEventListener("error",e=>{
+  const img=e.target;
+  if(!img||img.tagName!=="IMG") return;
+  if(img.classList.contains("art")||img.classList.contains("sl-art"))
+    (img.closest(".artbox,.stage-layers")||img.parentElement||img).classList.add("noart");
+  else img.style.visibility="hidden";
+},true);
 const TIER={IRON:"Ferro",BRONZE:"Bronze",SILVER:"Prata",GOLD:"Ouro",PLATINUM:"Platina",EMERALD:"Esmeralda",
   DIAMOND:"Diamante",MASTER:"Mestre",GRANDMASTER:"Grão-Mestre",CHALLENGER:"Desafiante",UNRANKED:"Sem elo"};
 function eloTxt(r){
