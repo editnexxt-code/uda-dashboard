@@ -12,10 +12,13 @@
 :root{
   --bg:#0E1116;  --card:#161B22;  --card2:#1C222B;  --card3:#222933;
   --line:#232A33; --line2:#1C222A;
-  --txt:#E9EDF2;  --mut:#8A94A3;  --dim:#5D6673;
+  /* --dim era #5D6673 e aparece quase sempre em 10-12px (rotulo de KPI, unidade,
+     legenda). Nesse tamanho dava 2.98:1 sobre o fundo dos cards -- abaixo dos
+     4.5:1 que texto pequeno exige. Clareado ate passar, sem virar --mut. */
+  --txt:#E9EDF2;  --mut:#8A94A3;  --dim:#828C9C;
   --teal:#0AC8B9; --teal-s:rgba(10,200,185,.13);
   --gold:#C8AA6E; --gold-s:rgba(200,170,110,.13);
-  --red:#E5484D;  --red-s:rgba(229,72,77,.13);
+  --red:#EB565B;  --red-s:rgba(229,72,77,.13);
   --blue:#4C8DFF; --blue-s:rgba(76,141,255,.13);
   --barneutral:#2A323D;
   --r:16px; --rs:10px; --rp:999px;
@@ -505,7 +508,10 @@ svg circle[data-tip]:hover{opacity:.75}
    quatro secoes ilustradas de virarem quatro dialetos diferentes. */
 
 /* esqueleto editorial de todo bloco-poster: eyebrow > titulo > nota > regua */
-.eyebrow{font:700 10px/1 var(--body);letter-spacing:.28em;text-transform:uppercase;color:var(--gold-3)}
+.eyebrow{font:700 10px/1 var(--body);letter-spacing:.28em;text-transform:uppercase;
+  /* --gold-3 e o degrau ESCURO da rampa, existe para bisel e gradiente.
+     Como texto de 10px dava 3.57:1 -- abaixo do minimo. O degrau 2 passa. */
+  color:var(--gold-2)}
 .poster-title{margin:0;font:800 clamp(28px,4.2cqi,62px)/.92 var(--cond);text-transform:uppercase;letter-spacing:.005em}
 .poster-note{margin:10px auto 0;max-width:62ch;font-size:12.5px;color:var(--mut);text-align:center}
 .rule{height:1px;border:0;margin:18px 0;
@@ -1222,7 +1228,10 @@ const sg=(v,d=1)=>(v>0?"+":"")+nf(v,d);
    virgula E ponto: os premios vem do kpi.py com ponto decimal. */
 const decDe=(s)=>{const m=/[.,](\d{1,2})$/.exec(String(s??"")); return m?m[1].length:0;};
 const DD=DATA?DATA.ddragon:"15.1.1", CIDX=DATA?DATA.championIndex:{};
-const FB=' onerror="this.style.visibility=\'hidden\'" loading="lazy" ';
+/* alt="" de proposito: sao icones decorativos ao lado de um nome que ja esta
+   escrito. Sem o atributo, o leitor de tela le a URL -- e com data URI isso vira
+   um parede de base64. Eram 115 imagens assim. */
+const FB=' alt="" onerror="this.style.visibility=\'hidden\'" loading="lazy" ';
 /* Os icones vem embutidos no proprio arquivo (DATA.icons). O CDN fica so como
    rede de seguranca para um id que nao tenha sido baixado. */
 const PACK=(DATA&&DATA.icons)||{profile:{},champion:{},crest:{}};
@@ -2594,7 +2603,12 @@ const PAGES=[
 ];
 let page="visao",fila="all";
 const grupo=()=>DATA.data[page==="equipe"?"squad":fila];
-const filas=()=>DATA.groups.filter(g=>g.key!=="squad");
+/* Fila sem nenhuma partida so servia para levar a 6 paginas vazias seguidas --
+   "Outros modos" vive assim porque Arena esta em BROKEN_MODES no kpi.py.
+   "Todas" e a fila ATUAL ficam sempre, senao o seletor sumiria debaixo de quem
+   chegou por link direto (#/pagina/fila). */
+const filas=()=>DATA.groups.filter(g=>g.key!=="squad"&&(
+  g.key==="all"||g.key===fila||(((DATA.data[g.key]||{}).team||{}).uniqueMatches>0)));
 
 function pVisao(){
   const g=grupo(); if(!g||!g.players.length) return vazio();
