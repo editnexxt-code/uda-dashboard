@@ -46,18 +46,30 @@ img{display:block;max-width:100%}
 .num{font-variant-numeric:tabular-nums;font-weight:600}
 .up{text-transform:uppercase;letter-spacing:.12em}
 
-/* =========================================================== LAYOUT */
-/* A sidebar e o UNICO @media que sobrou, e ela manda em 1180px -- nao em 1080.
-   Abaixo disso ela custa 252px que o conteudo nao tem: era esse degrau, somado ao
-   antigo @media de grid tambem em 1180, que fazia o card encolher quando a tela
-   crescia. Agora o degrau da sidebar cai onde o grid ja esta em 1 coluna. */
+/* =========================================================== LAYOUT
+   O limiar da sidebar tem CONTA, nao gosto. Ela custa 252px e o .content ainda
+   paga 2x --pad (clamp(20px,2.6vw,44px)), entao o container que as container
+   queries medem vale  V - 252 - 2*pad:
+     1080 -> 772px  (acima dos 760px que sao o degrau de CELULAR deste arquivo)
+     1067 -> 759px  (ja caiu na faixa de celular: barrado)
+   1080 e o ultimo numero redondo em que a sidebar convive com um container que
+   NAO e de celular. Do outro lado do degrau: 1093px CSS (= 1366 a 125% de DPI, o
+   notebook Windows mais comum) fica COM a sidebar e 784px de container -- com o
+   antigo 1180 ele a perdia a toa. Em 1024 (iPad deitado) a sidebar deixaria
+   719px; sem ela sobram 971px, que cruza os 900px e VOLTA para duas colunas. */
+:root{--tb-h:62px; --fb-h:52px; --drw:min(300px,86vw)}
+
 .app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
-@media(max-width:1180px){.app{grid-template-columns:1fr}}
+/* minmax(0,1fr) e NUNCA `1fr`: `1fr` e `minmax(auto,1fr)` e a coluna se recusa a
+   encolher abaixo do min-content do filho. Com a faixa de filas em uma linha so
+   (593px de min-content) o `1fr` esticava a PAGINA num aparelho de 375. */
+@media(max-width:1080px){.app{grid-template-columns:minmax(0,1fr)}}
+/* duas barras grudadas no topo: ancora nenhuma pode nascer debaixo delas */
+html{scroll-padding-top:calc(var(--tb-h) + var(--fb-h))}
 
 /* ---------------------------------------------------------- sidebar */
 aside{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:1180px){aside{position:static;height:auto}}
 .brand{display:flex;align-items:center;gap:11px;padding:20px 18px 18px}
 .brand img{width:38px;height:38px;flex:0 0 auto}
 .brand .t{font:700 14px/1.15 var(--disp);letter-spacing:.02em}
@@ -80,14 +92,133 @@ aside{background:var(--card);border-right:1px solid var(--line);display:flex;fle
 .sidecard .track{height:5px;border-radius:var(--rp);background:var(--barneutral);margin-top:11px;overflow:hidden}
 .sidecard .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
 
-/* ---------------------------------------------------------- topbar */
+/* --------------------------------------------------- GAVETA (off-canvas)
+   position:fixed tira os 620px do fluxo -- so isso ja apaga o bloco empilhado
+   que abria o celular. 100dvh depois de 100vh: no Chrome do Android 100vh e a
+   altura COM a barra de endereco recolhida e o pe da gaveta ficava debaixo dela;
+   o 100vh na frente e a rede para motor sem dvh. */
+@media(max-width:1080px){
+  aside{position:fixed;inset:0 auto auto 0;z-index:90;
+    width:var(--drw);height:100vh;height:100dvh;
+    transform:translateX(-100%);
+    transition:transform .26s var(--e);
+    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+    box-shadow:none}
+  /* estado no ATRIBUTO do proprio elemento, nao numa classe que mora no body */
+  aside[data-open="true"]{transform:translateX(0);box-shadow:var(--lift)}
+  .brand{padding-right:56px}          /* o X nao pode pisar no nome */
+  /* alvo de toque: os itens de menu sao a razao da gaveta existir */
+  .nav{padding:13px 11px;font-size:14.5px}
+}
+/* fechada ela vive em translateX(-100%): conteudo a ESQUERDA do zero nunca gera
+   rolagem (so direita/baixo geram), entao a gaveta escondida custa 0px de pagina */
+.drawerx{display:none;position:absolute;z-index:2;
+  top:calc(12px + env(safe-area-inset-top));right:12px;
+  width:36px;height:36px;place-items:center;cursor:pointer;
+  border:1px solid var(--line);border-radius:var(--rs);background:var(--card2);color:var(--mut)}
+.drawerx:hover{color:var(--txt);background:var(--card3)}
+.drawerx:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.drawerx svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.drawermeta{display:none;flex-wrap:wrap;gap:8px;padding:0 12px 16px}
+
+/* -------------------------------------------------------------- backdrop */
+.navscrim{position:fixed;inset:0;z-index:80;display:none;
+  background:rgba(6,9,13,.62);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .26s var(--e)}
+body.navon .navscrim{opacity:1;pointer-events:auto}
+
+/* -------------------------------------------------------------- hamburguer */
+.burger{display:none;place-items:center;flex:0 0 auto;
+  width:44px;height:44px;margin-left:-9px;          /* 44px: alvo minimo de toque */
+  border:1px solid var(--line);border-radius:var(--rs);background:var(--card);
+  color:var(--txt);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background .13s}
+.burger:hover{background:var(--card2)}
+.burger:active{background:var(--card3)}
+.burger:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.burger svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+/* as tres barras viram X sem trocar de SVG: so transform. O estado ja esta dito
+   em aria-expanded -- o desenho apenas repete o que a semantica ja diz. */
+.burger svg path{transform-box:fill-box;transform-origin:center;
+  transition:transform .22s var(--e),opacity .14s linear}
+.burger[aria-expanded="true"] .l1{transform:translateY(5px) rotate(45deg)}
+.burger[aria-expanded="true"] .l2{opacity:0}
+.burger[aria-expanded="true"] .l3{transform:translateY(-5px) rotate(-45deg)}
+
+/* os quatro nascem display:none e so acendem abaixo do limiar. Este bloco vem
+   DEPOIS das declaracoes de base de proposito: mesma especificidade, quem vem
+   por ultimo ganha -- inverter a ordem deixaria o hamburguer invisivel. */
+@media(max-width:1080px){
+  .burger{display:grid}
+  .drawerx{display:grid}
+  .drawermeta{display:flex}
+  .navscrim{display:block}
+}
+
+/* ---------------------------------------------------------- topbar
+   Tinha 207px no celular porque carregava titulo + subtitulo + 6 pilulas de fila
+   quebradas em linhas + 2 chips. Agora carrega hamburguer, titulo e chips, e
+   nada mais: altura FIXA, sem flex-wrap, sem surpresa. */
 .topbar{position:sticky;top:0;z-index:40;background:rgba(14,17,22,.92);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line);padding:16px 30px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.topbar h1{margin:0;font:700 21px/1.2 var(--disp)}
-.topbar .sub{font-size:12.5px;color:var(--mut);margin-top:3px}
-.tbright{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-/* sem o wrap os 6 botoes de fila somam 594px de min-content e empurravam a PAGINA
-   INTEIRA para 672px de largura -- o celular rolava de lado o site todo */
+  border-bottom:1px solid var(--line);
+  height:var(--tb-h);padding:0 30px;display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
+.topbar h1{margin:0;font:700 20px/1.2 var(--disp);min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbmeta{margin-left:auto;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+
+/* o subtitulo da pagina nao e cromo: e a primeira linha do texto. Fora da topbar
+   ele devolve altura de barra em TODA largura e ainda ganha medida de leitura --
+   na topbar ele era uma linha espremida ao lado dos chips. */
+.lede{margin:-4px 0 22px;font-size:14px;color:var(--mut);max-width:72ch}
+.lede:empty{display:none}
+
+/* ------------------------------------------------------ FAIXA DE FILAS
+   Faixa rolavel e nao <select>, por tres motivos medidos: (1) cada pilula carrega
+   a CONTAGEM da fila -- num <option> isso vira texto solto e some a comparacao de
+   relance; (2) sao 6 itens somando ~590px, 1,6 tela em 375px: rolagem curta, e
+   <select> so ganha la pelos 12/15 itens; (3) faixa = 1 toque, <select> = abrir,
+   rolar a roda do iOS, confirmar. E continua sendo o mesmo .seg com aria-pressed:
+   nenhum controle novo, nenhuma ponte de evento change->irPara.
+   Barra propria em TODA largura porque mesmo no desktop, entre 1081 e ~1300px,
+   h1 + seg + chips nao cabiam e a topbar ja quebrava em duas linhas. */
+.filabar{position:sticky;top:var(--tb-h);z-index:39;
+  background:rgba(14,17,22,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:8px 30px;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x proximity;scroll-padding-inline:14px;
+  overscroll-behavior-x:contain;scrollbar-width:none}
+.filabar::-webkit-scrollbar{display:none}
+.filabar:empty{display:none}          /* paginas sem fila: Em equipe e Regras */
+.filabar .seg{flex-wrap:nowrap;flex:0 0 auto}
+.filabar .seg button{scroll-snap-align:center}
+
+/* ------------------------------------------------- topbar/faixa no celular */
+@media(max-width:1080px){
+  :root{--tb-h:60px; --fb-h:46px}
+  .topbar{gap:10px;
+    padding-left:max(12px,env(safe-area-inset-left));
+    padding-right:max(12px,env(safe-area-inset-right))}
+  .topbar h1{font-size:17px;letter-spacing:.005em}
+  /* display:none tira tambem da arvore de acessibilidade: o leitor de tela nunca
+     ouve o par duplicado de chips (o gemeo vivo e o #drawermeta) */
+  .tbmeta{display:none}
+  .filabar{padding:7px max(12px,env(safe-area-inset-left))}
+  /* na faixa a capsula da .seg vira ruido. Sem moldura, a pilula CORTADA na borda
+     direita e o proprio aviso de "tem mais para o lado". */
+  .filabar .seg{background:none;border:0;padding:0;gap:6px}
+  .filabar .seg button{border:1px solid var(--line);background:var(--card);
+    border-radius:var(--rp);padding:8px 13px}
+  .filabar .seg button[aria-pressed="true"]{background:var(--card3);color:var(--txt)}
+}
+/* o curinga de linha ~1130 ja desliga isto, mas deixo explicito para o dia em que
+   aquele seletor for reduzido de escopo */
+@media(prefers-reduced-motion:reduce){
+  aside,.navscrim,.burger svg path{transition:none}
+}
+
+/* a .seg fora da faixa (desktop) continua sendo a capsula de sempre */
 .seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:3px}
 .seg button{appearance:none;border:0;background:none;color:var(--mut);cursor:pointer;font:500 12.5px/1 var(--body);
   padding:7px 12px;border-radius:7px;white-space:nowrap;transition:.13s}
@@ -257,6 +388,271 @@ tbody tr:last-child td{border-bottom:0}
 .wr .track{width:80px;height:5px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden}
 .wr .track i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
 .wr .track i.lo{background:var(--red)}
+
+/* ============================================ A TABELA QUE VIRA CARTÃO
+   Uma mesa de 19 colunas mede 1756px. Num celular de 375px sobram 335px de
+   caixa: 1421px de dado atras de uma rolagem que nao avisa que existe e que
+   perde o nome do jogador no primeiro centimetro. Rolagem cega nao e
+   responsividade -- e a tabela de desktop com uma janelinha.
+
+   A saida NAO e gerar outro HTML (dois geradores desincronizam em uma semana).
+   O <table> continua sendo UM so: ordena, clica, e lido. O que muda e COMO as
+   celulas se arrumam. Cada <td> passa a carregar data-k (que metrica e) e
+   data-l (como ela se chama), e o CSS usa esses dois atributos para montar a
+   grade do cartao e escrever o rotulo que o <thead> deixou de dar.
+
+   E um cartao com 19 campos e tao ruim quanto a rolagem. Por isso o cartao tem
+   ROSTO (quem e, quanto vale, joga bem?) e GAVETA (as metricas finas, atras de
+   um toque). A 20a coluna e a regua de ordenacao: ordenar por uma metrica da
+   gaveta PROMOVE aquele numero para o rosto. */
+
+/* --modo e o limiar COMPARTILHADO com o JS. Mora no #app -- que existe sempre e
+   nunca fica escondido -- porque o JS precisa perguntar "estou em cartao?"
+   mesmo quando a tabela em questao esta dentro de um <details> fechado. Um
+   matchMedia no JS mediria o VIEWPORT enquanto o CSS mede o CONTAINER, e
+   erraria pela largura do padding. Um numero, um lugar. */
+#app{--modo:mesa}
+[data-k="_go"]{display:none}
+.tsort{display:none}
+.nshort,.cpsub{display:none}
+
+/* ------------------------------------------- spine fixo (acima de 700px) */
+/* Entre 700 e 1180 a mesa de 1756px ainda esconde ~900px. As colunas de
+   identidade param de rolar. As larguras sao TRAVADAS de proposito: sticky com
+   left calculado a partir de coluna elastica desalinha em silencio. ATENCAO: se
+   COLS ganhar uma coluna antes de gameName, o left:52px daqui sai do lugar. */
+.tbox.spine th[data-k="rank"],.tbox.spine td[data-k="rank"]{
+  position:sticky;left:0;z-index:4;width:52px;min-width:52px;background:var(--card)}
+.tbox.spine th[data-k="gameName"],.tbox.spine td[data-k="gameName"],
+.tbox.spine th[data-k="jogador"],.tbox.spine td[data-k="jogador"]{
+  position:sticky;left:52px;z-index:4;width:208px;min-width:208px;background:var(--card);
+  box-shadow:14px 0 14px -14px rgba(0,0,0,.9)}
+/* a comparacao nao tem coluna de #: o jogador e a propria borda */
+.tbox.spine.nornk th[data-k="jogador"],.tbox.spine.nornk td[data-k="jogador"]{left:0}
+.tbox.spine thead th[data-k="rank"],.tbox.spine thead th[data-k="gameName"],
+.tbox.spine thead th[data-k="jogador"]{z-index:6;background:var(--card2)}
+.tbox.spine tbody tr:hover td[data-k="rank"],
+.tbox.spine tbody tr:hover td[data-k="gameName"],
+.tbox.spine tbody tr:hover td[data-k="jogador"]{background:var(--card2)}
+
+/* -------------------------------------------- a regua de ordenacao (.tsort) */
+/* Sem <thead> no celular nao ha como ordenar, e sem ordenacao um ranking morre.
+   Isto e rolagem, sim -- mas rolagem de CONTROLE: rotulada, curta e feita de
+   fichas que parecem botao. O rotulo fixo a esquerda e a mascara de fade a
+   direita existem para ela nao ser lida como mais uma tabela fugindo da tela. */
+.tsort{align-items:center;gap:10px;margin:0 0 12px;min-width:0}
+.tsl{flex:0 0 auto;font:600 10px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.tsf{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;padding:2px 24px 2px 0;
+  scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
+.tsf::-webkit-scrollbar{display:none}
+.tsc{flex:0 0 auto;appearance:none;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--line);background:var(--card2);color:var(--mut);
+  border-radius:var(--rp);padding:7px 12px;font:600 11.5px/1 var(--body)}
+.tsc:hover{color:var(--txt)}
+.tsc[aria-pressed="true"]{background:var(--teal-s);border-color:rgba(10,200,185,.42);color:var(--teal)}
+
+/* ---------------------------------------------------- a matriz vira lista */
+/* A matriz 13x13 nao estoura: ela IMPLODE. Com table-layout:fixed cada celula
+   fica com 6,1px de largura e 42px de altura -- o "62%" e o numero de partidas
+   somem, e ninguem reclamou porque o navegador espreme em silencio. No celular
+   a unica pergunta que se faz a uma matriz de sinergia e "quem funciona junto,
+   quem afunda junto", e isso e uma LISTA ORDENADA, nao uma grade. */
+.mxlist{display:none}
+.mxhd{font:600 10px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--teal);margin:4px 0 2px}
+.mxhd.bad{color:var(--red);margin-top:18px}
+/* em uma linha unica sobram ~80px para dois nomes e eles quebram em tres
+   linhas. A dupla passa a ocupar duas faixas: quem e em cima, quanto rende
+   embaixo -- os avatares seguram a coluna da esquerda nas duas. */
+.duo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-areas:"im nm pi" "im bar st";column-gap:11px;row-gap:7px;padding:10px 8px}
+.duo .ims{grid-area:im;align-self:center}
+.duo .nm{grid-area:nm;font-size:12px;line-height:1.3;align-self:center}
+.duo .bar{grid-area:bar;align-self:center}
+.duo .st{grid-area:st;align-self:center}
+.duo .pill{grid-area:pi;align-self:center;justify-self:end}
+/* barra DIVERGENTE ancorada em 50%: para a direita quem vence junto, para a
+   esquerda quem afunda junto. Um trilho comum nao distingue 51% de 92%. */
+.duo .bar{position:relative;height:9px;border-radius:3px;background:var(--card3)}
+.duo .bar::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line);z-index:2}
+.duo .bar i{position:absolute;top:0;bottom:0;border-radius:2px}
+.duo .bar i.up{left:50%;background:var(--teal)}
+.duo .bar i.dn{right:50%;background:var(--red)}
+/* amostra pequena: a lista ordenada expoe o 100%-em-3-jogos que a grade
+   escondia. Em vez de esconder de novo, a linha admite que e ruido. */
+.duo.thin{opacity:.6}
+.mxmid>summary,.mxfull>summary{display:none}
+
+/* ================================================ MODO CARTÃO (<=700px) */
+@container content (max-width:700px){
+  #app{--modo:cartao}
+  .tsort{display:flex}
+
+  .tbox.cards{overflow:visible;border:0;border-radius:0;background:none;background-image:none}
+  /* o spine nao existe em modo cartao: nao ha para onde rolar */
+  .tbox.cards th[data-k],.tbox.cards td[data-k]{position:static!important;
+    width:auto!important;min-width:0!important;box-shadow:none!important}
+
+  .tbox.cards table{display:block;width:100%;border-collapse:separate;border-spacing:0}
+  .tbox.cards thead{display:none}
+  .tbox.cards tbody{display:grid;gap:8px}
+  .tbox.cards tbody tr{position:relative;display:grid;column-gap:8px;align-items:start;
+    padding:10px 12px 18px;background:var(--card2);border:1px solid var(--line);
+    border-radius:var(--rs);box-shadow:var(--bevel);cursor:pointer;transition:border-color .16s}
+  .tbox.cards tbody tr:hover{background:var(--card2);border-color:#2C3540}
+  .tbox.cards tbody td{display:block;padding:0;border:0;text-align:left;min-width:0;white-space:normal}
+
+  /* o puxador. Absoluto de proposito para NAO virar item da grade e nao gastar
+     uma faixa inteira de altura em treze cartoes; o padding-bottom da linha e
+     que reserva a fatia dele. */
+  .tbox.cards tbody tr::after{content:"";position:absolute;right:14px;bottom:10px;
+    width:7px;height:7px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);
+    transform:rotate(45deg);transition:transform .16s var(--e);opacity:.7}
+  .tbox.cards tbody tr.open::after{transform:rotate(-135deg)}
+
+  /* a gaveta: rotulo a esquerda, valor a direita. Sem grid-area de proposito --
+     o auto-placement enfileira os pares depois das faixas nomeadas e ocupa a
+     faixa kv quando ela esta vazia (ordenacao por coluna do rosto). */
+  /* a regra base [data-k="_go"]{display:none} perde para o display:block que o
+     modo cartao da a toda celula -- aqui ela volta com a especificidade certa */
+  .tbox.cards tbody td[data-drawer],.tbox.cards tbody td[data-k="_go"]{display:none}
+  .tbox.cards tr.open>td[data-drawer]{display:flex;align-items:baseline;justify-content:space-between;
+    gap:8px;grid-column:span 3;padding:7px 0 6px;border-bottom:1px solid var(--line2);
+    font-size:12.5px;white-space:nowrap}
+  .tbox.cards tr.open>td[data-drawer]::before{content:attr(data-l);color:var(--dim);
+    font:500 11px/1.2 var(--body);min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+  /* a metrica ORDENADA sobe para o rosto mesmo com a gaveta fechada: e assim
+     que um cartao de 7 campos responde por uma tabela de 19 */
+  .tbox.cards td[data-on]{display:flex!important;align-items:baseline;justify-content:space-between;
+    gap:8px;grid-area:kv;margin-top:10px;padding:7px 10px!important;border:0!important;
+    border-radius:8px;background:var(--teal-s);font-size:12.5px;white-space:nowrap}
+  .tbox.cards td[data-on]::before{content:attr(data-l);color:var(--teal);
+    font:600 10px/1 var(--body);letter-spacing:.12em;text-transform:uppercase}
+
+  /* o destino explicito, no pe da gaveta: tocar na linha ABRE; ir para outra
+     pagina passa a ser escolha, nao efeito colateral do dedo */
+  .tbox.cards tr.open>td[data-k="_go"]{display:block;grid-column:1/-1;margin-top:12px;
+    padding:10px;text-align:center;border:1px solid var(--line);border-radius:8px;
+    font:600 11.5px/1 var(--body);color:var(--teal)}
+
+  /* ---------------------------------------- ROSTO do cartão de RANKING */
+  #tbl .tbox.cards tbody tr{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-areas:
+      "rk who who who sc sc"
+      "rk el  el  el  sc sc"
+      "jg jg  vi  vi  kd kd"
+      "kv kv  kv  kv  kv kv"}
+  #tbl .tbox.cards td[data-k="rank"]{grid-area:rk}
+  #tbl .tbox.cards td[data-k="gameName"]{grid-area:who}
+  #tbl .tbox.cards td[data-k="elo"]{grid-area:el;margin-top:5px}
+  #tbl .tbox.cards td[data-k="games"]{grid-area:jg}
+  #tbl .tbox.cards td[data-k="winrate"]{grid-area:vi}
+  #tbl .tbox.cards td[data-k="kda"]{grid-area:kd}
+  #tbl .tbox.cards td[data-k="score"]{grid-area:sc;justify-self:end;text-align:right}
+  #tbl .tbox.cards td[data-k="games"],#tbl .tbox.cards td[data-k="winrate"],
+  #tbl .tbox.cards td[data-k="kda"]{margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)}
+  #tbl .tbox.cards td[data-k="games"]::before,#tbl .tbox.cards td[data-k="winrate"]::before,
+  #tbl .tbox.cards td[data-k="kda"]::before{content:attr(data-l);display:block;
+    font:600 9.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--dim);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #tbl .tbox.cards .rnk{font-size:17px;width:auto}
+  #tbl .tbox.cards .pl>div,#tbl .tbox.cards .eloc>div{min-width:0}
+  #tbl .tbox.cards .pl .a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* o retrato encolhe porque no cartao ele nao esta competindo com dezoito
+     colunas por atencao -- quem e ja esta escrito ao lado, em corpo maior */
+  #tbl .tbox.cards .pl img{width:30px;height:30px}
+  #tbl .tbox.cards .eloc img{width:22px;height:22px}
+  #tbl .tbox.cards .wr{align-items:flex-start;gap:4px}
+  #tbl .tbox.cards .wr .track{width:100%;max-width:84px}
+
+  /* ------------------------------------ ROSTO do cartão da COMPARAÇÃO */
+  /* Aqui o cartao ganha da tabela ate no desktop, porque o dado e PAREADO:
+     juntos, sozinho e a diferenca, lado a lado, com o rotulo em cima. */
+  .tbox.cards.cmp tbody tr{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-areas:
+      "who who who"
+      "wj  ws  dw"
+      "kj  ks  dk"}
+  .tbox.cards.cmp td[data-k="jogador"]{grid-area:who}
+  .tbox.cards.cmp td[data-k="wr_j"]{grid-area:wj}
+  .tbox.cards.cmp td[data-k="wr_s"]{grid-area:ws}
+  .tbox.cards.cmp td[data-k="d_wr"]{grid-area:dw}
+  .tbox.cards.cmp td[data-k="kda_j"]{grid-area:kj}
+  .tbox.cards.cmp td[data-k="kda_s"]{grid-area:ks}
+  .tbox.cards.cmp td[data-k="d_kda"]{grid-area:dk}
+  .tbox.cards.cmp td[data-k="wr_j"],.tbox.cards.cmp td[data-k="wr_s"],
+  .tbox.cards.cmp td[data-k="d_wr"],.tbox.cards.cmp td[data-k="kda_j"],
+  .tbox.cards.cmp td[data-k="kda_s"],.tbox.cards.cmp td[data-k="d_kda"]{
+    margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)}
+  .tbox.cards.cmp td[data-k="wr_j"]::before,.tbox.cards.cmp td[data-k="wr_s"]::before,
+  .tbox.cards.cmp td[data-k="d_wr"]::before,.tbox.cards.cmp td[data-k="kda_j"]::before,
+  .tbox.cards.cmp td[data-k="kda_s"]::before,.tbox.cards.cmp td[data-k="d_kda"]::before{
+    content:attr(data-l);display:block;font:600 9.5px/1 var(--body);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--dim);margin-bottom:4px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tbox.cards.cmp .pl>div{min-width:0}
+  .tbox.cards.cmp .pl img{width:30px;height:30px}
+  .tbox.cards.cmp .pl .a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* tablet: duas colunas de cartao. Corta pela metade a altura que o modo
+     cartao custa exatamente na faixa em que ele e mais caro. */
+  @container content (min-width:520px){
+    .tbox.cards tbody{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  }
+
+  /* ------------------------------------- CAMPEÕES e SEQUÊNCIAS: encolhem */
+  /* 30 linhas nao viram 30 cartoes: dobrar a altura da pagina para resolver
+     155px de estouro e cura pior que a doenca. Aqui a mesa continua mesa e so
+     perde gordura -- e a pagina ate ENCURTA. */
+  .tcomp thead th{padding:11px 7px}
+  .tcomp tbody td{padding:9px 7px}
+  .tcomp .pl{gap:8px;min-width:0}
+  .tcomp .pl img{width:28px!important;height:28px!important}
+  .tcomp .pl .a{overflow:hidden;text-overflow:ellipsis}
+  .tcomp .wr{gap:4px;min-width:0}
+  .tcomp .wr .track{width:46px}
+
+  /* O estouro das sequencias e quase todo CABECALHO: "Maior de vitorias" gasta
+     108px para exibir um numero de um digito. Deixar quebrar em duas linhas
+     devolve mais largura que qualquer corte no corpo. */
+  .tseq table{table-layout:fixed}
+  .tseq thead th{white-space:normal;padding:9px 8px;font-size:10.5px;line-height:1.25}
+  .tseq tbody td{padding:11px 8px}
+  .tseq th[data-k="jogador"]{width:44%}
+  .tseq .pl{gap:8px;min-width:0}
+  .tseq .pl img{width:28px!important;height:28px!important}
+  .tseq .pl .a{overflow:hidden;text-overflow:ellipsis}
+  .tseq .nlong{display:none}
+  .tseq .nshort{display:inline}
+  .tseq .pill{font-size:10.5px;padding:4px 8px;white-space:nowrap}
+
+  /* --------------------------------------------- a matriz em modo lista */
+  .mxlist{display:block}
+  .mxmid>summary,.mxfull>summary{display:block;cursor:pointer;list-style:none;
+    margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--rs);
+    background:var(--card2);font:600 11.5px/1 var(--body);color:var(--teal);text-align:center}
+  .mxmid>summary::-webkit-details-marker,.mxfull>summary::-webkit-details-marker{display:none}
+  /* a grade nao se perde: so deixa de ser o padrao. Aqui ela volta a ter
+     largura honesta (table-layout:auto + celula de 46px) e uma ancora fixa. */
+  .mxfull .tbox{padding:12px!important}
+  .mxfull table.mx{table-layout:auto}
+  .mxfull .mx-c{min-width:46px}
+  .mxfull .mx-corner,.mxfull .mx-r{width:96px;min-width:96px}
+  .mxfull .mx-r span{font-size:10.5px;margin-left:6px}
+  .mxfull .mx-r img{width:22px;height:22px}
+}
+
+@container content (max-width:560px){
+  /* "Pilotos" e a coluna menos informativa da mesa de campeoes: em vez de
+     espremer todo mundo, ela desce para dentro do nome do campeao */
+  .tcomp th[data-k="pilotos"],.tcomp td[data-k="pilotos"]{display:none}
+  .tcomp .cpsub{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}
+}
 
 /* =========================================================== GRÁFICOS */
 .chart{display:block;width:100%}
@@ -1191,21 +1587,37 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   Números sorteados por <code>demo.py</code>. Para o painel real, rode <code>python run.py</code>.</div>
 
 <div class="app">
-  <aside>
+  <aside id="drawer" tabindex="-1" data-open="false" aria-label="Navegação">
+    <!-- so aparece abaixo do limiar: quem esta no dedo quer um alvo, nao so o Esc -->
+    <button class="drawerx" id="drawerx" type="button" aria-label="Fechar menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
     <div class="brand">
       <img src="__UDA_LOGO__" alt="">
       <div><div class="t">União dos Afundados</div><div class="s" id="brandsub">Painel</div></div>
     </div>
     <div id="nav"></div>
     <div class="sidecard" id="sidecard"></div>
+    <!-- gemeo de #tbmeta: exatamente um dos dois esta visivel por vez -->
+    <div class="drawermeta" id="drawermeta"></div>
   </aside>
 
-  <div>
-    <div class="topbar">
-      <div><h1 id="ptitle">Visão geral</h1><div class="sub" id="psub"></div></div>
-      <div class="tbright" id="tbright"></div>
-    </div>
+  <div id="maincol">
+    <header class="topbar">
+      <button class="burger" id="burger" type="button"
+              aria-label="Menu" aria-expanded="false" aria-controls="drawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path class="l1" d="M4 7h16"/><path class="l2" d="M4 12h16"/><path class="l3" d="M4 17h16"/>
+        </svg>
+      </button>
+      <h1 id="ptitle">Visão geral</h1>
+      <div class="tbmeta" id="tbmeta"></div>
+    </header>
+
+    <div class="filabar" id="filabar" role="group" aria-label="Filtrar por fila"></div>
+
     <div class="content">
+      <p class="lede" id="psub"></p>
       <div id="app"></div>
       <footer><span id="ft-fonte">Dados: Riot Games API · Data Dragon</span>
         <span id="ft-jan"></span><span id="ft-ger"></span>
@@ -1213,6 +1625,9 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
     </div>
   </div>
 </div>
+
+<!-- fora do .app de proposito: dentro dele seria um item de grade a toa -->
+<div class="navscrim" id="navscrim"></div>
 
 <script>
 const DATA = /*__UDA_DATA__*/null;
@@ -2150,15 +2565,34 @@ const COLS=[
 ];
 let sortKey="rank",sortDir=1;
 
+/* FACE governa DUAS coisas ao mesmo tempo: o que aparece no rosto do cartao e o
+   que NUNCA precisa ser promovido pela ordenacao. Quem mexer aqui mexe nas duas.
+   Sao as sete perguntas do rosto: quem e, quanto vale, joga bem? */
+const FACE=new Set(["rank","gameName","elo","games","winrate","kda","score"]);
+
+/* data-k diz QUE metrica a celula e; data-l diz COMO ela se chama. Sao os dois
+   atributos com que o CSS monta a grade do cartao e escreve o rotulo que o
+   <thead> deixou de dar no celular. Custo total: dois atributos por celula. */
+const cel=(k,l,extra)=>` data-k="${k}" data-l="${h(l)}"`+(extra||"");
+
 function tabela(g){
   const col=COLS.find(c=>c.k===sortKey);
   const rows=[...g.players].sort((a,b)=>{
     if(sortKey==="rank") return ((a.rank??1e9)-(b.rank??1e9))*(sortDir>0?1:-1);
     const av=col.s?col.s(a):0,bv=col.s?col.s(b):0;
     return typeof av==="string"?av.localeCompare(bv)*(sortDir>0?1:-1):(bv-av)*(sortDir>0?1:-1);});
-  return `<div class="tbox"><table><thead><tr>${COLS.map(c=>
-    `<th class="${c.l?"l":""} ${c.k===sortKey?"on":""}" data-k="${c.k}">${c.t}${c.k===sortKey?(sortDir>0?" ↓":" ↑"):""}</th>`).join("")}</tr></thead>
-    <tbody>${rows.map(p=>{const s=p.stats,e=eloTxt(p.ranks.solo);
+  const seta=k=>k===sortKey?(sortDir>0?" ↓":" ↑"):"";
+  /* A regua e a 20a coluna: sem <thead> no celular nao ha como ordenar, e sem
+     ordenacao um ranking morre. Ela nasce fora da .tbox porque nao e dado. */
+  const regua=`<div class="tsort" role="group" aria-label="Ordenar o ranking">
+    <span class="tsl">ordenar</span>
+    <div class="tsf">${COLS.map(c=>`<button type="button" class="tsc" data-sk="${c.k}"
+      aria-pressed="${c.k===sortKey}">${h(c.t)}${seta(c.k)}</button>`).join("")}</div></div>`;
+  /* role= explicito porque display:grid em table/tr/td apaga o papel nativo de
+     tabela no Chrome e no Firefox. Cartao nao pode custar acessibilidade. */
+  return `${regua}<div class="tbox cards spine"><table role="table"><thead role="rowgroup"><tr role="row">${COLS.map(c=>
+    `<th scope="col" role="columnheader" class="${c.l?"l":""} ${c.k===sortKey?"on":""}"${cel(c.k,c.t)}>${c.t}${seta(c.k)}</th>`).join("")}<th${cel("_go","")}></th></tr></thead>
+    <tbody role="rowgroup">${rows.map(p=>{const s=p.stats,e=eloTxt(p.ranks.solo);
       const t=tip(h(p.gameName),[
         ["Elo",e.name+(e.sub?` · ${e.sub}`:"")],
         ["UDA Score",p.score==null?"sem ranking":`${nf(p.score,1)} · ${p.rank}º lugar`,
@@ -2168,7 +2602,13 @@ function tabela(g){
         ["Rota mais jogada",p.roles&&p.roles[0]?`${ROTAS[p.roles[0].role]||p.roles[0].role} (${p.roles[0].games})`:"—"],
         ["Campeão mais jogado",p.champions&&p.champions[0]?`${p.champions[0].champion} (${p.champions[0].games})`:"—"],
       ],"clique para abrir o cartão completo");
-      return `<tr data-p="${h(p.puuid)}"${t}>${COLS.map(c=>`<td class="${c.l?"l":""}">${c.f(p)}</td>`).join("")}</tr>`;}).join("")}</tbody></table></div>`;
+      /* data-on e decidido AQUI e nao no CSS: no CSS exigiria um :not() com as
+         sete chaves do rosto. So promove quem nao esta no rosto. */
+      return `<tr role="row" tabindex="0" data-p="${h(p.puuid)}"${t}>${COLS.map(c=>{
+        const naGaveta=!FACE.has(c.k);
+        return `<td role="cell" class="${c.l?"l":""}"${cel(c.k,c.t,
+          (naGaveta?' data-drawer=""':"")+(naGaveta&&c.k===sortKey?' data-on=""':""))}>${c.f(p)}</td>`;}).join("")
+      }<td role="cell"${cel("_go","")}>ver o cartão completo →</td></tr>`;}).join("")}</tbody></table></div>`;
 }
 
 const AWICON={carregador:I.bolt,assassino:I.sword,imortal:I.heart,farmador:I.grid,
@@ -2273,7 +2713,11 @@ const ROTAS={TOP:"Topo",JUNGLE:"Selva",MIDDLE:"Meio",BOTTOM:"Atirador",UTILITY:"
 
 function championTable(l){
   if(!l.length) return noData("SEM CAMPEÕES","Nenhum campeão atingiu 3 partidas nesta fila.");
-  return `<div class="tbox"><table><thead><tr><th class="l">Campeão</th><th>Jogos</th><th>Pilotos</th><th>Vitórias</th><th>KDA</th></tr></thead>
+  /* .tcomp: 30 linhas nao viram 30 cartoes. Esta mesa so encolhe -- e a coluna
+     "Pilotos" desce para dentro do nome quando nem encolher basta. */
+  return `<div class="tbox tcomp"><table><thead><tr><th class="l" data-k="campeao">Campeão</th>
+    <th data-k="jogos">Jogos</th><th data-k="pilotos">Pilotos</th>
+    <th data-k="vitorias">Vitórias</th><th data-k="kda">KDA</th></tr></thead>
     <tbody>${l.map(c=>`<tr data-champ="${c.championId}" tabindex="0" role="button"${tip(h(c.champion),[
       ["Partidas",ni(c.games)],
       ["Resultado",`${c.wins}V ${c.losses}D`],
@@ -2281,12 +2725,14 @@ function championTable(l){
       ["KDA médio",nf(c.kda,2)],
       ["Pilotos",`${c.pilots} membro${c.pilots>1?"s":""} do grupo`],
     ],"clique para abrir o dossiê do campeão")}>
-      <td class="l"><div class="pl"><img src="${champImg(c.championId,c.champion)}"${FB} style="width:32px;height:32px;border-radius:9px">
-      <div class="a">${h(c.champion)}</div></div></td>
-      <td><span class="num">${c.games}</span></td><td><span class="num" style="color:var(--mut)">${c.pilots}</span></td>
-      <td><div class="wr" style="min-width:auto"><div class="t ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</div>
+      <td class="l" data-k="campeao"><div class="pl"><img src="${champImg(c.championId,c.champion)}"${FB} style="width:32px;height:32px;border-radius:9px">
+      <div><div class="a">${h(c.champion)}</div>
+      <div class="cpsub">${c.pilots} piloto${c.pilots>1?"s":""}</div></div></div></td>
+      <td data-k="jogos"><span class="num">${c.games}</span></td>
+      <td data-k="pilotos"><span class="num" style="color:var(--mut)">${c.pilots}</span></td>
+      <td data-k="vitorias"><div class="wr" style="min-width:auto"><div class="t ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</div>
         <div class="track"><i class="${c.winrate<50?"lo":""}" style="width:${c.winrate}%"></i></div></div></td>
-      <td><span class="num ${cl(c.kda,3)}">${nf(c.kda,2)}</span></td></tr>`).join("")}</tbody></table></div>`;
+      <td data-k="kda"><span class="num ${cl(c.kda,3)}">${nf(c.kda,2)}</span></td></tr>`).join("")}</tbody></table></div>`;
 }
 
 /* ================================================= A SALA DOS RECORDES
@@ -2372,20 +2818,31 @@ function recordes(g){
 function comparacao(list){
   const ok=list.filter(p=>p.comparable),falta=list.filter(p=>!p.comparable);
   if(!ok.length) return noData("AMOSTRA PEQUENA","Cada jogador precisa de partidas suficientes nos dois cenários: com a UDA no time e sem ninguém da UDA.");
-  return `<div class="tbox"><table><thead><tr><th class="l">Jogador</th><th>WR juntos</th><th>WR sozinho</th>
-    <th>Δ vitórias</th><th>KDA juntos</th><th>KDA sozinho</th><th>Δ KDA</th><th>Δ mortes</th><th>Δ particip.</th><th>Δ dano/min</th></tr></thead><tbody>
-    ${ok.map(p=>{const d=p.delta;return `<tr>
-      <td class="l"><div class="pl"><img src="${iconImg(p.icon)}"${FB}><div><div class="a">${h(p.gameName)}</div>
-        <div class="b">${p.together.games} juntos · ${p.alone.games} sozinho</div></div></div></td>
-      <td><span class="num">${nf(p.together.winrate,1)}%</span></td>
-      <td><span class="num" style="color:var(--mut)">${nf(p.alone.winrate,1)}%</span></td>
-      <td><span class="pill ${d.winrate>0?"t":d.winrate<0?"r":"n"}">${sg(d.winrate)}pp</span></td>
-      <td><span class="num">${nf(p.together.kda,2)}</span></td>
-      <td><span class="num" style="color:var(--mut)">${nf(p.alone.kda,2)}</span></td>
-      <td><span class="num ${dcl(d.kda)}">${sg(d.kda,2)}</span></td>
-      <td><span class="num ${dcl(d.deaths,true)}">${sg(d.deaths,2)}</span></td>
-      <td><span class="num ${dcl(d.kp)}">${sg(d.kp)}pp</span></td>
-      <td><span class="num ${dcl(d.dmg_min)}">${sg(d.dmg_min,0)}</span></td></tr>`;}).join("")}
+  /* Dez colunas de numero puro sem ancora visual: sticky nao ajuda porque o
+     leitor nao sabe qual numero e qual. Vira cartao -- e aqui o cartao ganha da
+     tabela ate no desktop, porque o dado e PAREADO (juntos / sozinho / Δ). */
+  const CC=[["jogador","Jogador"],["wr_j","WR juntos"],["wr_s","WR sozinho"],["d_wr","Δ vitórias"],
+    ["kda_j","KDA juntos"],["kda_s","KDA sozinho"],["d_kda","Δ KDA"],
+    ["d_mortes","Δ mortes"],["d_kp","Δ particip."],["d_dmg","Δ dano/min"]];
+  const gav=k=>k.startsWith("d_")&&k!=="d_wr"&&k!=="d_kda"?' data-drawer=""':"";
+  return `<div class="tbox cards cmp spine nornk"><table role="table"><thead role="rowgroup"><tr role="row">${
+    CC.map(([k,l],i)=>`<th scope="col" role="columnheader" class="${i?"":"l"}"${cel(k,l)}>${h(l)}</th>`).join("")
+    }</tr></thead><tbody role="rowgroup">
+    ${ok.map(p=>{const d=p.delta;
+      const v={
+        wr_j:`<span class="num">${nf(p.together.winrate,1)}%</span>`,
+        wr_s:`<span class="num" style="color:var(--mut)">${nf(p.alone.winrate,1)}%</span>`,
+        d_wr:`<span class="pill ${d.winrate>0?"t":d.winrate<0?"r":"n"}">${sg(d.winrate)}pp</span>`,
+        kda_j:`<span class="num">${nf(p.together.kda,2)}</span>`,
+        kda_s:`<span class="num" style="color:var(--mut)">${nf(p.alone.kda,2)}</span>`,
+        d_kda:`<span class="num ${dcl(d.kda)}">${sg(d.kda,2)}</span>`,
+        d_mortes:`<span class="num ${dcl(d.deaths,true)}">${sg(d.deaths,2)}</span>`,
+        d_kp:`<span class="num ${dcl(d.kp)}">${sg(d.kp)}pp</span>`,
+        d_dmg:`<span class="num ${dcl(d.dmg_min)}">${sg(d.dmg_min,0)}</span>`,
+        jogador:`<div class="pl"><img src="${iconImg(p.icon)}"${FB}><div><div class="a">${h(p.gameName)}</div>
+          <div class="b">${p.together.games} juntos · ${p.alone.games} sozinho</div></div></div>`};
+      return `<tr role="row" tabindex="0">${CC.map(([k,l],i)=>
+        `<td role="cell" class="${i?"":"l"}"${cel(k,l,gav(k))}>${v[k]}</td>`).join("")}</tr>`;}).join("")}
     </tbody></table>${falta.length?`<div style="padding:14px 16px;font-size:12px;color:var(--dim);border-top:1px solid var(--line2)">
       Sem amostra dos dois lados ainda: ${falta.map(p=>h(p.gameName)).join(" · ")}</div>`:""}</div>`;
 }
@@ -2394,7 +2851,42 @@ function matriz(m){
   if(!m.order.length) return noData("SEM DUPLAS","Ninguém jogou junto o suficiente.");
   const cor=w=>w>=50?`background:rgba(10,200,185,${.1+(w-50)/50*.6})`:`background:rgba(229,72,77,${.1+(50-w)/50*.6})`;
   const cur=n=>short(n).slice(0,10);
-  return `<div class="tbox" style="padding:16px"><table class="mx"><thead><tr><th class="mx-corner"></th>
+
+  /* ---- o RANKING DAS DUPLAS: a mesma matriz respondendo a pergunta que
+     realmente se faz a ela. 41 duplas nao viram 41 cartoes nem uma lista de
+     2300px: viram as melhores, as piores, e um "ver o meio" para o resto. */
+  const duplas=[];
+  for(let i=0;i<m.order.length;i++)for(let j=i+1;j<m.order.length;j++){
+    const a=m.order[i],b=m.order[j],c=m.cells[a+"|"+b]||m.cells[b+"|"+a];
+    if(c) duplas.push({a,b,winrate:c.winrate,games:c.games,wins:c.wins,losses:c.losses});}
+  duplas.sort((x,y)=>(y.winrate-x.winrate)||(y.games-x.games));
+  const N=Math.min(6,Math.floor(duplas.length/2));
+  const top=duplas.slice(0,N), fim=N?duplas.slice(-N):[], meio=duplas.slice(N,duplas.length-N);
+  /* piso de amostra marcado com opacidade em vez de escondido: a grade
+     disfarcava o 100%-em-3-jogos porque ninguem lia celula por celula; a lista
+     ordenada expoe, entao ela precisa admitir o ruido em vez de fingir. */
+  const piso=Math.max(m.minPair+2,5);
+  const duo=d=>{const w=d.winrate,larg=(Math.min(50,Math.abs(w-50))/50*50).toFixed(1);
+    return `<div class="lrow duo${d.games<piso?" thin":""}"${tip(
+      `${h(short(m.names[d.a]))} + ${h(short(m.names[d.b]))}`,[
+      ["Aproveitamento",nf(w,1)+"%",w>=50?"var(--teal)":"var(--red)"],
+      ["Partidas juntos",ni(d.games)],["Resultado",`${d.wins}V ${d.losses}D`]],
+      d.games<piso?"amostra pequena — leia com desconfiança":(w>=50?"essa dupla funciona":"essa dupla afunda junto"))}>
+      <span class="ims"><img src="${iconImg(m.icons[d.a])}"${FB}><img src="${iconImg(m.icons[d.b])}"${FB}></span>
+      <span class="nm">${h(short(m.names[d.a]))} <span style="color:var(--dim)">+</span> ${h(short(m.names[d.b]))}</span>
+      <span class="bar"><i class="${w>=50?"up":"dn"}" style="width:${larg}%"></i></span>
+      <span class="st">${d.games}j</span>
+      <span class="pill ${w>=50?"t":"r"}">${nf(w,0)}%</span></div>`;};
+  const lista=!N?"":`<div class="mxlist">
+    <div class="mxhd">as ${N} que mais vencem juntas</div>${top.map(duo).join("")}
+    ${meio.length?`<details class="mxmid"><summary>ver as ${meio.length} duplas do meio</summary>
+      ${meio.map(duo).join("")}</details>`:""}
+    <div class="mxhd bad">as ${N} que mais afundam juntas</div>${fim.map(duo).join("")}</div>`;
+
+  /* a grade continua existindo, so deixa de ser o padrao no celular. `open` no
+     markup e a rede: se o JS morrer, o desktop continua mostrando a matriz. */
+  return `${lista}<details class="mxfull" open><summary>ver a grade completa</summary>
+    <div class="tbox" style="padding:16px"><table class="mx"><thead><tr><th class="mx-corner"></th>
     ${m.order.map(p=>`<th class="mx-h"><img src="${iconImg(m.icons[p])}"${FB}><span>${h(cur(m.names[p]))}</span></th>`).join("")}</tr></thead><tbody>
     ${m.order.map(a=>`<tr><th class="mx-r"><img src="${iconImg(m.icons[a])}"${FB}><span>${h(cur(m.names[a]))}</span></th>
       ${m.order.map(b=>{if(a===b) return `<td class="mx-c mx-self">—</td>`;
@@ -2412,7 +2904,7 @@ function matriz(m){
     <div class="legend"><span><i style="background:rgba(10,200,185,.65)"></i>vencem juntos</span>
     <span><i style="background:rgba(229,72,77,.65)"></i>afundam juntos</span>
     <span><i style="background:var(--card2)"></i>menos de ${m.minPair} partidas</span>
-    <span>número pequeno = partidas juntos</span></div>`;
+    <span>número pequeno = partidas juntos</span></div></details>`;
 }
 
 const formacoes=(l)=>!l.length?noData("SEM FORMAÇÕES","Ninguém jogou junto o suficiente ainda."):
@@ -2708,13 +3200,14 @@ function pEvolucao(){
       ${heatmap(ev.atividade)}</div></section>`;
   if(ev&&ev.sequencias&&ev.sequencias.length)
     o+=`<section><div class="card flush">${`<div style="padding:22px 24px 0">${chead(I.bolt,"Sequências","a maior sequência de cada um, e como está agora")}</div>`}
-      <div class="tbox" style="border:0;border-radius:0"><table><thead><tr><th class="l">Jogador</th>
-      <th>Sequência atual</th><th>Maior de vitórias</th><th>Maior de derrotas</th></tr></thead><tbody>
-      ${ev.sequencias.map(s=>`<tr><td class="l"><div class="pl"><img src="${iconImg(s.icon)}"${FB}>
-        <div class="a">${h(s.gameName)}</div></div></td>
-        <td>${s.atual>0?`<span class="pill t">${s.atual}V seguidas</span>`:s.atual<0?`<span class="pill r">${-s.atual}D seguidas</span>`:`<span class="pill n">—</span>`}</td>
-        <td><span class="num good">${s.maiorVitorias}</span></td>
-        <td><span class="num bad">${s.maiorDerrotas}</span></td></tr>`).join("")}</tbody></table></div></div></section>`;
+      <div class="tbox tseq" style="border:0;border-radius:0"><table><thead><tr><th class="l" data-k="jogador">Jogador</th>
+      <th data-k="atual">Sequência atual</th><th data-k="maiorv">Maior de vitórias</th>
+      <th data-k="maiord">Maior de derrotas</th></tr></thead><tbody>
+      ${ev.sequencias.map(s=>`<tr><td class="l" data-k="jogador"><div class="pl"><img src="${iconImg(s.icon)}"${FB}>
+        <div class="a"><span class="nlong">${h(s.gameName)}</span><span class="nshort">${h(short(s.gameName))}</span></div></div></td>
+        <td data-k="atual">${s.atual>0?`<span class="pill t">${s.atual}V seguidas</span>`:s.atual<0?`<span class="pill r">${-s.atual}D seguidas</span>`:`<span class="pill n">—</span>`}</td>
+        <td data-k="maiorv"><span class="num good">${s.maiorVitorias}</span></td>
+        <td data-k="maiord"><span class="num bad">${s.maiorDerrotas}</span></td></tr>`).join("")}</tbody></table></div></div></section>`;
   return o;
 }
 
@@ -2870,17 +3363,37 @@ function pintarNav(){
     <div class="s">${ni(t.uniqueMatches)} partidas analisadas</div>
     <div class="track"><i style="width:${Math.max(0,Math.min(100,t.winrate))}%;background:${t.winrate>=50?"var(--teal)":"var(--red)"}"></i></div>`;
 
+  /* os chips existem em DOIS nos -- #tbmeta (desktop) e #drawermeta (gaveta) --
+     e o CSS deixa exatamente UM em display diferente de none por vez. */
   const idade=DATA.lastFetch?(Date.now()-DATA.lastFetch)/3600000:999;
-  $("#tbright").innerHTML=`${meta.q?`<div class="seg">${filas().map(g=>{
+  const chips=`<span class="chip"><span class="dot ${idade<26?"":"old"}"></span>${DATA.demo?"Gerado":"Atualizado"} <b>${ago(DATA.lastFetch||DATA.generatedAt)}</b></span>
+    <span class="chip">Patch <b>${h(DD)}</b></span>`;
+  $("#tbmeta").innerHTML=chips;
+  $("#drawermeta").innerHTML=chips;
+
+  /* a faixa de filas e barra propria: vazia em Em equipe e Regras, e o
+     .filabar:empty do CSS a apaga sem sobrar borda nem padding */
+  $("#filabar").innerHTML=meta.q?`<div class="seg">${filas().map(g=>{
       const d=DATA.data[g.key];
       return `<button data-q="${g.key}" aria-pressed="${g.key===fila}">${h(g.label)}<b>${d?d.team.uniqueMatches:0}</b></button>`;
-    }).join("")}</div>`:""}
-    <span class="chip"><span class="dot ${idade<26?"":"old"}"></span>${DATA.demo?"Gerado":"Atualizado"} <b>${ago(DATA.lastFetch||DATA.generatedAt)}</b></span>
-    <span class="chip">Patch <b>${h(DD)}</b></span>`;
-  document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>irPara(page,b.dataset.q));
+    }).join("")}</div>`:"";
+  document.querySelectorAll("#filabar .seg button").forEach(b=>b.onclick=()=>irPara(page,b.dataset.q));
+  centrarFila();
+}
+
+/* a fila ativa pode estar fora da janela da faixa quando ela rola: trazer ela
+   para o meio e o unico jeito de a barra dizer ONDE voce esta sem numero extra */
+function centrarFila(){
+  const bar=$("#filabar"); if(!bar) return;
+  const b=bar.querySelector('[aria-pressed="true"]'); if(!b) return;
+  const rb=bar.getBoundingClientRect(), r=b.getBoundingClientRect();
+  const alvo=bar.scrollLeft+(r.left-rb.left)-(rb.width-r.width)/2;
+  bar.scrollTo({left:Math.max(0,alvo),behavior:REDUZ?"auto":"smooth"});
 }
 
 function irPara(p,q){
+  /* trocar de pagina fecha a gaveta: ela e um desvio, nao um lugar onde se fica */
+  fecharGaveta(!!(document.activeElement&&$("#drawer").contains(document.activeElement)));
   page=RENDER[p]?p:"visao"; fila=DATA.data[q]?q:"all";
   location.hash=`#/${page}/${fila}`;
   sortKey="rank";sortDir=1;
@@ -2889,6 +3402,7 @@ function irPara(p,q){
 function desenhar(){
   $("#app").innerHTML=RENDER[page]();
   if($("#tbl")) ligarTabela();
+  ligarCartoes();
   ligarSeletor();
   ligarRecordes();
   vida();
@@ -2975,17 +3489,160 @@ function ligarRecordes(){
   });
 }
 
+/* O limiar mora no CSS e o JS PERGUNTA por ele. Um matchMedia aqui mediria o
+   VIEWPORT enquanto o container query mede a CAIXA DE CONTEUDO, e erraria pela
+   largura do padding (ate 88px). #app e a sonda porque existe sempre e nunca
+   fica dentro de um <details> fechado. */
+const emCartao=()=>{const a=$("#app");
+  return !!a&&getComputedStyle(a).getPropertyValue("--modo").trim()==="cartao";};
+
+/* Duas coisas que o CSS nao alcanca: aria-expanded (estado, nao aparencia) e a
+   grade da matriz, que precisa nascer ABERTA no desktop e fechada no celular. */
+function sincCartoes(){
+  const c=emCartao();
+  document.querySelectorAll(".tbox.cards tbody tr").forEach(tr=>{
+    if(c){ if(!tr.hasAttribute("aria-expanded")) tr.setAttribute("aria-expanded","false"); }
+    else { tr.removeAttribute("aria-expanded"); tr.classList.remove("open"); }});
+  /* por ELEMENTO e nao por "mudou de modo": a matriz e repintada a cada troca de
+     pagina, e um <details> recem-nascido nunca viu a virada do modo. O data-uso
+     e marcado no clique do summary (nao no toggle, que tambem dispara quando
+     somos NOS abrindo) para nao desfazer a escolha de quem abriu na mao. */
+  document.querySelectorAll("details.mxfull").forEach(d=>{
+    const s=d.querySelector("summary");
+    if(s&&!s.onclick) s.onclick=()=>{d.dataset.uso="1";};
+    if(!d.dataset.uso) d.open=!c;});
+}
+
+function abrirCartao(tr){
+  const ab=tr.classList.toggle("open");
+  tr.setAttribute("aria-expanded",String(ab));
+}
+
+/* Toda linha de mesa-que-vira-cartao responde ao toque. As do ranking tambem
+   navegam, mas so pelo botao do pe da gaveta -- ver o resto da linha nao pode
+   ser efeito colateral de querer ler a linha. */
+function ligarCartoes(){
+  document.querySelectorAll(".tbox.cards tbody tr:not([data-p])").forEach(tr=>{
+    tr.onclick=()=>{ if(emCartao()) abrirCartao(tr); };
+    tr.onkeydown=e=>{ if((e.key==="Enter"||e.key===" ")&&emCartao()){e.preventDefault();abrirCartao(tr);} };});
+  sincCartoes();
+}
+
 function ligarTabela(){
-  document.querySelectorAll("#tbl thead th").forEach(th=>th.onclick=()=>{
-    const k=th.dataset.k;
+  const ordenar=k=>{ if(!k||k==="_go") return;
     if(k===sortKey) sortDir*=-1; else {sortKey=k;sortDir=1;}
-    $("#tbl").innerHTML=tabela(grupo()); ligarTabela();});
-  document.querySelectorAll("#tbl tbody tr[data-p]").forEach(tr=>tr.onclick=()=>{
-    const id=tr.dataset.p; irPara("jogadores",fila);
+    $("#tbl").innerHTML=tabela(grupo()); ligarTabela();};
+  document.querySelectorAll("#tbl thead th[data-k]").forEach(th=>th.onclick=()=>ordenar(th.dataset.k));
+  document.querySelectorAll("#tbl .tsc").forEach(b=>b.onclick=()=>ordenar(b.dataset.sk));
+  const irAoJogador=id=>{ irPara("jogadores",fila);
     setTimeout(()=>{const c=document.getElementById("pc-"+id);
       if(c){c.scrollIntoView({behavior:"smooth",block:"center"});
-        c.style.borderColor="var(--teal)";setTimeout(()=>c.style.borderColor="",1800);}},60);});
+        c.style.borderColor="var(--teal)";setTimeout(()=>c.style.borderColor="",1800);}},60);};
+  document.querySelectorAll("#tbl tbody tr[data-p]").forEach(tr=>{
+    tr.onclick=e=>{
+      if(emCartao()&&!(e.target.closest&&e.target.closest('[data-k="_go"]'))) return abrirCartao(tr);
+      irAoJogador(tr.dataset.p);};
+    tr.onkeydown=e=>{ if(e.key!=="Enter"&&e.key!==" ") return; e.preventDefault();
+      if(emCartao()) abrirCartao(tr); else irAoJogador(tr.dataset.p);};});
+  sincCartoes();
 }
+
+/* o limiar e de CONTAINER, mas so o viewport muda sozinho: um resize e o unico
+   momento em que o modo pode virar sem nova pintura */
+let tmrCartoes=0;
+addEventListener("resize",()=>{clearTimeout(tmrCartoes);tmrCartoes=setTimeout(sincCartoes,140);});
+
+/* ============================================================== GAVETA
+   Um limiar so, e ele mora aqui e no CSS. O CSS desenha; o JS decide QUANDO a
+   gaveta e um dialogo modal e quando ela e sidebar de verdade. */
+const MQ_GAVETA=matchMedia("(max-width:1080px)");
+const elDrawer=$("#drawer"), elScrim=$("#navscrim"), elBurger=$("#burger"), elMain=$("#maincol");
+let scrollPreso=0;
+
+/* trava com position:fixed + top negativo, NAO overflow:hidden -- o iOS Safari
+   ignora overflow:hidden no body e rola a pagina por baixo da gaveta. O
+   padding-right compensa a barra de rolagem do desktop; no celular vale 0. */
+function travarScroll(t){
+  const b=document.body;
+  if(t){
+    scrollPreso=window.scrollY||document.documentElement.scrollTop||0;
+    const barra=window.innerWidth-document.documentElement.clientWidth;
+    b.style.position="fixed"; b.style.top=(-scrollPreso)+"px";
+    b.style.left="0"; b.style.right="0"; b.style.width="100%";
+    if(barra>0) b.style.paddingRight=barra+"px";
+  }else{
+    b.style.position=""; b.style.top=""; b.style.left=""; b.style.right="";
+    b.style.width=""; b.style.paddingRight="";
+    /* enquanto o body estava fixo a pagina media uma tela de altura. Sem forcar o
+       recalculo AQUI, o scrollTo e cortado pelo limite antigo e a pagina volta
+       para o meio do nada em vez do ponto exato onde a gaveta abriu. */
+    void b.offsetHeight;
+    window.scrollTo({top:scrollPreso,left:0,behavior:"instant"});
+  }
+}
+
+const gavetaAberta=()=>elDrawer.getAttribute("data-open")==="true";
+
+function abrirGaveta(){
+  sincGaveta();   /* terceira rede: no pior caso o modo se acerta na hora do uso */
+  if(!MQ_GAVETA.matches||gavetaAberta()) return;
+  elDrawer.setAttribute("data-open","true");
+  elBurger.setAttribute("aria-expanded","true");
+  document.body.classList.add("navon");
+  /* aria-modal sem inertar o fundo seria mentira para a tecnologia assistiva */
+  elMain.setAttribute("inert","");
+  travarScroll(true);
+  /* preventScroll: dar foco a um elemento o traz para a tela, e isso desfaria a
+     trava que acabou de guardar a posicao de leitura */
+  elDrawer.focus({preventScroll:true});
+}
+function fecharGaveta(devolveFoco){
+  if(!gavetaAberta()) return;
+  elDrawer.setAttribute("data-open","false");
+  elBurger.setAttribute("aria-expanded","false");
+  document.body.classList.remove("navon");
+  elMain.removeAttribute("inert");
+  travarScroll(false);
+  if(devolveFoco!==false&&MQ_GAVETA.matches) elBurger.focus({preventScroll:true});
+}
+
+/* acima do limiar o role sai: ali ela nao e dialogo, e sidebar de verdade */
+let gavetaModo=null;
+function sincGaveta(){
+  const movel=MQ_GAVETA.matches;
+  if(movel===gavetaModo) return;   /* resize dispara aos montes: so agir na virada */
+  gavetaModo=movel;
+  if(movel){
+    elDrawer.setAttribute("role","dialog");
+    elDrawer.setAttribute("aria-modal","true");
+  }else{
+    fecharGaveta(false);   /* nada de scrim ou inert pendurado ao girar a tela */
+    elDrawer.removeAttribute("role");
+    elDrawer.removeAttribute("aria-modal");
+  }
+}
+/* os dois ouvintes de proposito: o `change` da media query e o certo, mas ha
+   motor (e navegador com viewport forcado) que nao o dispara -- o resize e a rede */
+if(MQ_GAVETA.addEventListener) MQ_GAVETA.addEventListener("change",sincGaveta);
+else if(MQ_GAVETA.addListener) MQ_GAVETA.addListener(sincGaveta);
+window.addEventListener("resize",sincGaveta);
+sincGaveta();
+
+elBurger.onclick=()=>gavetaAberta()?fecharGaveta():abrirGaveta();
+elScrim.onclick=()=>fecharGaveta();
+$("#drawerx").onclick=()=>fecharGaveta();
+document.addEventListener("keydown",e=>{
+  if(!gavetaAberta()) return;
+  if(e.key==="Escape"){fecharGaveta();return;}
+  if(e.key!=="Tab") return;
+  /* o fundo esta inert, entao o ciclo do Tab tem de ser o da propria gaveta */
+  const f=[...elDrawer.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')]
+    .filter(x=>x.offsetParent!==null&&!x.disabled);
+  if(!f.length) return;
+  const a=f[0], z=f[f.length-1];
+  if(e.shiftKey&&(document.activeElement===a||document.activeElement===elDrawer)){z.focus();e.preventDefault();}
+  else if(!e.shiftKey&&document.activeElement===z){a.focus();e.preventDefault();}
+});
 
 if(!DATA){
   $("#app").innerHTML=noData("PAINEL AINDA NÃO GERADO","Rode <code>python run.py</code> para buscar os dados e montar o painel.");

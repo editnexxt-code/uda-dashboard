@@ -315,39 +315,10 @@ def _impact(row: sqlite3.Row) -> float:
     return row["kills"] * 2 + row["assists"] - row["deaths"] * 2.5 + (6 if row["win"] else 0)
 
 
-def _build_duos(rows: list[sqlite3.Row], players: dict[str, dict],
-                min_games: int) -> list[dict]:
-    by_match: dict[tuple[str, int], list[sqlite3.Row]] = defaultdict(list)
-    for row in rows:
-        by_match[(row["match_id"], row["team_id"])].append(row)
-
-    pairs: dict[tuple[str, str], dict[str, int]] = defaultdict(
-        lambda: {"games": 0, "wins": 0}
-    )
-    for group in by_match.values():
-        if len(group) < 2:
-            continue
-        group = sorted(group, key=lambda r: r["puuid"])
-        for i in range(len(group)):
-            for j in range(i + 1, len(group)):
-                key = (group[i]["puuid"], group[j]["puuid"])
-                pairs[key]["games"] += 1
-                pairs[key]["wins"] += group[i]["win"]
-
-    out = []
-    floor = max(3, min_games // 2)
-    for (a, b), data in pairs.items():
-        if data["games"] < floor or a not in players or b not in players:
-            continue
-        out.append({
-            "a": players[a]["gameName"], "b": players[b]["gameName"],
-            "iconA": players[a]["icon"], "iconB": players[b]["icon"],
-            "games": data["games"], "wins": data["wins"],
-            "losses": data["games"] - data["wins"],
-            "winrate": _r(_safe_div(data["wins"], data["games"]) * 100, 1),
-        })
-    out.sort(key=lambda d: (-d["winrate"], -d["games"]))
-    return out
+# _build_duos() vivia aqui e enchia data[fila].duos com ate 41 duplas por fila,
+# em 7 filas (~14 KB de JSON em todo build). A tela nunca leu essa chave: quem
+# desenha dupla e a matriz de sinergia (squadExtra.matrix, _synergy_matrix), que
+# cobre os mesmos pares com mais contexto. Removido em vez de mantido morto.
 
 
 def _squad_index(rows: list[sqlite3.Row]) -> dict[tuple[str, int], int]:
@@ -1064,7 +1035,6 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
             "team": team,
             "awardsGood": _pick_awards(ranked, AWARDS_GOOD),
             "awardsBad": _pick_awards(ranked, AWARDS_BAD),
-            "duos": _build_duos(group_rows, players, min_games),
             "trend": _weekly_trend(group_rows),
             "champions": _champion_table(group_rows),
             "records": _build_records(group_rows, players),
