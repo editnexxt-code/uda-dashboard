@@ -13,10 +13,31 @@ LOGO_FILE = Path(__file__).resolve().parent.parent / "assets" / "uda-crest-192.p
 
 
 def _logo_data_uri() -> str:
-    """Brasao embutido: o HTML continua funcionando se for compartilhado sozinho."""
+    """Brasao embutido: o HTML continua funcionando se for compartilhado sozinho.
+
+    Em WebP porque o marcador aparece TRES vezes no template (favicon, brasao da
+    barra lateral e a const que alimenta a marca d'agua dos graficos) -- e como
+    str.replace troca todas as ocorrencias, o PNG de 75KB entrava 3x, virando
+    ~300KB de base64 num arquivo de 1.7MB. O mesmo brasao em WebP fica em ~7KB.
+    Sem Pillow, volta para o PNG: arquivo maior, mas continua funcionando.
+    """
     if not LOGO_FILE.exists():
         return ""
-    b64 = base64.b64encode(LOGO_FILE.read_bytes()).decode("ascii")
+    raw = LOGO_FILE.read_bytes()
+    try:
+        import io
+
+        from PIL import Image
+
+        im = Image.open(io.BytesIO(raw)).convert("RGBA")
+        buf = io.BytesIO()
+        im.save(buf, format="WEBP", quality=90, method=6)
+        if buf.tell() < len(raw):
+            b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+            return f"data:image/webp;base64,{b64}"
+    except Exception:  # noqa: BLE001
+        pass
+    b64 = base64.b64encode(raw).decode("ascii")
     return f"data:image/png;base64,{b64}"
 
 # O payload vira um literal JavaScript dentro de <script>. Um "<" vindo de um nome

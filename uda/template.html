@@ -680,6 +680,73 @@ svg text{font-family:var(--body)}
 .gdraw{animation:arcDraw .9s var(--e) both}
 .gpop{transform-box:fill-box;transform-origin:50% 50%;animation:pop .45s var(--e-pop) both}
 
+/* ===================================================== EVOLUÇÃO: A GRADE
+   Cinco cartões de largura inteira, um gráfico solitário em cada, davam 3993px
+   de página a 1600 e 4540px a 1920 -- e como o SVG escala com a largura do
+   cartão, o mesmo gráfico media 457px numa tela e 577px na outra. A grade de 12
+   tem divisores exatos (6+6 e 12), responde ao .content e nunca usa auto-fit: o
+   número de cartões é conhecido em tempo de render, então a fila órfã não pode
+   existir (quem garante isso é o meia[]/inteiro[] do pEvolucao). */
+.egrid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.egrid>*{grid-column:span 6}
+.egrid>.wide{grid-column:span 12}
+/* 1040px é onde meia coluna cai abaixo de ~470px reais: daí para baixo um
+   gráfico de linha com 11 séries deixa de ser gráfico e vira tinta. */
+@container content (max-width:1040px){.egrid>*{grid-column:span 12}}
+
+/* A CAIXA DE PLOTAGEM. O SVG dela nasce DEPOIS do innerHTML, com a largura real
+   medida (ligarGraficos): é isso que faz a escala do viewBox ser sempre 1 --
+   11px é 11px e a altura que eu peço é a altura em pixels que aparece.
+   O min-height é o que impede o salto de layout entre o primeiro quadro
+   (caixa vazia) e a pintura. */
+.plot{position:relative;min-height:226px}
+.plot.leg{min-height:284px}
+.plot>svg{display:block;width:100%;height:auto}
+/* o mapa de horários tem 24 colunas: no celular ele ROLA na horizontal em vez de
+   encolher para tiras de 21px. É o único gráfico da página que não cabe em 375px. */
+.plot.hm{min-height:250px;overflow-x:auto;overflow-y:hidden}
+.plot.hm>svg{min-width:620px}
+
+/* MARCA D'ÁGUA. O brasão entra UMA vez no documento (crestDefs, a partir da const
+   CREST) e cada gráfico só aponta <use href="#uda-crest">: o data URI tem 103 KB
+   e a página repinta a cada clique num chip de jogador. Dessaturado, clareado e
+   com o contraste comprimido, o brasão inteiro colapsa numa faixa de 26..31 sobre
+   o card #161B22 (22) -- sempre mais claro que o card e sempre mais escuro que a
+   própria gridline var(--line) #232A33 (35). Fica ABAIXO do grid na hierarquia:
+   não existe leitura em que ele dispute com a série. */
+.wm{pointer-events:none;filter:grayscale(1) brightness(1.55) contrast(.5)}
+
+/* LEGENDA FORA DO SVG. Ela morava dentro, numa coluna de 142 unidades reservada
+   à direita: comia 13% da largura útil e, com 11 jogadores empilhados a 20u de
+   distância, exigia ~240u de altura mínima de plotagem só para caber -- era ela
+   que segurava o H:410, não o dado. Em HTML ela quebra em linhas, some quando há
+   um jogador só e devolve a largura inteira ao desenho. */
+.glegend{display:flex;flex-wrap:wrap;gap:5px 13px;margin-top:11px;padding-top:10px;
+  border-top:1px solid var(--line2);font-size:11.5px;color:var(--dim)}
+.glegend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.glegend i{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.glegend b{color:var(--ink2);font-weight:600}
+.glegend b.up{color:var(--teal)} .glegend b.dn{color:var(--red)}
+
+/* O AVISO DE FILA SEM SÉRIE. Em 'normal' e 'aram' o payload não traz evolution:
+   a página desenhava 1 dos 5 gráficos e ficava calada sobre os outros 4. Ele é um
+   cartão IRMÃO, de meia largura, e não um .empty centralizado no vazio -- assim a
+   linha 6+6 fecha e a página continua sendo uma grade. */
+.evnote{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  justify-content:center;gap:11px}
+.evnote>*{position:relative;z-index:1}
+.evnote .eyebrow{color:var(--gold-3)}
+.evnote h3{margin:0;font:600 15.5px/1.25 var(--disp);color:var(--txt)}
+.evnote p{margin:0;font-size:13px;line-height:1.62;color:var(--mut);max-width:54ch}
+.evnote p b{color:var(--gold-1);font-weight:600}
+.evnote .qgo{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+/* o mesmo brasão do fundo dos gráficos, no mesmo tom e pela mesma referência: o
+   cartão de aviso é feito do mesmo material dos cartões que ele está explicando. */
+.evnote>.wmcard{position:absolute;z-index:0;inset:auto -34px -46px auto;
+  width:210px;height:210px;opacity:.06;pointer-events:none;
+  filter:grayscale(1) brightness(1.55) contrast(.5)}
+
 /* =========================================================== PRÊMIOS
    Os dois halls moram no bloco "AS DUAS SALAS", depois do pódio: eles são
    feitos do mesmo material (.metal, .engraved, .artbox) e precisam nascer
@@ -1258,6 +1325,45 @@ svg circle[data-tip]:hover{opacity:.75}
   background:linear-gradient(90deg,transparent,var(--acc-3) 18%,var(--acc) 50%,var(--acc-3) 82%,transparent)}
 .hall .poster-note{margin-top:11px}
 
+/* ================================================ AS DUAS SALAS, LADO A LADO
+   Na home, Fama e Vergonha dividem UMA parede em vez de ocupar duas. Cada .hall
+   vira seu proprio container de query: sem isso o clamp de 3.4cqi do titulo
+   continuaria medindo o .content (1255px em 1600) e um poster de 43px cairia
+   num painel de 564px -- caricatura. O container se chama `hall` e NAO `content`:
+   as regras `@container content (...)` que ja existem continuam achando o
+   .content la em cima, intactas.
+   Todo seletor daqui tem especificidade MAIOR que a regra original que
+   sobrescreve (.halls2 .awards 0,2,0 vence .awards 0,1,0), entao o bloco pode
+   entrar em QUALQUER ponto da folha -- nao depende de ordem de cascata. */
+.halls2{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--stage);align-items:start}
+/* margin:0 porque cada hall e <section> e traz margin-bottom:--stage: dentro da
+   grade quem espaca e o gap, senao sobra um degrau morto embaixo de cada painel.
+   Empilhado o gap E --stage: a tela estreita fica identica a de hoje. */
+.halls2>.hall{margin:0;container-type:inline-size;container-name:hall}
+
+/* O par so existe enquanto cada metade ainda for uma PAREDE: ~494px internos,
+   dois premios de 238px. Abaixo disso o painel vira miniatura e o bloco volta a
+   empilhar -- e volta se comportando exatamente como hoje, porque TODO o
+   reescalonamento mora dentro desta consulta. content 1080 ~= 1415px de tela. */
+@container content (min-width:1080px){
+  .halls2{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,1.7vw,26px)}
+  /* 32px de folga lateral eram 2,5% de uma parede de 1255px e viram 5,2% de uma
+     de 614px: o mesmo respiro, medido de novo. */
+  .halls2>.hall{padding-inline:clamp(14px,1.5vw,26px)}
+  .halls2 .hall-head{max-width:none;margin-bottom:clamp(16px,3.4cqi,26px)}
+  /* poster nao escala por regra de tres, tem piso de presenca: 6,2cqi da metade
+     pesa o mesmo que 3,4cqi da parede inteira. 35px em 1600, teto de 42px.
+     SO font-size: a gravacao (background-image) nao e tocada aqui. */
+  .halls2 .hall .poster-title{font-size:clamp(28px,6.2cqi,42px)}
+  .halls2 .hall .rule{max-width:min(300px,58%);margin-top:12px}
+  .halls2 .hall .poster-note{max-width:44ch;margin-top:9px;font-size:12px}
+  /* 6 premios = 2 colunas x 3 filas, sem orfao. 3x2 aqui daria cartao de 168px:
+     a janela da arte viraria selo de 166x104 e a etiqueta ja cortava o nome. */
+  .halls2 .awards{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,1.2vw,18px);max-width:none}
+  .halls2 .aw-plate .nm{font-size:clamp(17px,3.4cqi,21px)}
+  .halls2 .aw-sc b{font-size:clamp(28px,6.4cqi,38px)}
+}
+
 /* 1220px e o teto da parede: em 3 colunas de 1700px cada quadro passaria de
    550px e a loading art (308px de largura) viraria borrao ampliado. */
 .awards{display:grid;gap:clamp(14px,1.6vw,22px);grid-template-columns:1fr;
@@ -1455,44 +1561,83 @@ svg circle[data-tip]:hover{opacity:.75}
 }
 
 /* ============================================== PÁGINA CAMPEÕES: O ARSENAL
-   A pagina era uma tabela de 5 colunas num campo vazio. O arsenal poe a arte na
-   frente e a tabela vira o apendice detalhado, no fim. 12 cartoes fecham fila
-   exata em 3, 2 e 1 coluna -- nunca sobra orfao. */
-.cgrid{display:grid;gap:clamp(12px,1.5vw,20px);grid-template-columns:1fr;
+   O cartão anterior tinha DOIS defeitos de caixa, e o pior não era o splash.
+
+   1) .cc-ic era um <span> — portanto display:inline. width/height NÃO se aplicam
+      a inline não-substituído, então os 52x52 eram silenciosamente ignorados; com
+      o pai colapsado, a regra .cc-ic img{width:100%;height:100%} resolvia o 100%
+      contra o .cc-in inteiro. O ícone de campeão, que o assets.py embute em 64x64
+      (CHAMPION_PX), acabava esticado até 351x202 — upscale de 5,5x na horizontal
+      e 3,2x na vertical, com object-fit no default `fill`. ERA ESSE o rosto
+      borrado e deformado, não a arte do ddragon (essa é uma REDUÇÃO e está nítida).
+      A cura não é object-fit nem image-rendering: é o ícone deixar de ser filho de
+      um inline. Agora ele é o próprio <img class="cc-ic"> — sem embrulho — e 40px
+      é redução de 64, nítido por construção.
+
+   2) 16/8.4 dava ~200px de arte por cartão e a grade travava em 3 colunas: a
+      .cgrid sozinha ocupava 1737px. A faixa cai para 16/7 (~80px, redução de 7x
+      sobre o centered 1280x720) e a grade abre até 6 colunas.
+
+   12 cartões fecham fila EXATA em 6, 4, 3 e 2 — 12 é divisível por todas, então
+   nenhum breakpoint deixa órfão, que era a regra do desenho original. */
+.cgrid{display:grid;gap:clamp(10px,1.1vw,14px);grid-template-columns:repeat(2,minmax(0,1fr));
   max-width:1320px;margin-inline:auto}
-@container content (min-width:640px){.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@container content (min-width:1020px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container content (min-width:560px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container content (min-width:780px){.cgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container content (min-width:1120px){.cgrid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+
 .ccard{position:relative;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;
-  border-radius:12px;background:linear-gradient(180deg,#10141B,var(--ink));
+  border-radius:10px;background:linear-gradient(180deg,#10141B,var(--ink));
   border:1px solid var(--line);box-shadow:var(--bevel),var(--lift);
   transition:border-color .2s var(--e),box-shadow .2s var(--e),transform .2s var(--e)}
 .ccard:hover,.ccard:focus-visible{border-color:var(--gold-2);transform:translateY(-3px);
-  box-shadow:0 0 44px -20px var(--gold-2),var(--bevel),var(--lift);outline:0}
-.ccard:hover .art{transform:scale(1.05)}
-.cc-win{aspect-ratio:16/8.4}
-.cc-win .art{transition:transform .32s var(--e);object-position:center 18%;background-position:center 18%}
-/* a posicao no arsenal e dado: o numero fica gravado no canto da arte */
-.cc-rk{position:absolute;top:9px;right:11px;z-index:2;font:800 22px/1 var(--cond);
-  color:rgba(240,230,210,.55);text-shadow:0 2px 6px rgba(0,0,0,.8);font-variant-numeric:tabular-nums}
-.cc-in{position:relative;z-index:2;padding:0 15px 15px;text-align:center}
-.cc-ic{width:52px;height:52px;margin:-26px auto 0;border-radius:14px;padding:2px;
-  background:linear-gradient(160deg,var(--gold-1),var(--gold-3));box-shadow:0 9px 20px rgba(0,0,0,.7)}
-.cc-ic img{width:100%;height:100%;border-radius:12px;background:var(--ink2)}
-.cc-nm{margin-top:9px;font:800 clamp(17px,1.5cqi,22px)/1 var(--cond);text-transform:uppercase;
-  letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cc-tt{font-size:11px;color:var(--dim);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cc-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;
-  padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
-.cc-st .k{font:600 9px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.cc-st .v{font:800 19px/1 var(--cond);margin-top:6px;font-variant-numeric:tabular-nums}
-.cc-tr{height:5px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;margin-top:11px}
+  box-shadow:0 0 34px -18px var(--gold-2),var(--bevel),var(--lift);outline:0}
+.ccard:hover .art{transform:scale(1.06)}
+
+/* a faixa continua sendo o centered de 1280x720 — em ~186px de largura isso é
+   redução de 7x, ou seja, nítida por construção. Nunca use aqui o ícone do PACK. */
+.cc-win{aspect-ratio:16/7}
+.cc-win .art{transition:transform .32s var(--e);object-position:center 20%;background-position:center 20%}
+/* o véu padrão começa transparente aos 30%; numa faixa de 80px isso deixaria o
+   número de posição sobre arte crua. Um degrau a mais no topo resolve. */
+.cc-win .scrim{background:linear-gradient(180deg,rgba(11,15,21,.12),rgba(11,15,21,.62) 62%,#10141B 100%)}
+.cc-rk{position:absolute;top:6px;right:8px;z-index:2;font:800 15px/1 var(--cond);
+  color:rgba(240,230,210,.6);text-shadow:0 2px 6px rgba(0,0,0,.85);font-variant-numeric:tabular-nums}
+
+.cc-in{position:relative;z-index:2;padding:0 10px 10px}
+/* -18px faz o brasão quebrar a moldura da arte, que é a assinatura do Arena UDA.
+   align-items:flex-end apoia o nome na base do ícone; se o CDN cair e o .cc-tt
+   vier vazio, a linha continua com 40px de altura e o cartão não muda de tamanho. */
+.cc-hd{display:flex;align-items:flex-end;gap:8px;min-width:0;margin-top:-18px}
+/* IMG COM CLASSE PRÓPRIA. Nada de <span> no meio: era dali que vinha o upscale.
+   40 < 64 (CHAMPION_PX no assets.py) — se um dia precisar de ícone maior, suba lá,
+   não aqui. object-fit:cover só como cinto de segurança: a fonte já é quadrada. */
+img.cc-ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;object-fit:cover;
+  background:var(--ink2);border:1px solid var(--gold-3);
+  box-shadow:0 6px 16px rgba(0,0,0,.75)}
+.cc-id{flex:1;min-width:0}
+.cc-nm{font:800 16px/1.02 var(--cond);text-transform:uppercase;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-tt{margin-top:2px;font:500 9.5px/1.1 var(--body);color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* três colunas de rótulo em 186px viravam três colunas de 51px com "VITÓRIAS"
+   espremido. Aqui há hierarquia: o aproveitamento é o número, o resto é legenda. */
+.cc-st{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+  margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07)}
+.cc-wr{font:800 20px/1 var(--cond);font-variant-numeric:tabular-nums}
+.cc-mt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:500 9.5px/1 var(--body);color:var(--mut);font-variant-numeric:tabular-nums}
+.cc-tr{height:4px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden;margin-top:7px}
 .cc-tr i{display:block;height:100%;border-radius:var(--rp);background:var(--teal)}
 .cc-tr i.lo{background:var(--red)}
-.cc-pl{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;
-  font-size:10.5px;color:var(--dim)}
-.cc-pl .ims{display:flex}
-.cc-pl .ims img{width:21px;height:21px;border-radius:50%;border:2px solid #10141B}
-.cc-pl .ims img+img{margin-left:-8px}
+.cc-pl{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}
+.cc-pl .ims{display:flex;flex:0 0 auto}
+/* PROFILE_PX é 72 no assets.py: 17px continua sendo redução. */
+.cc-pl .ims img{width:17px;height:17px;border-radius:50%;border:1.5px solid #10141B;object-fit:cover}
+.cc-pl .ims img+img{margin-left:-6px}
+.cc-pt{min-width:0;font:500 9.5px/1 var(--body);color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* tudo que abre o dossie se comporta como botao, inclusive pelo teclado */
 .champ[data-champ],.aw[data-champ],tr[data-champ]{cursor:pointer}
 [data-champ]:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
@@ -1580,6 +1725,190 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--card3);border-radius:5px}
 ::-webkit-scrollbar-thumb:hover{background:#333d4a}
+
+/* ============================================ DENSIDADE VERTICAL (CELULAR)
+   A Visao geral tinha 18968px em 375px de largura: 23 telas de rolagem para
+   ver 12 KPIs, 3 do podio, 12 quadros de hall, 31 recordes e 24 partidas.
+   Nada e escondido aqui -- o dash continua completo. O que muda e:
+     (1) o RITMO: 52px de ar entre secoes viram 28, e o card aperta;
+     (2) o PISO das escalas fluidas: todo clamp() foi calibrado pelo topo,
+         entao no celular ele caia no MINIMO, que era um minimo de desktop
+         (numero de 38px num cartao de 128px);
+     (3) a PROPORCAO das artes, que e a maior despesa de altura da pagina;
+     (4) a ORDEM, porque a primeira tela do celular tem de responder
+         "quem esta ganhando", nao "qual a duracao media da partida".
+   Tudo em @container content: acima de 560px de container o desktop nao
+   perde um pixel, e nenhuma dessas regras chega a existir. */
+@container content (max-width:560px){
+
+  /* -------------------------------------------------- ritmo e respiro */
+  #app{--stage:28px}
+  #app>section{margin-bottom:var(--stage)}
+  .card{padding:15px 14px}
+  .ch{margin-bottom:13px;gap:10px}
+  .ch .ic{width:28px;height:28px}
+  .ch .ic svg{width:15px;height:15px}
+  .ch h2{font-size:14.5px}
+  .ch .hint{font-size:11.5px;line-height:1.35}
+
+  /* ------------------------------------------------- ORDEM DE LEITURA
+     So a ordem VISUAL muda: o DOM continua o mesmo, o leitor de tela e o
+     desktop tambem. O data-sec vem do pVisao/podio/hall/recordes -- e
+     nomeado de proposito, porque :nth-child quebraria no dia em que
+     "Os afundados" nao existir naquela fila. */
+  #app{display:flex;flex-direction:column}
+  #app>section{order:50}
+  #app>[data-sec="podio"]{order:10}          /* quem esta ganhando */
+  #app>[data-sec="kpis"]{order:20}           /* o placar do grupo */
+  #app>[data-sec="feed"]{order:30}           /* o que acabou de acontecer */
+  #app>[data-sec="afundados"]{order:40}
+  /* Fama e Vergonha viajam juntas dentro de <section class="halls2">: no celular
+     elas ja estao empilhadas e a ordem entre as duas e a do DOM. */
+  #app>[data-sec="halls"]{order:50}
+  #app>[data-sec="recordes"]{order:70}
+  #app>[data-sec="medidor"]{order:80}        /* leitura de estudo, no fim */
+  #app>[data-sec="dispersao"]{order:90}
+
+  /* -------------------------------------------------------------- KPIs
+     4 herois empilhados a 128px = 512px antes de qualquer conteudo.
+     Dois por fila com o numero em 30px: 2 filas de 113. */
+  .stats{gap:10px}
+  .stats>.kpi-hero{grid-column:span 4}
+  .kpi-hero{padding:11px 12px 12px}
+  .kpi-hero .v{font-size:30px;margin-top:6px}
+  .kpi-hero .v small{font-size:12px}
+  .kpi-hero .k{font-size:9px;letter-spacing:.14em}
+  .kpi-hero .ic{width:22px;height:22px}
+  .kpi-hero .ic svg{width:12px;height:12px}
+  .kpi-hero .foot{padding-top:7px}
+  .kpi-hero .sub{font-size:10.5px;line-height:1.25}
+  .kpi-hero .spark{width:44px;height:14px}
+  .kpi-tick{padding:10px 11px}
+  .kpi-tick .v{font-size:19px}
+
+  /* ------------------------------------------------------------ PODIO */
+  .stage{padding-top:18px}
+  .pod-head{margin-bottom:16px}
+  .pod-head .poster-note{font-size:11.5px}
+  .podium3{gap:16px}
+  .podium3 .pod .artbox{aspect-ratio:308/236}
+  .podium3 .pod.p1 .artbox{aspect-ratio:308/300}
+  .pod-por{margin-bottom:24px}
+  .pod.p1 .pod-por{margin-bottom:28px}
+  .pod .nm{font-size:17px}
+  .pod.p1 .nm{font-size:21px}
+  .pod .sc{font-size:26px;margin-top:6px}
+  .pod.p1 .sc{font-size:32px}
+  .pod .ft{margin-top:9px}
+  .pod .step{margin-top:11px;height:44px}
+  .pod.p2 .step{height:50px}
+  .pod.p1 .step{height:56px}
+  .pod .step .rn{font-size:30px}
+
+  /* -------------------------------------------------- HALL / QUADRO .aw
+     461px por quadro x 12 quadros = 5532px, quase um terco da pagina. A
+     janela de arte cai de 16/10 para 16/6 (187px -> 124px) e o miolo
+     aperta; a placa, o numero e a regua da media continuam legiveis. */
+  .hall{padding:20px 0 6px}
+  .hall-head{margin-bottom:16px}
+  .hall .poster-title{font-size:23px}
+  .hall .poster-note{font-size:11.5px}
+  .awards{gap:10px}
+  .aw-win{aspect-ratio:16/6}
+  .aw-tag{padding:8px 10px}
+  .aw-tag .t{font-size:12px;letter-spacing:.14em}
+  .aw-in{padding:0 11px 12px}
+  .aw-disc{width:44px;height:44px;margin-top:-23px}
+  .aw-plate{margin-top:9px;padding:7px 10px}
+  .aw-plate .nm{font-size:16px}
+  .aw-plate .d{font-size:10.5px;margin-top:3px}
+  .aw-sc{margin-top:9px}
+  .aw-sc b{font-size:26px}
+  .aw-m{margin-top:9px}
+  .aw-m .cap{margin-top:5px}
+  .aw-f{margin-top:9px;padding-top:9px;gap:7px}
+  /* o quadro torto da sala da vergonha empurra 4px para fora do container
+     numa tela de 375px -- e em coluna unica a piada nem aparece, so a
+     conta sobra. Fica reto no celular. (mesma especificidade da regra
+     original, vindo depois: ganha sem !important) */
+  .hall-shame .aw:nth-child(odd),
+  .hall-shame .aw:nth-child(even){--rot:0deg}
+
+  /* --------------------------------------------------------- RECORDES */
+  .relics{gap:10px}
+  .rel{min-height:172px;padding:13px}
+  .rel .big{font-size:30px;margin-top:6px}
+  .rel .big small{margin-top:6px}
+  .rel .who{margin-top:10px;padding-top:9px}
+  .rel .lg{margin-top:7px;font-size:11px}
+  .rtabs{margin:16px 0 12px;gap:6px}
+  .rgrid{gap:8px}
+  .rc{padding:11px 12px}
+  .rc .vl{margin-top:7px}
+  .rc .vl b{font-size:23px}
+  .rc .pl2{padding-top:9px}
+
+  /* -------------------------------------------------------- AFUNDADOS */
+  .sunk{gap:10px}
+  .sk{padding:14px}
+  .sk-why{margin-top:10px}
+  .sk-gap{margin-top:10px;padding-top:9px}
+  .sk-worst{margin-top:10px;padding-top:9px}
+
+  /* ------------------------------------------------------------- FEED */
+  .mfeed{gap:8px}
+  .mfeed-top{padding-bottom:10px;margin-bottom:10px}
+  .mfeed-lg{font-size:11px}
+
+  /* --------------------------------------------- graficos e distancias */
+  .gauge{max-height:172px}
+  .gmeta .v{font-size:18px}
+  .legend{gap:8px 14px;margin-top:12px;padding-top:11px;font-size:11px}
+  .hbar{padding:7px 8px}
+  .content{padding-bottom:56px}
+
+  /* Jogadores e Campeoes pegam carona no mesmo aperto */
+  .pcards{gap:12px}
+  .pc-h{padding:14px}
+  .pc-b{padding:14px;gap:14px}
+  .champs{padding:12px 14px 14px}
+  .cgrid{gap:10px}
+}
+
+/* ================================================= VER MAIS / VER MENOS
+   O botao e a classe abaixo nao tem media query de proposito: quem decide
+   se eles existem e o dobrar(), e ele so dobra em tela estreita. Sem JS,
+   ou no desktop, nada disto chega a existir no documento. */
+.fold-off{display:none!important}
+.maisbtn{grid-column:1/-1;appearance:none;width:100%;min-height:44px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 16px;cursor:pointer;border-radius:var(--rs);
+  background:var(--card2);border:1px dashed var(--line);color:var(--mut);
+  font:700 11px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;
+  transition:border-color .13s,color .13s}
+.maisbtn:hover,.maisbtn:focus-visible{border-style:solid;border-color:var(--gold-2);color:var(--txt)}
+.maisbtn::after{content:"";width:7px;height:7px;flex:0 0 auto;margin-top:-3px;
+  border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:rotate(45deg);transition:transform .16s var(--e)}
+.maisbtn[aria-expanded="true"]::after{transform:rotate(225deg);margin-top:2px}
+
+/* ====================================================== ALVOS DE TOQUE
+   Medido hoje: .rtab 31px, .cchip 32px, .pchip ~31px, .seg button 26px,
+   .mc-p 41px. O dash foi desenhado para um cursor de 1px. Este e um
+   @media de VIEWPORT de proposito: quem define o alvo e o dedo que segura
+   o aparelho, nao a largura do container. */
+@media(max-width:620px){
+  .rtab{min-height:44px;padding:11px 16px}
+  .rtabs{gap:8px}
+  .pchip,.pbtn{min-height:44px;padding:10px 14px}
+  .pod .cchip{min-height:44px;padding:10px 14px}
+  .mc-p{min-height:44px}
+  .seg button{min-height:44px;padding:12px 14px}
+  .form i{width:26px;height:26px}
+  /* a linha da tabela ja e o alvo: 44px garante que o toque abre o cartao
+     do jogador sem o dedo cair na linha de cima */
+  #tbl tbody tr td{padding-top:10px;padding-bottom:10px}
+}
 </style>
 </head>
 <body>
@@ -1793,22 +2122,73 @@ const eixoY=(vals,Y,x0,x1,fmt,destaque)=>vals.map(v=>{
   <text x="${x0-12}" y="${Y(v)+4}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="end">${fmt(v)}</text>`;
 }).join("");
 
-/* barras semanais + linha dourada. A escala nao e mais 0-100 fixa: com o grupo
-   oscilando entre 45% e 58% o grafico virava um bloco reto. */
-function barLine(trend){
+/* ==================================================== EVOLUÇÃO: GRÁFICOS
+   Margens próprias, e não GX.PL/GX.PB: scatter e radar dividem aquele objeto e
+   as margens de 56/48 são o que alinha as colunas de rótulo daquelas páginas.
+   Aqui a caixa chega MEDIDA, então estes números são pixels de verdade.
+   GX continua sendo a fonte das CORES -- o vocabulário não se divide. */
+const EV={PL:46,PR:18,PT:16,PB:30};
+
+/* ------------------------------------------------- MARCA D'ÁGUA (uma vez)
+   O data URI do brasão tem 103 KB. Repetido nos cinco gráficos seriam 500 KB de
+   DOM a cada repintura, e a página repinta a cada clique num chip de jogador.
+   Ele entra UMA vez em <defs>, no fim do <body>, e os gráficos só apontam. */
+const CREST="__UDA_LOGO__";
+function crestDefs(){
+  if(!CREST||document.getElementById("uda-crest")) return;
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("aria-hidden","true");
+  s.setAttribute("style","position:absolute;width:0;height:0;overflow:hidden");
+  s.innerHTML=`<defs><image id="uda-crest" href="${CREST}" width="256" height="256"
+    preserveAspectRatio="xMidYMid meet"/></defs>`;
+  document.body.appendChild(s);
+}
+/* O brasão ocupa 76% do MENOR lado da área de plotagem e fica centrado NELA, não
+   no cartão: centrado no cartão ele encostaria na coluna de rótulos do eixo Y.
+   Sai por baixo de tudo (é o primeiro nó do SVG) e sem pointer-events, então não
+   rouba nenhum hover das faixas de tooltip. */
+const marca=(x,y,w,h,op)=>{
+  if(!CREST||w<80||h<60) return "";
+  const d=Math.min(w,h)*.76;
+  return `<use class="wm" href="#uda-crest" opacity="${op||.055}"
+    transform="translate(${(x+(w-d)/2).toFixed(1)},${(y+(h-d)/2).toFixed(1)}) scale(${(d/256).toFixed(4)})"/>`;
+};
+/* o mesmo brasão, versão HTML, para o cartão de aviso */
+const crestImgTag=(cls)=>CREST?`<svg class="${cls}" viewBox="0 0 256 256" aria-hidden="true"><use href="#uda-crest"/></svg>`:"";
+
+/* legenda em HTML: quebra em linhas, some quando há uma série só e devolve ao
+   desenho as 142 unidades que a coluna reservada à direita comia. */
+const glegend=(itens)=>itens.length<2?"":`<div class="glegend">${itens.map(l=>
+  `<span><i style="background:${l.c}"></i>${h(l.n)}${l.vt!=null?` <b class="${l.cls||""}">${l.vt}</b>`:""}</span>`).join("")}</div>`;
+
+/* anotação de extremo: anel + valor. Só aparece quando há UMA série desenhada --
+   com onze linhas, vinte e duas anotações seriam ruído, não leitura. */
+const anota=(x,y,txt,cor,acima,atraso)=>`<g class="gfade" style="animation-delay:${atraso||.45}s">
+  <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="none" stroke="${cor}" stroke-width="1.6"/>
+  <text x="${x.toFixed(1)}" y="${(y+(acima?-13:19)).toFixed(1)}" fill="${cor}" font-size="11" font-weight="600"
+    text-anchor="middle" style="paint-order:stroke;stroke:var(--card);stroke-width:3.5">${txt}</text></g>`;
+
+/* ---------------------------------------------------------------- BARRAS
+   Aproveitamento por semana. H fixo em 226px: 176 de plotagem (4 faixas de 44px
+   entre gridlines -- quatro vezes o corpo da fonte, que é onde um rótulo de 11px
+   para de disputar espaço com o vizinho) + 16 de folga em cima para o rótulo do
+   pico + 34 embaixo para as datas. Antes eram 340 de viewBox que viravam 379px
+   numa tela de 1600 e 479px numa de 1920. */
+function barLine(trend,W){
   if(!trend||trend.length<2) return noData("POUCOS DADOS","Ainda não há semanas suficientes.");
-  const W=1080,H=340,PL=GX.PL,PR=GX.PR,PT=GX.PT,PB=GX.PB,iw=W-PL-PR,ih=H-PT-PB,n=trend.length;
+  W=Math.max(300,Math.round(W||760));
+  /* abaixo de 430px a coluna de rótulos de 46 come 15% da largura: ela encolhe
+     para 36, que ainda cabe "100%" a 11px com 11px de folga até o eixo */
+  const PL=W<430?36:EV.PL,PR=EV.PR,PT=EV.PT,PB=34,ih=176,H=PT+ih+PB,iw=W-PL-PR,n=trend.length;
   const wrs=trend.map(t=>t.winrate);
   const y0=Math.max(0,Math.min(35,Math.min(...wrs)-6)),y1=Math.min(100,Math.max(65,Math.max(...wrs)+6));
-  const bw=Math.max(14,Math.min(64,iw/n*.72)), X=i=>PL+iw*(i+.5)/n, Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
+  const bw=Math.max(9,Math.min(48,iw/n*.7)), X=i=>PL+iw*(i+.5)/n, Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
   const passo=(y1-y0)/4;
   const g=eixoY([0,1,2,3,4].map(i=>y0+passo*i),Y,PL,W-PR,v=>nf(v,0)+"%");
-  /* a faixa do empate: 50% e o unico valor que importa nesse grafico, e antes era
-     uma gridline igual as outras */
   const faixa=(y0<50&&y1>50)?`<rect x="${PL}" y="${Y(52)}" width="${iw}" height="${Y(48)-Y(52)}"
     fill="var(--gold-2)" opacity=".05"/>
     <line x1="${PL}" y1="${Y(50)}" x2="${W-PR}" y2="${Y(50)}" stroke="${GX.eixo}" stroke-dasharray="5 4"/>
-    <text x="${W-PR-4}" y="${Y(50)-7}" fill="${GX.lab}" font-size="10" text-anchor="end">empate</text>`:"";
+    <text x="${W-PR-3}" y="${Y(50)-6}" fill="${GX.lab}" font-size="10" text-anchor="end">empate</text>`:"";
   const melhor=Math.max(...wrs),pior=Math.min(...wrs);
   const gd=uid("gwk");
   const bars=trend.map((d,i)=>{
@@ -1820,28 +2200,38 @@ function barLine(trend){
       ["Vitórias",`${ni(d.wins)}V ${ni(d.games-d.wins)}D`],
     ],dest?"melhor semana do período":d.winrate===pior?"pior semana do período":null);
     return `<g${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}" fill="transparent"/>
-      <rect class="gbar" style="animation-delay:${(i*32)}ms" x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${hh}" rx="7"
-      fill="${c}" fill-opacity="${dest?".95":".55"}" stroke="${dest?"var(--gold-2)":"none"}" stroke-width="${dest?1.4:0}"/></g>`;
+      <rect class="gbar" style="animation-delay:${(i*32)}ms" x="${(X(i)-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" rx="${Math.min(6,bw/2.6).toFixed(1)}"
+      fill="${c}" fill-opacity="${dest?".95":".5"}" stroke="${dest?"var(--gold-2)":"none"}" stroke-width="${dest?1.4:0}"/></g>`;
   }).join("");
-  const path=trend.map((d,i)=>`${i?"L":"M"}${X(i)},${Y(d.winrate)}`).join(" ");
-  const area=`${path} L${X(n-1)},${PT+ih} L${X(0)},${PT+ih} Z`;
-  const step=Math.ceil(n/12);
-  /* i===n-1 no filtro: a semana mais recente e a que mais importa e era justamente
-     a que ficava sem rotulo quando (n-1) nao caia no passo */
+  const path=trend.map((d,i)=>`${i?"L":"M"}${X(i).toFixed(1)},${Y(d.winrate).toFixed(1)}`).join(" ");
+  const area=`${path} L${X(n-1).toFixed(1)},${PT+ih} L${X(0).toFixed(1)},${PT+ih} Z`;
+  const step=Math.ceil(n/Math.max(3,Math.floor(iw/58)));
   const xl=trend.map((d,i)=>(i%step===0||i===n-1)
-    ?`<text x="${X(i)}" y="${H-18}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${h(rotSemana(d.week))}</text>`:"").join("");
-  const iM=wrs.indexOf(melhor);
-  const nota=`<g class="gfade" style="animation-delay:.5s"><circle cx="${X(iM)}" cy="${Y(melhor)}" r="5.5" fill="none" stroke="var(--gold-2)" stroke-width="1.6"/>
-    <text x="${X(iM)}" y="${Math.max(PT+12,Y(melhor)-14)}" fill="var(--gold-1)" font-size="11" font-weight="600" text-anchor="middle">${nf(melhor,0)}%</text></g>`;
+    ?`<text x="${X(i).toFixed(1)}" y="${H-12}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${h(rotSemana(d.week))}</text>`:"").join("");
+  /* os DOIS extremos anotados: antes só o melhor ganhava anel, e "qual foi a pior
+     semana" é exatamente a pergunta que este painel existe para responder */
+  const iM=wrs.indexOf(melhor),im=wrs.indexOf(pior);
+  const nota=anota(X(iM),Y(melhor),nf(melhor,0)+"%","var(--gold-1)",true,.5)
+            +(im!==iM?anota(X(im),Y(pior),nf(pior,0)+"%","var(--red)",false,.58):"");
+  /* faixa de leitura no rodapé: mesma peça da legenda dos outros gráficos. Ela
+     existe por dois motivos -- diz a média do período, que o desenho não diz em
+     lugar nenhum, e dá ao cartão a mesma altura do vizinho de meia coluna, que
+     tem legenda. Sem ela sobravam 82px de cartão vazio no fim da fila. */
+  const gj=trend.reduce((s,d)=>s+d.games,0),vt=trend.reduce((s,d)=>s+d.wins,0);
+  const rodape=glegend([
+    {n:"melhor",c:"var(--gold-2)",vt:nf(melhor,0)+"%"},
+    {n:"pior",c:"var(--red)",vt:nf(pior,0)+"%"},
+    {n:`média de ${ni(trend.length)} semanas`,c:"var(--dim)",vt:nf(gj?vt/gj*100:0,1)+"%",cls:gj&&vt/gj>=.5?"up":"dn"},
+  ]);
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"><defs>
     <linearGradient id="${gd}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="var(--gold-2)" stop-opacity=".26"/>
       <stop offset="1" stop-color="var(--gold-2)" stop-opacity="0"/></linearGradient></defs>
-    ${g}${faixa}<path class="gfade" d="${area}" fill="url(#${gd})" stroke="none"/>${bars}
+    ${marca(PL,PT,iw,ih)}${g}${faixa}<path class="gfade" d="${area}" fill="url(#${gd})" stroke="none"/>${bars}
     <path class="gfade" style="animation-delay:.25s" d="${path}" fill="none" stroke="var(--gold-2)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    ${trend.map((d,i)=>`<circle class="gfade" style="animation-delay:.3s" cx="${X(i)}" cy="${Y(d.winrate)}" r="3" fill="var(--gold-1)"/>`).join("")}
+    ${trend.map((d,i)=>`<circle class="gfade" style="animation-delay:.3s" cx="${X(i).toFixed(1)}" cy="${Y(d.winrate).toFixed(1)}" r="2.8" fill="var(--gold-1)"/>`).join("")}
     ${nota}${xl}
-    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/></svg>`;
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/></svg>`+rodape;
 }
 /* "2026-W07" nao diz nada a ninguem: vira a segunda-feira daquela semana.
    O formato vem de strftime %W (kpi.py:616), onde a semana 01 comeca na PRIMEIRA
@@ -2030,47 +2420,60 @@ const corDe=(puuid,fallback)=>{
 const visiveis=(series)=>!series?[]:
   (selJog.size?series.filter(s=>selJog.has(s.puuid)):series);
 
+/* ----------------------------------------------------------- SÉRIE (linha)
+   H = 16 + 184 + 30 = 230px. 184 de plotagem porque o eixo tem cinco gridlines:
+   quatro faixas de 46px, folga suficiente para o rótulo de 11px e, num domínio
+   de KDA de 1,5 a 7, cerca de 33px por ponto de KDA -- uma diferença de 0,3 KDA
+   ainda são 10px na tela. Abaixo de ~150px as onze linhas viram uma trança.
+   O título do eixo saiu do SVG e foi para o .hint do cabeçalho: eram 22px de
+   altura gastos com uma frase que o cartão já podia dizer. */
 function serieChart(series,opts){
-  const o=Object.assign({H:400,yFmt:v=>nf(v,1),eixo:"",zero:null,campo:"y",unidade:""},opts||{});
+  const o=Object.assign({W:760,ih:184,yFmt:v=>nf(v,1),eixo:"",zero:null,campo:"y",unidade:""},opts||{});
   const use=visiveis(series).filter(s=>s.pontos&&s.pontos.length>1);
   if(!use.length) return noData("NENHUM JOGADOR SELECIONADO",
     "Escolha pelo menos um jogador nos chips acima para desenhar a evolução.");
-  const W=1080,PL=GX.PL,PR=142,PT=GX.PT,PB=GX.PB,H=o.H,iw=W-PL-PR,ih=H-PT-PB;
+  const W=Math.max(300,Math.round(o.W)),PL=W<430?36:EV.PL,PR=EV.PR,PT=EV.PT,PB=EV.PB;
+  const ih=o.ih,H=PT+ih+PB,iw=W-PL-PR;
   const maxN=Math.max(...use.map(s=>s.pontos.length));
   const all=use.flatMap(s=>s.pontos.map(p=>p[o.campo]));
   let y0=Math.min(...all),y1=Math.max(...all);
   if(o.zero!=null){y0=Math.min(y0,o.zero);y1=Math.max(y1,o.zero);}
   const pad=(y1-y0)*.12||1;y0-=pad;y1+=pad;
-  /* ancora o dominio no zero quando ele existe: sem isso a gridline do meio caia a
-     3px da linha do zero e as duas apareciam coladas -- a cara de "desalinhado" */
-  /* ancora o dominio para que o zero caia EXATAMENTE numa das 5 gridlines: antes a
-     linha extra do zero parava a poucos pixels de uma gridline e as duas apareciam
-     coladas -- e a cara de "desalinhado". O passo so cresce (nunca encolhe), senao
-     o dominio apertaria e a serie sairia desenhada fora do plot. */
+  /* ancora o domínio para que o zero caia EXATAMENTE numa das 5 gridlines: sem
+     isso a linha extra do zero para a poucos pixels de uma gridline e as duas
+     aparecem coladas -- é a cara de "desalinhado". O passo só cresce. */
   if(o.zero!=null){const a=o.zero-y0,b=y1-o.zero;let st=(a+b)/4||1,ka=0;
     for(let i=0;i<40;i++){ka=Math.ceil(a/st);if(ka+Math.ceil(b/st)<=4) break;st*=1.06;}
     y0=o.zero-ka*st;y1=o.zero+(4-ka)*st;}
   const X=i=>PL+(maxN===1?iw/2:i*iw/(maxN-1)),Y=v=>PT+ih-((v-y0)/(y1-y0||1))*ih;
   const cl=uid("clip"),gd=uid("fade");
   let g=eixoY([0,1,2,3,4].map(i=>y0+(y1-y0)*i/4),Y,PL,W-PR,o.yFmt,o.zero);
-  /* listras a cada 5 partidas: dao ritmo horizontal e ajudam a contar sem eixo */
+  /* listras a cada 10 partidas: dão ritmo horizontal e ajudam a contar sem eixo */
   let faixas="";
   for(let i=0;i<maxN;i+=10){const x=X(i),x2=X(Math.min(i+5,maxN-1));
-    if(x2>x) faixas+=`<rect x="${x}" y="${PT}" width="${x2-x}" height="${ih}" fill="rgba(255,255,255,.014)"/>`;}
+    if(x2>x) faixas+=`<rect x="${x.toFixed(1)}" y="${PT}" width="${(x2-x).toFixed(1)}" height="${ih}" fill="rgba(255,255,255,.014)"/>`;}
   const uma=use.length===1;
   const ls=use.map((s,k)=>{const c=corDe(s.puuid,k);
-    const d=s.pontos.map((p,i)=>`${i?"L":"M"}${X(i)},${Y(p[o.campo])}`).join(" ");
+    const d=s.pontos.map((p,i)=>`${i?"L":"M"}${X(i).toFixed(1)},${Y(p[o.campo]).toFixed(1)}`).join(" ");
     const u=s.pontos[s.pontos.length-1],ux=X(s.pontos.length-1),uy=Y(u[o.campo]);
-    /* area so quando ha UMA serie: com 14 linhas empilhadas o gradiente viraria sopa */
-    const area=uma?`<path class="gfade" d="${d} L${ux},${PT+ih} L${X(0)},${PT+ih} Z" fill="url(#${gd})"/>`:"";
-    return {c,s,path:`${area}<path d="${d}" fill="none" stroke="${c}" stroke-width="${uma?2.6:2}" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>
-      <circle cx="${ux}" cy="${uy}" r="6.5" fill="${c}" fill-opacity=".2"/>
-      <circle cx="${ux}" cy="${uy}" r="3.6" fill="${c}" stroke="var(--card)" stroke-width="1.2"/>`,
-      leg:{n:short(s.gameName),c,v:u[o.campo]}};});
+    /* área só quando há UMA série: com onze linhas empilhadas o gradiente vira sopa */
+    const area=uma?`<path class="gfade" d="${d} L${ux.toFixed(1)},${PT+ih} L${X(0).toFixed(1)},${PT+ih} Z" fill="url(#${gd})"/>`:"";
+    return {c,s,path:`${area}<path d="${d}" fill="none" stroke="${c}" stroke-width="${uma?2.4:1.7}" stroke-linejoin="round" stroke-linecap="round" opacity="${uma?".95":".88"}"/>
+      <circle cx="${ux.toFixed(1)}" cy="${uy.toFixed(1)}" r="5.5" fill="${c}" fill-opacity=".2"/>
+      <circle cx="${ux.toFixed(1)}" cy="${uy.toFixed(1)}" r="3.2" fill="${c}" stroke="var(--card)" stroke-width="1.2"/>`,
+      leg:{n:short(s.gameName),c,v:u[o.campo],vt:o.yFmt(u[o.campo])+o.unidade,
+           cls:o.zero!=null?(u[o.campo]>o.zero?"up":u[o.campo]<o.zero?"dn":""):""}};});
 
-  /* faixa invisível por índice: mostra todos os jogadores naquele ponto.
-     O clipPath e o que impede a ultima faixa (bw/2 alem do plot) de cobrir a
-     legenda e roubar o hover do ponto mais recente, que e o que mais importa. */
+  /* extremos anotados: só na série isolada. Com onze linhas seriam 22 rótulos. */
+  let extremos="";
+  if(uma){const p=use[0].pontos,c=ls[0].c;
+    let iMax=0,iMin=0;
+    p.forEach((q,i)=>{if(q[o.campo]>p[iMax][o.campo])iMax=i;if(q[o.campo]<p[iMin][o.campo])iMin=i;});
+    if(iMax!==iMin){
+      extremos=anota(X(iMax),Y(p[iMax][o.campo]),o.yFmt(p[iMax][o.campo])+o.unidade,"var(--gold-1)",true,.45)
+              +anota(X(iMin),Y(p[iMin][o.campo]),o.yFmt(p[iMin][o.campo])+o.unidade,c,false,.55);}}
+
+  /* faixa invisível por índice: mostra todos os jogadores naquele ponto */
   const bandas=Array.from({length:maxN},(_,i)=>{
     const bw=iw/Math.max(1,maxN-1);
     const linhas=ls.filter(l=>l.s.pontos[i]!=null)
@@ -2078,28 +2481,27 @@ function serieChart(series,opts){
       .sort((a,b)=>b[3]-a[3]).map(l=>l.slice(0,3));
     if(!linhas.length) return "";
     const t=tip(`Partida ${i+1}`,linhas,o.eixo);
-    return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
-      <line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih}"/></g>`;}).join("");
+    return `<g class="band"${t}><rect x="${(X(i)-bw/2).toFixed(1)}" y="${PT}" width="${bw.toFixed(1)}" height="${ih}"/>
+      <line x1="${X(i).toFixed(1)}" y1="${PT}" x2="${X(i).toFixed(1)}" y2="${PT+ih}"/></g>`;}).join("");
 
-  const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
-    `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
-     <text x="16" y="0" fill="${GX.lab2}" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
-  /* eixo X: antes nao existia nenhum numero de partida, so a legenda de texto */
-  const passoX=Math.max(1,Math.ceil(maxN/10));
+  const passoX=Math.max(1,Math.ceil(maxN/Math.max(3,Math.floor(iw/56))));
   let xl="";
-  for(let i=0;i<maxN;i+=passoX) xl+=`<text x="${X(i)}" y="${PT+ih+20}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${i+1}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"><defs>
+  for(let i=0;i<maxN;i+=passoX) xl+=`<text x="${X(i).toFixed(1)}" y="${PT+ih+19}" fill="${GX.lab}" font-size="${GX.fsx}" text-anchor="middle">${i+1}</text>`;
+  const svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"><defs>
     <clipPath id="${cl}"><rect x="${PL}" y="${PT}" width="${iw}" height="${ih}"/></clipPath>
     <linearGradient id="${gd}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${ls[0]?ls[0].c:"var(--teal)"}" stop-opacity=".30"/>
+      <stop offset="0" stop-color="${ls[0]?ls[0].c:"var(--teal)"}" stop-opacity=".28"/>
       <stop offset="1" stop-color="${ls[0]?ls[0].c:"var(--teal)"}" stop-opacity="0"/></linearGradient></defs>
-    ${faixas}${g}<g clip-path="url(#${cl})">${ls.map(l=>l.path).join("")}</g>
-    <g clip-path="url(#${cl})">${bandas}</g>${leg}${xl}
-    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/>
-    <text x="${PL+iw/2}" y="${H-16}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">${h(o.eixo)}</text></svg>`;
+    ${marca(PL,PT,iw,ih)}${faixas}${g}<g clip-path="url(#${cl})">${ls.map(l=>l.path).join("")}</g>
+    ${extremos}<g clip-path="url(#${cl})">${bandas}</g>${xl}
+    <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/></svg>`;
+  return svg+glegend(ls.map(l=>l.leg).sort((a,b)=>b.v-a.v));
 }
 
-function corridaMensal(meses){
+/* ------------------------------------------------------------- A CORRIDA
+   Quatro meses de eixo X num viewBox de 400 de altura era o pior negócio da
+   página: 563px de tela para quatro colunas. H = 16 + 176 + 30 = 222px. */
+function corridaMensal(meses,W){
   if(!meses||meses.length<2) return noData("POUCOS MESES","A corrida do UDA Score precisa de pelo menos dois meses.");
   const byP={};
   meses.forEach((m,mi)=>m.entradas.forEach(e=>{
@@ -2109,61 +2511,59 @@ function corridaMensal(meses){
   if(!series.length) return noData("SEM SÉRIE",
     selJog.size?"Nenhum dos jogadores escolhidos tem dois meses seguidos com partidas suficientes."
                :"Ninguém tem partidas suficientes em dois meses seguidos.");
-  const W=1080,H=400,PL=GX.PL,PR=142,PT=GX.PT,PB=GX.PB,iw=W-PL-PR,ih=H-PT-PB,n=meses.length;
-  /* dominio adaptativo. O 1-99 fixo era o pior desalinhamento da pagina: o Score e
-     normalizado contra o proprio grupo, entao ninguem sai de ~35..65 e as 14 linhas
-     se amontoavam num terco da altura, com dois tercos de plot permanentemente vazio. */
+  W=Math.max(300,Math.round(W||760));
+  const PL=W<430?36:EV.PL,PR=EV.PR,PT=EV.PT,PB=EV.PB,ih=176,H=PT+ih+PB,iw=W-PL-PR,n=meses.length;
   const todos=series.flatMap(s=>s.pontos.map(p=>p.y));
   const y0=Math.max(1,Math.floor(Math.min(...todos)-4)),y1=Math.min(99,Math.ceil(Math.max(...todos)+4));
   const X=i=>PL+(n===1?iw/2:i*iw/(n-1)),Y=v=>PT+ih-((v-y0)/((y1-y0)||1))*ih;
   const passo=(y1-y0)/4;
   let g=eixoY([0,1,2,3,4].map(i=>y0+passo*i),Y,PL,W-PR,v=>nf(v,0),(y0<50&&y1>50)?50:null);
-  /* coluna por mes: os rotulos de mes flutuavam sem nada que os ligasse aos pontos */
-  g+=meses.map((m,i)=>`<line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih+5}" stroke="${GX.grid}"/>`).join("");
-  /* quem lidera cada mes ganha marca dourada -- o grafico se chama "a corrida" e
-     nao mostrava o primeiro lugar em lugar nenhum */
+  /* coluna por mês: os rótulos de mês flutuavam sem nada que os ligasse aos pontos */
+  g+=meses.map((m,i)=>`<line x1="${X(i).toFixed(1)}" y1="${PT}" x2="${X(i).toFixed(1)}" y2="${PT+ih+5}" stroke="${GX.grid}"/>`).join("");
   const lider=meses.map((m,i)=>{let melhor=null;
     series.forEach(s=>{const p=s.pontos.find(x=>x.i===i);
       if(p&&(!melhor||p.y>melhor.y)) melhor=p;});
-    return melhor?`<circle class="gpop" style="animation-delay:${i*70}ms" cx="${X(i)}" cy="${Y(melhor.y)}" r="7.5" fill="none" stroke="var(--gold-2)" stroke-width="1.6"/>`:"";}).join("");
+    return melhor?`<circle class="gpop" style="animation-delay:${i*70}ms" cx="${X(i).toFixed(1)}" cy="${Y(melhor.y).toFixed(1)}" r="7" fill="none" stroke="var(--gold-2)" stroke-width="1.6"/>`:"";}).join("");
   const cl=uid("cmc");
-  const ls=series.map((s,k)=>{const c=corDe(s.puuid,k);
-    return {c,s,g:`<path d="${s.pontos.map((p,i)=>`${i?"L":"M"}${X(p.i)},${Y(p.y)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>
-      ${s.pontos.map(p=>`<circle cx="${X(p.i)}" cy="${Y(p.y)}" r="3.4" fill="${c}"/>`).join("")}`,
-      leg:{n:short(s.gameName),c,v:s.pontos[s.pontos.length-1].y}};});
+  const ls=series.map((s,k)=>{const c=corDe(s.puuid,k);const u=s.pontos[s.pontos.length-1];
+    return {c,s,g:`<path d="${s.pontos.map((p,i)=>`${i?"L":"M"}${X(p.i).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="${series.length===1?2.4:1.9}" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>
+      ${s.pontos.map(p=>`<circle cx="${X(p.i).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="3.1" fill="${c}"/>`).join("")}`,
+      leg:{n:short(s.gameName),c,v:u.y,vt:`${u.rank}º`,cls:u.y>=50?"up":"dn"}};});
   const bandas=meses.map((m,i)=>{
     const bw=iw/Math.max(1,n-1);
-    /* ordena pelo numero BRUTO: parseFloat("52,3 · 3º · 12 jogos") parava na
-       virgula do decimal brasileiro e devolvia 52 para todo mundo */
+    /* ordena pelo número BRUTO: parseFloat("52,3 · 3º") para na vírgula decimal */
     const linhas=ls.map(l=>{const p=l.s.pontos.find(x=>x.i===i);
       return p?[short(l.s.gameName),`${nf(p.y,1)} · ${p.rank}º · ${p.games} jogos`,l.c,p.y]:null;})
       .filter(Boolean).sort((a,b)=>b[3]-a[3]).map(l=>l.slice(0,3));
     if(!linhas.length) return "";
     const t=tip(h(m.mes),linhas,"Score recalculado só com as partidas do mês");
-    return `<g class="band"${t}><rect x="${X(i)-bw/2}" y="${PT}" width="${bw}" height="${ih}"/>
-      <line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT+ih}"/></g>`;}).join("");
-  const leg=ls.map(l=>l.leg).sort((a,b)=>b.v-a.v).map((l,i)=>
-    `<g transform="translate(${W-PR+14},${PT+8+i*20})"><rect width="9" height="9" y="-7" rx="2.5" fill="${l.c}"/>
-     <text x="16" y="0" fill="${GX.lab2}" font-size="11">${h(l.n.slice(0,13))}</text></g>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">
+    return `<g class="band"${t}><rect x="${(X(i)-bw/2).toFixed(1)}" y="${PT}" width="${bw.toFixed(1)}" height="${ih}"/>
+      <line x1="${X(i).toFixed(1)}" y1="${PT}" x2="${X(i).toFixed(1)}" y2="${PT+ih}"/></g>`;}).join("");
+  const svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">
     <defs><clipPath id="${cl}"><rect x="${PL}" y="${PT}" width="${iw}" height="${ih}"/></clipPath></defs>
-    ${g}<g clip-path="url(#${cl})">${ls.map(l=>l.g).join("")}${lider}</g>
-    <g clip-path="url(#${cl})">${bandas}</g>${leg}
+    ${marca(PL,PT,iw,ih)}${g}<g clip-path="url(#${cl})">${ls.map(l=>l.g).join("")}${lider}</g>
+    <g clip-path="url(#${cl})">${bandas}</g>
     <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="${GX.eixo}"/>
-    ${meses.map((m,i)=>`<text x="${X(i)}" y="${PT+ih+22}" fill="${GX.lab}" font-size="${GX.fsx}"
-      text-anchor="${i===n-1?"end":i===0?"start":"middle"}">${h(m.mes)}</text>`).join("")}
-    <text x="${PL+iw/2}" y="${H-16}" fill="${GX.lab}" font-size="${GX.fs}" text-anchor="middle">anel dourado = líder do mês</text></svg>`;
+    ${meses.map((m,i)=>`<text x="${X(i).toFixed(1)}" y="${PT+ih+19}" fill="${GX.lab}" font-size="${GX.fsx}"
+      text-anchor="${i===n-1?"end":i===0?"start":"middle"}">${h(m.mes)}</text>`).join("")}</svg>`;
+  return svg+glegend(ls.map(l=>l.leg).sort((a,b)=>b.v-a.v));
 }
 
-function heatmap(mapa){
+/* ---------------------------------------------------------------- MAPA
+   Único gráfico que merece a largura inteira: são 24 colunas. A altura da célula
+   passa a sair da largura da célula (clamp 24..32) em vez de ser 34 fixo num
+   viewBox que esticava -- é isso que impedia o mapa de virar 442px numa tela de
+   1920. */
+function heatmap(mapa,W){
   if(!mapa||!mapa.celulas) return noData("SEM DADOS","Sem partidas para montar o mapa.");
   const DIAS=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-  /* margens simetricas (PL na esquerda, PL/2+8 na direita nao: os dois lados agora
-     sao os mesmos GX) e H fechado no conteudo: antes sobravam 52px de buraco preto
-     no fundo do viewBox, que no card full-width viravam 74px reais. */
-  const W=1080,PL=GX.PL,PR=GX.PR,PT=34,cw=(W-PL-PR)/24,ch=34,GH=7*ch,LEG=42,H=PT+GH+LEG;
+  /* 620 é o piso: 24 colunas abaixo disso viram tiras de 22px com um número de
+     5px dentro. No celular o mapa ROLA na horizontal (.plot.hm) em vez de encolher. */
+  W=Math.max(620,Math.round(W||1100));
+  const PL=EV.PL,PR=EV.PR,PT=28,cw=(W-PL-PR)/24;
+  const ch=Math.max(24,Math.min(32,cw*.58)),GH=7*ch,LEG=34,H=Math.round(PT+GH+LEG);
   const max=Math.max(1,...mapa.celulas.flat());
-  /* escala perceptual: com sqrt um sabado de pico deixa de apagar todo o resto */
+  /* escala perceptual: com sqrt um sábado de pico deixa de apagar todo o resto */
   const inten=v=>v===0?0:.14+Math.sqrt(v/max)*.8;
   let cells="";
   const DIASL=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
@@ -2175,29 +2575,28 @@ function heatmap(mapa){
       ["Partidas",ni(v),v?"var(--teal)":null],
       ["Fatia do total",nf(v/mapa.total*100,1)+"%"],
     ],v===max?"é o horário de pico de vocês":v===0?"nunca jogaram nesse horário":null);
-    cells+=`<rect${t} x="${(PL+hh*cw+1.5).toFixed(1)}" y="${PT+d*ch+1.5}" width="${(cw-3).toFixed(1)}" height="${ch-3}" rx="6" fill="${f}"
+    cells+=`<rect${t} x="${(PL+hh*cw+1.4).toFixed(1)}" y="${(PT+d*ch+1.4).toFixed(1)}" width="${(cw-2.8).toFixed(1)}" height="${(ch-2.8).toFixed(1)}" rx="5" fill="${f}"
       stroke="${v===0?"var(--line)":"none"}" stroke-width=".6"/>`;
-    /* texto branco com opacidade pelo valor: o #062B29 quase preto so era legivel
-       nas celulas de pico e sumia justamente nas medianas */
-    if(v>max*.34) cells+=`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${PT+d*ch+ch/2+4}" fill="var(--ink)" fill-opacity="${(.45+inten(v)*.5).toFixed(2)}"
-      font-size="10.5" font-weight="700" text-anchor="middle" pointer-events="none">${v}</text>`;}));
-  const anel=pk?`<rect x="${(PL+pk.hh*cw+1.5).toFixed(1)}" y="${PT+pk.d*ch+1.5}" width="${(cw-3).toFixed(1)}" height="${ch-3}" rx="6"
+    if(v>max*.34) cells+=`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${(PT+d*ch+ch/2+3.6).toFixed(1)}" fill="var(--ink)" fill-opacity="${(.45+inten(v)*.5).toFixed(2)}"
+      font-size="10" font-weight="700" text-anchor="middle" pointer-events="none">${v}</text>`;}));
+  const anel=pk?`<rect x="${(PL+pk.hh*cw+1.4).toFixed(1)}" y="${(PT+pk.d*ch+1.4).toFixed(1)}" width="${(cw-2.8).toFixed(1)}" height="${(ch-2.8).toFixed(1)}" rx="5"
     fill="none" stroke="var(--gold-2)" stroke-width="1.8" pointer-events="none"/>`:"";
-  /* legenda de escala no espaco que antes era morto */
-  const gd=uid("hm"),lx=PL,ly=PT+GH+20,lw=190;
+  const gd=uid("hm"),lx=PL,ly=Math.round(PT+GH+16),lw=Math.min(170,(W-PL-PR)*.22);
   const legenda=`<defs><linearGradient id="${gd}" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="rgba(10,200,185,.14)"/><stop offset="1" stop-color="rgba(10,200,185,.94)"/></linearGradient></defs>
-    <rect x="${lx}" y="${ly}" width="${lw}" height="10" rx="5" fill="url(#${gd})"/>
-    <text x="${lx-8}" y="${ly+9}" fill="${GX.lab}" font-size="10" text-anchor="end">0</text>
-    <text x="${lx+lw+8}" y="${ly+9}" fill="${GX.lab}" font-size="10">${max} partidas</text>
-    <text x="${W-PR}" y="${ly+9}" fill="var(--gold-3)" font-size="10" text-anchor="end">anel dourado = horário de pico</text>`;
-  /* separadores de manha/tarde/noite: dao leitura ao eixo de 24 colunas */
-  const div=[6,12,18].map(hh=>`<line x1="${(PL+hh*cw).toFixed(1)}" y1="${PT-4}" x2="${(PL+hh*cw).toFixed(1)}" y2="${PT+GH}"
+    <rect x="${lx}" y="${ly}" width="${lw.toFixed(1)}" height="9" rx="4.5" fill="url(#${gd})"/>
+    <text x="${lx-8}" y="${ly+8}" fill="${GX.lab}" font-size="10" text-anchor="end">0</text>
+    <text x="${(lx+lw+8).toFixed(1)}" y="${ly+8}" fill="${GX.lab}" font-size="10">${max} partidas</text>
+    <text x="${W-PR}" y="${ly+8}" fill="var(--gold-3)" font-size="10" text-anchor="end">anel dourado = horário de pico</text>`;
+  /* separadores de manhã/tarde/noite: dão leitura ao eixo de 24 colunas */
+  const div=[6,12,18].map(hh=>`<line x1="${(PL+hh*cw).toFixed(1)}" y1="${PT-4}" x2="${(PL+hh*cw).toFixed(1)}" y2="${(PT+GH).toFixed(1)}"
     stroke="${GX.eixo}" stroke-opacity=".55"/>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${cells}${anel}${div}
-    ${DIAS.map((d,i)=>`<text x="${PL-12}" y="${PT+i*ch+ch/2+4}" fill="${GX.lab2}" font-size="11" text-anchor="end">${d}</text>`).join("")}
-    ${[0,2,4,6,8,10,12,14,16,18,20,22].map(hh=>`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${PT-12}" fill="${GX.lab}" font-size="10" text-anchor="middle">${String(hh).padStart(2,"0")}</text>`).join("")}
-    <text x="${W-PR}" y="${PT-12}" fill="${GX.lab}" font-size="10" text-anchor="end">hora</text>
+  /* a marca d'água do mapa é mais fraca (3,5%): aqui o fundo do gráfico não é
+     vazio, são 168 células, e o brasão passaria a ser mais uma delas */
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${marca(PL,PT,W-PL-PR,GH,.035)}${cells}${anel}${div}
+    ${DIAS.map((d,i)=>`<text x="${PL-11}" y="${(PT+i*ch+ch/2+3.6).toFixed(1)}" fill="${GX.lab2}" font-size="10.5" text-anchor="end">${d}</text>`).join("")}
+    ${[0,2,4,6,8,10,12,14,16,18,20,22].map(hh=>`<text x="${(PL+hh*cw+cw/2).toFixed(1)}" y="${PT-10}" fill="${GX.lab}" font-size="10" text-anchor="middle">${String(hh).padStart(2,"0")}</text>`).join("")}
+    <text x="${W-PR}" y="${PT-10}" fill="${GX.lab}" font-size="10" text-anchor="end">hora</text>
     ${legenda}</svg>`;
 }
 
@@ -2449,7 +2848,7 @@ const podHead=(g)=>`<div class="pod-head">
    troca para 2-1-3 na tela e o `order` do CSS. */
 function podio(g){
   const top=g.podium.map(id=>g.players.find(p=>p.puuid===id)).filter(Boolean);
-  const palco=(dentro,fundo)=>`<section class="stage stage-layers">
+  const palco=(dentro,fundo)=>`<section class="stage stage-layers" data-sec="podio">
     ${fundo?`<img class="sl-art" src="${fundo}"${FBART}>`:""}
     <div class="sl-light"></div><div class="sl-vig"></div>
     ${podHead(g)}${dentro}</section>`;
@@ -2623,7 +3022,7 @@ const AWICON={carregador:I.bolt,assassino:I.sword,imortal:I.heart,farmador:I.gri
 function hall(g,bad){
   const l=bad?g.awardsBad:g.awardsGood;
   if(!l||!l.length) return "";
-  return `<section class="hall${bad?" hall-shame":""}">
+  return `<section class="hall${bad?" hall-shame":""}" data-sec="hall-${bad?"vergonha":"fama"}">
     <div class="hall-head">
       <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
       <h2 class="poster-title engraved">${bad?"Hall da Vergonha":"Hall da Fama"}</h2>
@@ -2796,7 +3195,7 @@ function recordes(g){
   if(!rel.length&&!abas.length) return "";
   const ativo=abas.length?abas[0][0]:"";
   const feitos=l.filter(r=>r.valor!=null).length;
-  return `<section class="hall">
+  return `<section class="hall" data-sec="recordes">
     <div class="hall-head">
       <span class="eyebrow">União dos Afundados · ${h(g.label||"")}</span>
       <h2 class="poster-title engraved">A Sala dos Recordes</h2>
@@ -3032,9 +3431,12 @@ document.addEventListener("keydown",e=>{
 });
 
 /* --------------------------------------------------------- O ARSENAL
-   A pagina Campeoes era uma tabela de 5 colunas num campo vazio. O arsenal poe a
-   arte na frente; a tabela vira o apendice detalhado, no fim da pagina. 12
-   cartoes fecham fila exata em 3, 2 e 1 coluna -- nunca sobra orfao. */
+   A página Campeões era uma tabela de 5 colunas num campo vazio. O arsenal põe a
+   arte na frente; a tabela vira o apêndice detalhado, no fim da página. 12
+   cartões fecham fila exata em 6, 4, 3 e 2 colunas -- nunca sobra órfão.
+   O ícone é <img class="cc-ic"> DIRETO: o <span class="cc-ic"> anterior era
+   display:inline, engolia os 52px de largura e fazia o width:100% do filho
+   resolver contra o cartão inteiro -- 64x64 esticado até 351x202. */
 function arsenal(g){
   const l=(g.champions||[]).slice(0,12);
   if(!l.length) return "";
@@ -3052,6 +3454,9 @@ function arsenal(g){
     </div>
     <div class="cgrid">${l.map((c,i)=>{
       const d=CDET[String(c.championId)], pl=pilotosDe(c.championId);
+      /* PAPÉIS antes do título: num cartão de 186px "a Caçadora de Recompensas"
+         reticencia e "Atirador · Mago" cabe inteiro -- e diz mais. O título fica
+         de reserva para campeão sem tags no payload. */
       const papeis=((d&&d.tags)||[]).map(x=>PAPEL[x]||x).join(" · ");
       const t=tip(h(c.champion),[
         ["Partidas",ni(c.games)],
@@ -3066,19 +3471,22 @@ function arsenal(g){
           <img class="art" src="${artWide(c.championId,c.champion)}"${FBART}>
           <div class="scrim"></div><span class="cc-rk">${i+1}</span></div>
         <div class="cc-in">
-          <span class="cc-ic"><img src="${champImg(c.championId,c.champion)}"${FB}></span>
-          <div class="cc-nm">${h(c.champion)}</div>
-          <div class="cc-tt">${h(d&&d.title?d.title:papeis)}</div>
+          <div class="cc-hd">
+            <img class="cc-ic" src="${champImg(c.championId,c.champion)}"${FB}>
+            <div class="cc-id">
+              <div class="cc-nm">${h(c.champion)}</div>
+              <div class="cc-tt">${h(papeis||(d&&d.title)||"")}</div>
+            </div>
+          </div>
           <div class="cc-st">
-            <div><div class="k">Jogos</div><div class="v">${c.games}</div></div>
-            <div><div class="k">Vitórias</div><div class="v ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</div></div>
-            <div><div class="k">KDA</div><div class="v ${cl(c.kda,3)}">${nf(c.kda,2)}</div></div>
+            <b class="cc-wr ${cl(c.winrate,50)}">${nf(c.winrate,0)}%</b>
+            <span class="cc-mt">${c.games} jogo${c.games>1?"s":""} · KDA ${nf(c.kda,2)}</span>
           </div>
           <div class="cc-tr"><i class="${c.winrate<50?"lo":""}"
             style="width:${Math.max(3,Math.min(100,c.winrate))}%"></i></div>
-          ${pl.length?`<div class="cc-pl"><span class="ims">${pl.slice(0,4).map(x=>
+          ${pl.length?`<div class="cc-pl"><span class="ims">${pl.slice(0,3).map(x=>
             `<img src="${iconImg(x.icon)}"${FB}>`).join("")}</span>
-            <span>${c.pilots} piloto${c.pilots>1?"s":""} · ${h(short(pl[0].nome))} lidera</span></div>`:""}
+            <span class="cc-pt">${c.pilots} piloto${c.pilots>1?"s":""} · ${h(short(pl[0].nome))} lidera</span></div>`:""}
         </div>
       </article>`;}).join("")}</div></section>`;
 }
@@ -3105,23 +3513,27 @@ const filas=()=>DATA.groups.filter(g=>g.key!=="squad"&&(
 function pVisao(){
   const g=grupo(); if(!g||!g.players.length) return vazio();
   const t=g.team, acima=t.winrate>=50;
+  /* Fama e Vergonha dividem UMA parede acima de 1080px de .content -- quem faz o
+     par e o .halls2. PRECISA ser <section>: vida() so observa "#app > section", e
+     num <div> os dois halls sairiam do IntersectionObserver e os 12 numeros dos
+     premios nunca rodariam o odometro. */
+  const salas=hall(g,false)+hall(g,true);
   /* o podio ja vem como <section> de palco: e ele que abre a pagina depois dos KPIs */
   /* as tres salas ficam juntas -- fama, vergonha e recordes sao o mesmo
      componente e ler uma depois da outra e o que faz elas parecerem um predio.
      O medidor desceu para junto das distribuicoes: o aproveitamento ja e o
      primeiro KPI heroi, aqui em cima ele apareceria duas vezes seguidas. */
-  return `<section>${statRow(g)}</section>
+  return `<section data-sec="kpis">${statRow(g)}</section>
     ${podio(g)}
-    ${afundados(g)?`<section>${afundados(g)}</section>`:""}
-    ${hall(g,false)}
-    ${hall(g,true)}
+    ${afundados(g)?`<section data-sec="afundados">${afundados(g)}</section>`:""}
+    ${salas?`<section class="halls2" data-sec="halls">${salas}</section>`:""}
     ${recordes(g)}
-    <section><div class="card">${chead(I.bolt,"Carrega ou alimenta?","dano por minuto contra mortes a cada 10 minutos")}
+    <section data-sec="dispersao"><div class="card">${chead(I.bolt,"Carrega ou alimenta?","dano por minuto contra mortes a cada 10 minutos")}
       ${scatter(g.players)}
       <div class="legend"><span><i style="background:var(--teal)"></i>dano acima da média, morrendo pouco</span>
       <span><i style="background:var(--gold)"></i>meio-termo</span>
       <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div></section>
-    <section><div class="grid g3">
+    <section data-sec="medidor"><div class="grid g3">
       <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
         ${gauge({valor:t.winrate,rotulo:`${ni(t.wins)}V · ${ni(t.losses)}D`,
           pill:acima?"Acima de 50%":"Abaixo de 50%",
@@ -3144,7 +3556,7 @@ function pVisao(){
       <div class="card">${chead(I.grid,"Filas","distribuição das partidas")}
         ${barrasHoriz(g.queues,"queue","matches","winrate","share")}</div>
     </div></section>
-    <section><div class="card">${chead(I.clock,"Últimas partidas",
+    <section data-sec="feed"><div class="card">${chead(I.clock,"Últimas partidas",
       "uma placa por partida — clique num campeão para abrir o dossiê")}
       ${feedRecentes(g.recent)}</div></section>`;
 }
@@ -3179,27 +3591,97 @@ function seletorJogadores(g){
     </div></div>`;
 }
 
+/* ================================================== EVOLUÇÃO: A PÁGINA */
+/* As fábricas de gráfico ficam guardadas por chave e são chamadas depois, por
+   ligarGraficos(), com a largura real da caixa. É o que faz a escala do viewBox
+   ser sempre 1 -- sem isso a mesma série media 457px numa tela e 617px noutra. */
+let GEV={},RO=null,RAF=0;
+const GBOX=new WeakMap();
+function pintarGrafico(box){
+  const w=Math.round(box.clientWidth);
+  if(!w) return;
+  const ant=GBOX.get(box);
+  /* 10px de folga: sem isso o simples aparecer da barra de rolagem (que a própria
+     pintura provoca) devolveria o observador para dentro de si mesmo */
+  if(ant!=null&&Math.abs(ant-w)<10) return;
+  GBOX.set(box,w);
+  const f=GEV[box.dataset.g];
+  box.innerHTML=f?f(w):"";
+}
+function ligarGraficos(){
+  crestDefs();
+  document.querySelectorAll("[data-ev-go]").forEach(b=>b.onclick=()=>irPara("evolucao",b.dataset.evGo));
+  if(RO) RO.disconnect();
+  const cx=[...document.querySelectorAll(".plot[data-g]")];
+  if(!cx.length) return;
+  if(!RO&&"ResizeObserver" in window) RO=new ResizeObserver(()=>{
+    cancelAnimationFrame(RAF);
+    RAF=requestAnimationFrame(()=>document.querySelectorAll(".plot[data-g]").forEach(pintarGrafico));});
+  cx.forEach(b=>{pintarGrafico(b); if(RO) RO.observe(b);});
+}
+
+/* cartão que explica a fila sem séries. Ele existe porque 'normal' e 'aram' não
+   têm DATA.evolution: a página desenhava 1 dos 5 gráficos e ficava calada sobre
+   os outros 4, e "sumiu" é a única leitura possível de um buraco silencioso. */
+function evAviso(){
+  const meta=DATA.groups.find(x=>x.key===fila)||{label:fila};
+  const d=DATA.data[fila],np=d&&d.team?d.team.uniqueMatches:0;
+  const alvos=["all","solo","flex"].filter(k=>DATA.evolution&&DATA.evolution[k])
+    .map(k=>{const m=DATA.groups.find(x=>x.key===k);
+      return `<button class="pbtn" data-ev-go="${k}">${h(m?m.label:k)}</button>`;}).join("");
+  return `<div class="card evnote">${crestImgTag("wmcard")}
+    <div class="eyebrow">Série temporal indisponível</div>
+    <h3>Esta fila não tem histórico calculado</h3>
+    <p>A corrida do UDA&nbsp;Score, a forma recente, o saldo acumulado e o mapa de horários
+    existem só para <b>Todas</b>, <b>Solo/Duo</b>, <b>Flex</b> e <b>Em equipe</b>.
+    <b>${h(meta.label)}</b> tem ${ni(np)} partida${np===1?"":"s"} no período — pouco para uma média
+    móvel de dez partidas dizer alguma coisa, e o painel prefere não desenhar a fingir.</p>
+    <p>O aproveitamento por semana ao lado continua valendo para esta fila.</p>
+    <div class="qgo">${alvos?`<span style="align-self:center;font-size:12px;color:var(--dim)">Ver a evolução em:</span>${alvos}`:""}</div></div>`;
+}
+
 function pEvolucao(){
   const g=grupo(); if(!g||!g.players.length) return vazio();
   const ev=DATA.evolution&&DATA.evolution[page==="equipe"?"squad":fila];
-  let o=`<section>${seletorJogadores(g)}</section>
-    <section><div class="card">${chead(I.cal,"Aproveitamento por semana","barras são as semanas; a linha dourada acompanha a taxa de vitórias")}
-    ${barLine(g.trend)}</div></section>`;
+  GEV={};
+  /* cada gráfico é uma CAIXA vazia + uma fábrica; o SVG nasce medido */
+  const cx=(k,cls,fab)=>{GEV[k]=fab;return `<div class="plot ${cls||""}" data-g="${k}"></div>`;};
+  const cartao=(head,corpo)=>`<div class="card">${head}${corpo}</div>`;
+  /* meia[] e inteiro[] em vez de despejar tudo em sequência: é assim que a grade
+     garante que nunca sobra um cartão de meia largura sozinho no fim de uma fila
+     -- se meia[] fecha ímpar, o último vira wide. Nenhum auto-fit decide nada. */
+  const meia=[],inteiro=[];
+  const temSerie=!!(ev&&((ev.scoreMensal&&ev.scoreMensal.length)||(ev.mediaMovel&&ev.mediaMovel.length)));
+
+  meia.push(cartao(chead(I.cal,"Aproveitamento por semana",
+      "cada barra é uma semana; os anéis marcam a melhor e a pior"),
+      cx("wk","leg",w=>barLine(g.trend,w))));
+
   if(ev&&ev.scoreMensal&&ev.scoreMensal.length)
-    o+=`<section><div class="card">${chead(I.trend,"A corrida do UDA Score","o Score recalculado dentro de cada mês — quem sobe e quem afunda","gold")}
-      ${corridaMensal(ev.scoreMensal)}</div></section>`;
+    meia.push(cartao(chead(I.trend,"A corrida do UDA Score",
+        "o Score recalculado dentro de cada mês · anel dourado = líder do mês","gold"),
+        cx("corrida","leg",w=>corridaMensal(ev.scoreMensal,w))));
+  else if(!temSerie) meia.push(evAviso());
+
   if(ev&&ev.mediaMovel&&ev.mediaMovel.length)
-    o+=`<section><div class="card">${chead(I.heart,"Forma recente","média móvel de KDA nas últimas 10 partidas de cada um")}
-      ${serieChart(ev.mediaMovel,{campo:"kda",H:410,eixo:"partidas, da mais antiga à mais recente",yFmt:v=>nf(v,1)})}</div></section>`;
+    meia.push(cartao(chead(I.heart,"Forma recente",
+        "média móvel de KDA nas 10 últimas partidas de cada um"),
+        cx("mm","leg",w=>serieChart(ev.mediaMovel,{W:w,campo:"kda",
+          eixo:"partidas, da mais antiga à mais recente",yFmt:v=>nf(v,1)}))));
+
   if(ev&&ev.saldo&&ev.saldo.length)
-    o+=`<section><div class="card">${chead(I.trend,"Saldo acumulado","vitórias menos derrotas ao longo do tempo — acima de zero é lucro")}
-      ${serieChart(ev.saldo,{campo:"saldo",H:410,zero:0,eixo:"partidas, da mais antiga à mais recente",yFmt:v=>sg(v,0)})}</div></section>`;
+    meia.push(cartao(chead(I.trend,"Saldo acumulado",
+        "vitórias menos derrotas ao longo do tempo — acima de zero é lucro"),
+        cx("saldo","leg",w=>serieChart(ev.saldo,{W:w,campo:"saldo",zero:0,
+          eixo:"partidas, da mais antiga à mais recente",yFmt:v=>sg(v,0)}))));
+
   if(ev&&ev.atividade)
-    o+=`<section><div class="card">${chead(I.clock,"Quando vocês jogam",
-      ev.atividade.pico?`pico: ${ev.atividade.diaLabel} às ${String(ev.atividade.pico.hora).padStart(2,"0")}h, com ${ev.atividade.pico.n} partidas`:"")}
-      ${heatmap(ev.atividade)}</div></section>`;
+    inteiro.push(cartao(chead(I.clock,"Quando vocês jogam",
+        ev.atividade.pico?`pico: ${ev.atividade.diaLabel} às ${String(ev.atividade.pico.hora).padStart(2,"0")}h, com ${ev.atividade.pico.n} partidas`:""),
+        cx("hm","hm",w=>heatmap(ev.atividade,w))));
+
   if(ev&&ev.sequencias&&ev.sequencias.length)
-    o+=`<section><div class="card flush">${`<div style="padding:22px 24px 0">${chead(I.bolt,"Sequências","a maior sequência de cada um, e como está agora")}</div>`}
+    inteiro.push(`<div class="card flush"><div style="padding:22px 24px 0">${chead(I.bolt,"Sequências","a maior sequência de cada um, e como está agora")}</div>
       <div class="tbox tseq" style="border:0;border-radius:0"><table><thead><tr><th class="l" data-k="jogador">Jogador</th>
       <th data-k="atual">Sequência atual</th><th data-k="maiorv">Maior de vitórias</th>
       <th data-k="maiord">Maior de derrotas</th></tr></thead><tbody>
@@ -3207,8 +3689,13 @@ function pEvolucao(){
         <div class="a"><span class="nlong">${h(s.gameName)}</span><span class="nshort">${h(short(s.gameName))}</span></div></div></td>
         <td data-k="atual">${s.atual>0?`<span class="pill t">${s.atual}V seguidas</span>`:s.atual<0?`<span class="pill r">${-s.atual}D seguidas</span>`:`<span class="pill n">—</span>`}</td>
         <td data-k="maiorv"><span class="num good">${s.maiorVitorias}</span></td>
-        <td data-k="maiord"><span class="num bad">${s.maiorDerrotas}</span></td></tr>`).join("")}</tbody></table></div></div></section>`;
-  return o;
+        <td data-k="maiord"><span class="num bad">${s.maiorDerrotas}</span></td></tr>`).join("")}</tbody></table></div></div>`);
+
+  /* fila ímpar: o último de meia largura sobe para largura inteira */
+  if(meia.length%2) meia[meia.length-1]=meia[meia.length-1].replace(/^<div class="/,'<div class="wide ');
+  return `<section>${seletorJogadores(g)}</section>
+    <section><div class="egrid">${meia.join("")}
+      ${inteiro.map(c=>c.replace(/^<div class="/,'<div class="wide ')).join("")}</div></section>`;
 }
 
 function pEquipe(){
@@ -3400,11 +3887,19 @@ function irPara(p,q){
   pintarNav(); desenhar(); window.scrollTo({top:0,behavior:"instant"});
 }
 function desenhar(){
+  /* o brasao entra ANTES do innerHTML: o <use href="#uda-crest"> do cartao de
+     aviso precisa achar o <defs> ja no primeiro quadro */
+  crestDefs();
   $("#app").innerHTML=RENDER[page]();
   if($("#tbl")) ligarTabela();
   ligarCartoes();
   ligarSeletor();
   ligarRecordes();
+  /* os graficos da Evolucao nascem MEDIDOS: a caixa existe, o SVG vem depois */
+  ligarGraficos();
+  /* dobrar ANTES de vida(): quem nasce dobrado nao entra na cascata de entrada
+     com um --i que ninguem vai ver */
+  dobrar();
   vida();
 }
 
@@ -3455,7 +3950,7 @@ function vida(){
     secs.push(s); s.classList.add("rv");
     /* stagger so em bloco REPETIDO. Podio e halls ja tem cascata propria no CSS
        e entrariam em conflito se ganhassem outra por cima. */
-    s.querySelectorAll(".stats>*,.grid>*,.sunk>*,.pcards>*,.cgrid>*")
+    s.querySelectorAll(".stats>*,.grid>*,.egrid>*,.sunk>*,.pcards>*,.cgrid>*")
       .forEach((c,i)=>{c.classList.add("stg"); c.style.setProperty("--i",i);});
     OBS.observe(s);
   });
@@ -3464,6 +3959,54 @@ function vida(){
      zoom estranho), passado o prazo o painel inteiro aparece do mesmo jeito. */
   setTimeout(()=>{ if(!obsVivo) secs.forEach(revelar); },1200);
 }
+
+/* ==================================================== DOBRAS DE CELULAR
+   O dash tem de continuar INTEIRO no celular: 31 recordes, 12 quadros de
+   hall, 24 partidas, todos os jogadores. O que nao pode e a pagina nascer
+   toda aberta -- eram 23 telas de rolagem ate o rodape. Entao cada bloco
+   REPETIDO nasce cortado no N util, com um botao de 44px que devolve o
+   resto e volta a fechar.
+   No desktop a funcao apaga tudo o que criou e sai: nao existe botao, nao
+   existe item escondido, o documento e o mesmo de hoje. */
+const DOBRA=[
+  [".mfeed",  8,"partidas"],   /* 24 placas            -> 8      */
+  [".awards", 3,"prêmios"],    /* 6 quadros por hall   -> 3      */
+  [".rgrid",  6,"recordes"],   /* 12/10/6 por aba      -> 6      */
+  [".stats",  8,"números"],    /* 4 herois + 8 tickers -> 4 + 4  */
+  [".pcards", 3,"jogadores"],  /* pagina Jogadores               */
+  [".cgrid",  6,"campeões"],   /* arsenal da pagina Campeoes     */
+];
+/* o MESMO limiar do bloco de alvos de toque no CSS: se os dois discordarem,
+   aparece um aparelho em que o botao existe mas nao cabe o dedo */
+const MQ_DOBRA=matchMedia("(max-width:620px)");
+
+function dobrar(){
+  /* idempotente de proposito: desenhar() chama a cada troca de pagina e o
+     matchMedia chama a cada giro do aparelho */
+  document.querySelectorAll(".maisbtn").forEach(b=>b.remove());
+  document.querySelectorAll(".fold-off").forEach(e=>e.classList.remove("fold-off"));
+  if(!MQ_DOBRA.matches) return;
+  DOBRA.forEach(([sel,n,rot])=>document.querySelectorAll("#app "+sel).forEach(cx=>{
+    const itens=[...cx.children];
+    /* esconder UM item so nao paga o botao que o esconde */
+    if(itens.length<=n+1) return;
+    const b=document.createElement("button");
+    b.type="button"; b.className="maisbtn";
+    const fechar=()=>{
+      itens.slice(n).forEach(e=>e.classList.add("fold-off"));
+      b.setAttribute("aria-expanded","false");
+      b.textContent=`Ver mais ${itens.length-n} ${rot}`;};
+    const abrir=()=>{
+      /* tira o .stg junto: o item revelado depois da cascata ja terminada
+         ficaria com uma animacao de entrada velha pendurada */
+      itens.forEach(e=>e.classList.remove("fold-off","stg"));
+      b.setAttribute("aria-expanded","true");
+      b.textContent="Ver menos";};
+    b.onclick=()=>b.getAttribute("aria-expanded")==="true"?fechar():abrir();
+    cx.appendChild(b); fechar();
+  }));
+}
+MQ_DOBRA.addEventListener("change",dobrar);
 
 function ligarSeletor(){
   document.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{selJog.clear();desenhar();});
@@ -3536,8 +4079,13 @@ function ligarTabela(){
   document.querySelectorAll("#tbl .tsc").forEach(b=>b.onclick=()=>ordenar(b.dataset.sk));
   const irAoJogador=id=>{ irPara("jogadores",fila);
     setTimeout(()=>{const c=document.getElementById("pc-"+id);
-      if(c){c.scrollIntoView({behavior:"smooth",block:"center"});
-        c.style.borderColor="var(--teal)";setTimeout(()=>c.style.borderColor="",1800);}},60);};
+      if(!c) return;
+      /* com .pcards dobrado em 3 o cartao alvo pode estar em display:none, e o
+         scrollIntoView nao iria a lugar nenhum: abre a dobra antes de pular */
+      const b=c.closest(".pcards")&&c.closest(".pcards").querySelector(".maisbtn");
+      if(b&&b.getAttribute("aria-expanded")!=="true") b.click();
+      c.scrollIntoView({behavior:"smooth",block:"center"});
+      c.style.borderColor="var(--teal)";setTimeout(()=>c.style.borderColor="",1800);},60);};
   document.querySelectorAll("#tbl tbody tr[data-p]").forEach(tr=>{
     tr.onclick=e=>{
       if(emCartao()&&!(e.target.closest&&e.target.closest('[data-k="_go"]'))) return abrirCartao(tr);
