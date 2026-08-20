@@ -2653,7 +2653,7 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .zcopy{position:absolute;top:9px;right:9px;appearance:none;border:1px solid var(--line);
   background:var(--card2);color:var(--mut);border-radius:6px;padding:4px 8px;
   font:600 10px/1 var(--body);cursor:pointer;opacity:0;transition:opacity .15s,color .15s}
-.ztrof,.mumes,.vx-podio{position:relative}
+.ztrof,.mumes,.vx-podio,.sec-copia{position:relative}
 .ztrof:hover .zcopy,.zcopy:focus-visible{opacity:1}
 .zcopy:hover{color:var(--teal);border-color:var(--teal)}
 .zcopy.feito{opacity:1;color:var(--teal);border-color:var(--teal)}
@@ -6370,7 +6370,12 @@ function pAutopsia(){
         "torre, minion, monstro neutro ou execução")}));
 
   return `
-  ${bobas.length?`<section><div class="sh-plain">${chead(I.skull,"Morreu sem ninguém encostar",
+  ${bobas.length?`<section class="sec-copia">
+    <button class="zcopy" type="button" title="copiar para mandar no grupo"
+      data-zoada="${h(["MORREU SEM NINGUÉM ENCOSTAR — torre, minion, monstro ou execução"]
+        .concat(bobas.map((x,i)=>`${i+1}º ${x.nome} — ${ni(x.valor)} mortes sem culpado`))
+        .join("\n"))}">copiar</button>
+    <div class="sh-plain">${chead(I.skull,"Morreu sem ninguém encostar",
     "torre, minion, monstro ou execução — não teve inimigo, teve decisão","red")}</div>
     <div class="autpod">${podio3(bobas,"verg")}</div></section>`:""}
 
@@ -6479,7 +6484,12 @@ function pMapa(){
           e misturar os dois viraria borrão.</div>
       </div></div></section>
 
-  ${pod.length?`<section><div class="sh-plain">${chead(I.skull,"Quem morre primeiro",
+  ${pod.length?`<section class="sec-copia">
+    <button class="zcopy" type="button" title="copiar para mandar no grupo"
+      data-zoada="${h(["QUEM MORRE PRIMEIRO — mediana do minuto da primeira morte"]
+        .concat(pod.map((x,i)=>`${i+1}º ${x.nome} — ${nf(x.valor,1)} min`))
+        .join("\n"))}">copiar</button>
+    <div class="sh-plain">${chead(I.skull,"Quem morre primeiro",
     "a mediana do minuto da primeira morte · metade das partidas dele acabou pior que isso","red")}</div>
     <div class="autpod">${podio3(pod,"verg",v=>nf(v,1)+" min")}</div></section>`:""}
 
@@ -6538,7 +6548,13 @@ function pServidor(){
   </div>`).join("");
 
   return `
-  <section><div class="sh-plain">${chead(I.award,"Quem mais pontuou nos desafios",
+  <section class="sec-copia">
+    <button class="zcopy" type="button" title="copiar para mandar no grupo"
+      data-zoada="${h(["PONTOS DE DESAFIO — a régua é o servidor inteiro, não a UDA"]
+        .concat(f.slice(0,3).map((x,i)=>
+          `${i+1}º ${x.gameName} — ${ni(x.pontos)} pts · faixa ${x.nivelPt}`))
+        .join("\n"))}">copiar</button>
+    <div class="sh-plain">${chead(I.award,"Quem mais pontuou nos desafios",
     "pontos de desafio somados — esse número é individual, ao contrário da faixa","gold")}</div>
     <div class="autpod">${podio3(pod,"ouro")}</div></section>
 
