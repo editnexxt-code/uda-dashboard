@@ -96,6 +96,10 @@ apanha (físico / mágico / verdadeiro), onde se sente seguro para matar (na sai
 da própria torre ou na cara da inimiga), qual dos três botões o dedo castiga, e
 o pódio das mortes sem nenhum culpado por perto.
 
+**Contra o servidor** — a única aba cuja régua não é a própria UDA. A API de
+Desafios da Riot dá, por desafio, a faixa do jogador (Ferro a Desafiante) contra
+a base inteira do BR, mais os pontos totais e a maestria por campeão.
+
 **O Mapa** — mapa de calor das mortes, com a coordenada exata que a Riot
 registra em cada abate. Um mapa do grupo inteiro e um por pessoa. Só Summoner's
 Rift: o Abismo Uivante usa outra escala de coordenada, e sob o filtro ARAM a aba
@@ -122,7 +126,23 @@ visão/min 8%. Mínimo de 5 partidas na fila para entrar no ranking. Em ARAM e
 Outros modos os pesos mudam: CS e visão saem, dano sobe.
 
 A Riot não publica estatísticas agregadas do BR, então não existe "média do
-Esmeralda" para comparar. Por isso a régua é o próprio grupo.
+Esmeralda" para comparar em KDA, dano ou CS. Por isso a régua do UDA Score é o
+próprio grupo.
+
+A **única** exceção está na aba *Contra o servidor*: a API de Desafios entrega
+a faixa de cada jogador em cada desafio, medida contra toda a base. Vale ler com
+cuidado, porque a granularidade engana:
+
+- A **faixa** (Ferro a Desafiante) é individual de verdade.
+- O **percentil** descreve a *faixa*, não a pessoa: quem está em Ouro num desafio
+  recebe o mesmo número de todo mundo em Ouro nele, tendo o dobro do valor ou
+  não. Medido: 5,5 percentis distintos por desafio entre 18 pessoas.
+- Por isso os destaques são ordenados por faixa. Ordenando por percentil, os
+  mesmos três desafios apareciam no cartão do elenco inteiro — e no bloco de
+  ponto fraco saíam desafios em que a pessoa estava 500% *acima* da mediana da
+  UDA. Com a faixa são 45 desafios distintos ali, contra 3.
+- **Sem faixa não é ser ruim**: desafio nunca pontuado volta com percentil 100%
+  por definição, e fica de fora.
 
 ### O que fica de fora
 
@@ -230,6 +250,8 @@ uda/rota.py           o algoz de rota
 uda/autopsia.py       como cada um morre, e de que
 uda/timeline.py       coleta e extrato da timeline (minuto a minuto)
 uda/mapa.py           mapa de calor das mortes
+uda/desafios.py       coleta dos desafios e da maestria
+uda/servidor.py       a comparacao com o servidor
 uda/partidas.py       placar completo das partidas citadas
 uda/inhouse.py        importa e analisa as personalizadas
 uda/assets.py         embute ícones e a ficha dos campeões

@@ -257,6 +257,41 @@ CREATE INDEX IF NOT EXISTS idx_part_puuid  ON participants (puuid, game_creation
 CREATE INDEX IF NOT EXISTS idx_part_track  ON participants (tracked, queue_id);
 CREATE INDEX IF NOT EXISTS idx_match_time  ON matches (game_creation);
 
+CREATE TABLE IF NOT EXISTS challenge_names (
+    challenge_id  INTEGER PRIMARY KEY,
+    nome          TEXT,
+    descricao     TEXT,
+    categoria     TEXT
+);
+
+CREATE TABLE IF NOT EXISTS challenges (
+    puuid         TEXT NOT NULL,
+    challenge_id  INTEGER NOT NULL,
+    nivel         TEXT,
+    percentil     REAL,
+    valor         REAL,
+    PRIMARY KEY (puuid, challenge_id)
+);
+
+CREATE TABLE IF NOT EXISTS challenge_totals (
+    puuid       TEXT PRIMARY KEY,
+    nivel       TEXT,
+    pontos      INTEGER,
+    maximo      INTEGER,
+    percentil   REAL,
+    categorias  TEXT,
+    atualizado  INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS mastery (
+    puuid        TEXT NOT NULL,
+    champion_id  INTEGER NOT NULL,
+    nivel        INTEGER,
+    pontos       INTEGER,
+    ultima_vez   INTEGER,
+    PRIMARY KEY (puuid, champion_id)
+);
+
 CREATE TABLE IF NOT EXISTS timeline_stats (
     match_id        TEXT NOT NULL,
     puuid           TEXT NOT NULL,

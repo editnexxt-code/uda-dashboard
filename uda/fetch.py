@@ -194,6 +194,15 @@ def run(settings: Settings, conn: sqlite3.Connection) -> None:
     _timeline.coletar(client, conn, set(store.tracked_puuids(conn)),
                       limite=settings.timeline_limit)
 
+    # Desafios e maestria sao estado ATUAL, nao historico: ~37 chamadas para o
+    # elenco inteiro. Barato o bastante para refazer por completo toda execucao,
+    # entao nao ha marca de progresso nem coleta incremental aqui.
+    from . import desafios as _desafios
+    try:
+        _desafios.coletar(client, conn, store.tracked_puuids(conn))
+    except Exception as exc:
+        print(f"  desafios: falhou ({type(exc).__name__}) -- segue sem eles")
+
     store.set_meta(conn, "last_fetch", str(_now()))
     store.set_meta(conn, "last_fetch_saved", str(saved))
     conn.commit()

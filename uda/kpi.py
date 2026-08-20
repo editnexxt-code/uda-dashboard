@@ -1232,6 +1232,8 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     payload["arsenal"] = arsenal_payload
     payload["rota"] = rota_payload
     payload["autopsia"] = autopsia_payload
+    from . import servidor as _servidor
+    payload["servidor"] = _servidor.construir(conn, players)
     payload["mapa"] = mapa_payload
     payload["mural"] = _mural.construir(rows_by_player, players, min_games,
                                         champ_index)
