@@ -1723,7 +1723,7 @@ svg circle[data-tip]:hover{opacity:.75}
   box-shadow:0 10px 22px rgba(0,0,0,.7),var(--bevel)}
 .aw-disc img{width:100%;height:100%;border-radius:50%;background:var(--ink2)}
 /* a placa gravada: nome em relevo, metrica em letra miuda */
-.aw-plate{margin-top:12px;padding:9px 12px;border-radius:7px;
+.aw-plate{margin-top:8px;padding:8px 12px;border-radius:7px;
   background:linear-gradient(180deg,#161B23,#0C1015);
   border:1px solid color-mix(in srgb,var(--acc) 20%,var(--line));box-shadow:var(--bevel)}
 .aw-plate .nm{font:800 clamp(17px,1.6cqi,23px)/1 var(--cond);text-transform:uppercase;
@@ -1733,18 +1733,18 @@ svg circle[data-tip]:hover{opacity:.75}
   filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
 .aw-plate .d{font-size:11px;color:var(--mut);margin-top:5px}
 /* o numero e placar: condensado, tabular, e a unidade nao rouba o olho */
-.aw-sc{margin-top:12px;display:flex;align-items:baseline;justify-content:center;gap:8px}
+.aw-sc{margin-top:8px;display:flex;align-items:baseline;justify-content:center;gap:8px}
 .aw-sc b{font:800 clamp(30px,3.4cqi,44px)/.9 var(--cond);font-variant-numeric:tabular-nums;
   color:var(--txt)}
 .aw-sc span{font:600 10.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-.aw-m{margin-top:12px}
+.aw-m{margin-top:8px}
 .aw-m .track{height:6px;border-radius:var(--rp);background:rgba(255,255,255,.09);overflow:hidden}
 .aw-m .track i{display:block;height:100%;border-radius:var(--rp);
   background:linear-gradient(90deg,var(--acc-3),var(--acc))}
 .aw-m .cap{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--dim);margin-top:7px}
 .aw-m .cap b{color:var(--mut);font-variant-numeric:tabular-nums}
 .aw-f{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;
-  margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
+  margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07)}
 .aw-f .lbl{font-size:10px;color:var(--dim)}
 .aw-f .ru{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);min-width:0}
 .aw-f .ru img{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
@@ -1821,7 +1821,7 @@ svg circle[data-tip]:hover{opacity:.75}
 [hidden]{display:none!important}
 .rgrid[hidden]{display:none}
 @container content (min-width:560px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@container content (min-width:1040px){.rgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container content (min-width:880px){.rgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .rc{display:flex;flex-direction:column;padding:14px;border-radius:11px;
   background:linear-gradient(180deg,#10141B,var(--ink));border:1px solid var(--line);
   transition:border-color .16s,transform .16s}
@@ -2944,6 +2944,15 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 }
 @container content (min-width:900px){
   .awards{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+/* Quarta coluna a partir de 1000px de CONTEUDO. Na tela padrao o conteudo mede
+   1.015 px: com tres colunas o cartao ficava com 303 px e os sete premios de
+   cada hall ocupavam duas fileiras. Com quatro, o cartao vai a 230 px e cabe
+   tudo numa fileira so mais o botao -- medido, sem texto cortado.
+   Este limiar TEM que morar aqui: a escada la de cima e sobrescrita por este
+   bloco, que vem depois no arquivo com a mesma especificidade. */
+@container content (min-width:1000px){
+  .awards{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
 /* ------------------------------------------------------- O ALGOZ DE ROTA
@@ -6183,8 +6192,13 @@ function pRegras(){
     <p>O Score compara <b>vocês com vocês</b>, não com o servidor. Um Score de <b>50 é exatamente a média
     da UDA</b>. Acima disso você está acima dos seus amigos; abaixo, o contrário.</p>
     <p>Isso não é preguiça: a Riot não publica estatísticas agregadas do BR. Não existe endpoint de
-    "média do Esmeralda". Sites como o LeagueOfGraphs conseguem porque baixam milhões de partidas por
-    conta própria. Comparar vocês com um número inventado seria pior do que não comparar.</p>
+    "média do Esmeralda" para KDA, dano ou CS. Sites como o LeagueOfGraphs conseguem porque baixam
+    milhões de partidas por conta própria. Comparar vocês com um número inventado seria pior do que
+    não comparar.</p>
+    <p>Existe <b>uma</b> exceção, e ela tem aba própria: a API de Desafios devolve a faixa de cada
+    jogador em cada desafio, medida contra a base inteira do servidor. É o que a aba
+    <b>Contra o servidor</b> mostra. Vale a ressalva que está escrita lá: a <i>faixa</i> é
+    individual, mas o <i>percentil</i> descreve a faixa, não a pessoa.</p>
 
     <h3>As sete métricas e seus pesos</h3>
     <div class="wtable">${P.map(([m,v])=>`<div class="wrow"><span class="wn">${m}</span>
