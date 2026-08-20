@@ -996,7 +996,8 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     zoeira_payload: dict[str, Any] = {}
     vexames_payload: dict[str, Any] = {}
     arsenal_payload: dict[str, Any] = {}
-    from . import arsenal as _arsenal, vexames as _vexames, zoeira as _zoeira
+    rota_payload: dict[str, Any] = {}
+    from . import arsenal as _arsenal, rota as _rota, vexames as _vexames, zoeira as _zoeira
 
     def _keep(row, teste, squad_only) -> bool:
         if teste is not None and not teste(row["queue_id"], row["game_mode"]):
@@ -1148,6 +1149,7 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
                 conn, rows_grupo, players, verbose=False)
             arsenal_payload[gkey] = _arsenal.construir(
                 group_rows, players, ddragon_ver, verbose=False)
+            rota_payload[gkey] = _rota.construir(group_rows, players, verbose=False)
 
         if squad_only:
             ordem = [e["puuid"] for e in entries]
@@ -1200,6 +1202,7 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     from . import mural as _mural
     payload["zoeira"] = zoeira_payload
     payload["arsenal"] = arsenal_payload
+    payload["rota"] = rota_payload
     payload["mural"] = _mural.construir(rows_by_player, players, min_games,
                                         champ_index)
     payload["titulos"] = _mural.resumo_titulos(payload["mural"])

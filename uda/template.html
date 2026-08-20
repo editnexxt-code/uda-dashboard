@@ -2844,6 +2844,30 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 @container content (min-width:900px){
   .awards{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* ------------------------------------------------------- O ALGOZ DE ROTA
+   O dado mais especifico de zoacao do banco: nao e "voce joga mal", e "voce nao
+   sabe jogar contra Yasuo, e aqui estao os quatro duelos". */
+.rota-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:10px}
+.rota-l{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--rs);padding:11px 13px}
+.rota-l:hover{border-color:rgba(229,72,77,.5)}
+.rota-l>img{width:34px;height:34px;border-radius:50%;flex:0 0 auto}
+.rota-l .quem{flex:1;min-width:0}
+.rota-l .quem .n{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rota-l .quem .s{font-size:10.5px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:5px}
+.rota-l .quem .s img{width:17px;height:17px;border-radius:4px;flex:0 0 auto}
+.rota-l .cs{text-align:right;flex:0 0 auto}
+.rota-l .cs b{font:700 15px/1 var(--disp);color:var(--red);font-variant-numeric:tabular-nums}
+.rota-l .cs i{display:block;font-style:normal;font-size:9.5px;color:var(--dim);margin-top:3px}
+.rota-tab{display:flex;flex-direction:column}
+.rota-r{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:12px}
+.rota-r:last-child{border-bottom:0}
+.rota-r img{width:28px;height:28px;border-radius:7px;flex:0 0 auto}
+.rota-r .n{flex:1;min-width:0;font-weight:500}
+.rota-r .d{color:var(--dim);font-variant-numeric:tabular-nums;font-size:11px}
+.rota-r .v{font-weight:700;font-variant-numeric:tabular-nums;width:64px;text-align:right}
+
 </style>
 </head>
 <body>
@@ -5544,7 +5568,7 @@ function podio3(itens,tone,fmt){
   return `<div class="p3 ${tone||"ouro"}">${ordem.map(i=>{
     const it=l[i]; if(!it) return "";
     return `<div class="p3s s${i+1}"${it.tip||""}${it.ev||""}>
-      <img class="av" src="${iconImg(it.icon)}"${FB}>
+      <img class="av" src="${it.img||iconImg(it.icon)}"${FB}>
       <div class="nm">${h(short(it.nome))}</div>
       <div class="vl">${f(it.valor)}</div>
       <div class="deg">${i+1}º</div></div>`;}).join("")}</div>`;
@@ -5572,6 +5596,46 @@ function ligarPeriodo(){
   document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{
     periodo=b.dataset.per; desenhar();
   });
+}
+
+
+/* ---------------------------------------------------------- ALGOZ DE ROTA */
+function pRotaBloco(){
+  const r=(DATA.rota||{})[filaDados()];
+  if(!r||!r.duros||!r.duros.length) return "";
+  const chip=(f)=>tip(h(f.champion),[
+    ["Duelos de rota",ni(f.duelos)],
+    ["Saldo de CS",(f.csDiff>0?"+":"")+nf(f.csDiff,0),f.csDiff>=0?"var(--teal)":"var(--red)"],
+    ["Mortes por partida",nf(f.mortes,1)],
+    ["Aproveitamento",nf(f.winrate,0)+"%",f.winrate>=50?"var(--teal)":"var(--red)"],
+  ],"saldo de CS contra o oponente direto de rota");
+  return `<section><div class="card">${chead(I.sword,"Os algozes da rota",
+      `contra quem vocês mais apanham na fase de rota · mínimo de ${r.minGrupo} duelos · só topo, meio e atirador`,"red")}
+      ${r.duros.length>2?`<div style="max-width:430px;margin:0 auto 18px">${podio3(
+        r.duros.slice(0,3).map(f=>({nome:f.champion,img:champImg(f.championId,f.champion),
+          valor:f.csDiff,tip:chip(f)})),"verg",(v)=>nf(v,0)+" CS")}</div>`:""}
+      <div class="rota-tab">${r.duros.map(f=>`<div class="rota-r"${chip(f)}>
+        <img src="${champImg(f.championId,f.champion)}"${FB}>
+        <span class="n">${h(f.champion)}</span>
+        <span class="d">${f.duelos} duelos · ${nf(f.mortes,1)} mortes · ${nf(f.winrate,0)}%</span>
+        <span class="v ${f.csDiff>=0?"good":"bad"}">${f.csDiff>0?"+":""}${nf(f.csDiff,0)} CS</span>
+      </div>`).join("")}</div></div></section>
+    ${r.porJogador.length?`<section><div class="card">${chead(I.user,"O algoz de cada um",
+      `o campeão que mais destrói cada um na rota · mínimo de ${r.minPessoa} duelos contra o mesmo`,"red")}
+      <div class="rota-g">${r.porJogador.map(j=>`<div class="rota-l"${
+        j.algoz.matchIds&&j.algoz.matchIds.length?linkPartida(j.algoz.matchIds[0]):""}${tip(
+        h(j.gameName)+" contra "+h(j.algoz.champion),[
+          ["Duelos",ni(j.algoz.duelos)],
+          ["Saldo de CS",nf(j.algoz.csDiff,0)],
+          ["Aproveitamento",nf(j.algoz.winrate,0)+"%",j.algoz.winrate>=50?"var(--teal)":"var(--red)"],
+          j.fregues?["Já contra "+j.fregues.champion,"+"+nf(j.fregues.csDiff,0)+" CS","var(--teal)"]:null,
+        ].filter(Boolean),"clique para abrir o pior desses duelos")}>
+        <img src="${iconImg(j.icon)}"${FB}>
+        <div class="quem"><div class="n">${h(short(j.gameName))}</div>
+          <div class="s">apanha de <img src="${champImg(j.algoz.championId,j.algoz.champion)}"${FB}>
+            ${h(j.algoz.champion)}</div></div>
+        <div class="cs"><b>${nf(j.algoz.csDiff,0)}</b><i>CS em ${j.algoz.duelos} duelos</i></div>
+      </div>`).join("")}</div></div></section>`:""}`;
 }
 
 /* ============================================================= VEXAMES */
@@ -5965,6 +6029,7 @@ function pCampeoes(){
           "e mesmo assim ninguém para de escolher")}):""}
     </div></section>
     ${arsenal(g)}
+    ${pRotaBloco()}
     ${estante(g)}`;
 }
 
