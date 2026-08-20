@@ -2648,6 +2648,17 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .zrow img{width:24px;height:24px;border-radius:50%;flex:0 0 auto}
 .zrow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zrow .v{font-weight:600;font-variant-numeric:tabular-nums}
+/* Botao de copiar: mora no canto do cabecalho do trofeu, discreto ate o hover
+   do cartao. Nao pode competir com o titulo -- ele e servico, nao conteudo. */
+.zcopy{position:absolute;top:9px;right:9px;appearance:none;border:1px solid var(--line);
+  background:var(--card2);color:var(--mut);border-radius:6px;padding:4px 8px;
+  font:600 10px/1 var(--body);cursor:pointer;opacity:0;transition:opacity .15s,color .15s}
+.ztrof{position:relative}
+.ztrof:hover .zcopy,.zcopy:focus-visible{opacity:1}
+.zcopy:hover{color:var(--teal);border-color:var(--teal)}
+.zcopy.feito{opacity:1;color:var(--teal);border-color:var(--teal)}
+@media (hover:none){.zcopy{opacity:1}}
+
 .zmais{appearance:none;width:100%;border:0;border-top:1px solid var(--line);background:var(--card2);
   color:var(--mut);padding:9px;font:500 11.5px/1 var(--body);cursor:pointer}
 .zmais:hover{color:var(--teal)}
@@ -3773,25 +3784,25 @@ function statRow(g){
       ],semanas?`a linha é o volume de partidas por semana · ${semanas}`:null)})}
 
     ${tickKpi(I.clock,"Partida média",nf(t.avg_minutes,0),"min",
-      tip("Duração média",[["Minutos por partida",nf(t.avg_minutes,1)]],"tempo médio até o Nexus cair"))}
+      tip("Duração média",[["Minutos por partida",nf(t.avg_minutes,1)]],"tempo médio até o Nexus cair — de um lado ou do outro"))}
     ${tickKpi(I.skull,"Mortes totais",ni(t.total_deaths),"",
       tip("Mortes totais",[["Total",ni(t.total_deaths),"var(--red)"],
-        ["A cada 10 min",nf(t.deaths_10min,2)]],"somando todas as participações do grupo"))}
+        ["A cada 10 min",nf(t.deaths_10min,2)]],"somando tudo o que o grupo já fez, para o bem e para o mal"))}
     ${tickKpi(I.bolt,"Particip. em abates",nf(t.kp,0),"%",
       tip("Participação em abates",[["Média do grupo",nf(t.kp,1)+"%"]],
-        "fatia dos abates do time em que vocês entraram"))}
+        "fatia dos abates do time em que vocês entraram, nem que seja para dar o último tapa"))}
     ${tickKpi(I.grid,"CS por minuto",nf(t.cs_min,1),"",
       tip("Farm",[["CS por minuto",nf(t.cs_min,2)],["CS por jogo",ni(t.cs_game)]],
         "referência: 7/min já é farm de gente séria"))}
     ${tickKpi(I.eye,"Visão por minuto",nf(t.vision_min,2),"",
       tip("Visão",[["Pontuação/min",nf(t.vision_min,2)],["Sentinelas/jogo",nf(t.wards_game,1)]],
-        "quanto do mapa vocês enxergam"))}
+        "quanto do mapa vocês enxergam. O resto é fé"))}
     ${tickKpi(I.award,"Multikills",ni(mk.double+mk.triple+mk.quadra+mk.penta),"",
       tip("Multikills",[["Duplos",ni(mk.double)],["Triplos",ni(mk.triple)],
         ["Quádruplos",ni(mk.quadra)],["Pentas",ni(mk.penta),"var(--gold)"]],
         mk.penta?"tem penta na conta":"nenhum penta ainda"))}
     ${tickKpi(I.heart,"Cura e escudo",ni(t.heal_shield_game),"",
-      tip("Cura e escudo",[["Por partida",ni(t.heal_shield_game)]],"o que foi parar em aliados"))}
+      tip("Cura e escudo",[["Por partida",ni(t.heal_shield_game)]],"o que foi parar em aliados, e não no próprio bolso"))}
     ${tickKpi(I.skull,"Rendições",nf(t.surrender_rate,0),"%",
       tip("Rendições",[["Fatia das partidas",nf(t.surrender_rate,1)+"%","var(--red)"]],
         "terminaram em WW antes do Nexus"))}
@@ -5576,7 +5587,18 @@ function pZoeira(){
     return `<section><div class="sh-plain">${chead(icone,titulo,sub,tone)}</div>
       <div class="zgrid">${lista.map(t2=>{
         const c=t2.campeao, resto=t2.ranking.slice(1,4);
+        /* A frase e montada aqui, no mesmo lugar que ja tem todos os dados --
+           montar no clique exigiria carregar o payload de novo pelo `key`. */
+        const zoada=[
+          t2.titulo.toUpperCase(),
+          `1º ${c.gameName} — ${nf(c.valor,t2.casas)} ${t2.unidade}`,
+          t2.ranking.slice(1,3).map((r,i)=>`${i+2}º ${r.gameName} ${nf(r.valor,t2.casas)}`).join(" · "),
+          t2.legenda,
+          `média do grupo: ${nf(t2.media,t2.casas)} · ${t2.ranking.length} no ranking`,
+        ].filter(Boolean).join("\n");
         return `<div class="ztrof ${g}">
+          <button class="zcopy" type="button" data-zoada="${h(zoada)}"
+            title="copiar para mandar no grupo">copiar</button>
           <div class="zh"><div class="tt">${h(t2.titulo)}</div><div class="lg">${h(t2.legenda)}</div></div>
           <div class="zpod">${podio3(
             t2.ranking.slice(0,3).map((r,ri)=>({nome:r.gameName,icon:r.icon,valor:r.valor,
@@ -5865,16 +5887,16 @@ function ligarVexames(){
 }
 
 const PAGES=[
-  {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O panorama do grupo na fila selecionada"},
-  {k:"ranking",n:"Classificação",i:I.rank,g:"Principal",q:1,sub:"Todos os jogadores, todas as métricas"},
-  {k:"evolucao",n:"Evolução",i:I.trend,g:"Principal",q:1,sub:"Como o desempenho de vocês muda ao longo do tempo"},
-  {k:"equipe",n:"Em equipe",i:I.users,g:"Grupo",q:0,sub:"Só as partidas com 2 ou mais da UDA no mesmo time"},
+  {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O estrago geral, na fila que você escolher"},
+  {k:"ranking",n:"Classificação",i:I.rank,g:"Principal",q:1,sub:"Todo mundo, toda métrica, sem onde se esconder"},
+  {k:"evolucao",n:"Evolução",i:I.trend,g:"Principal",q:1,sub:"Quem melhorou, quem piorou e quem sempre foi assim"},
+  {k:"equipe",n:"Em equipe",i:I.users,g:"Grupo",q:0,sub:"Só as partidas com 2 ou mais da UDA no mesmo time — dividir a culpa"},
   {k:"inhouse",n:"Personalizadas",i:I.target,g:"Grupo",q:0,sub:"As partidas que vocês jogam entre si — UDA contra UDA"},
-  {k:"jogadores",n:"Jogadores",i:I.user,g:"Grupo",q:1,sub:"Um cartão por pessoa, com radar comparativo"},
-  {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo joga, e com que resultado"},
-  {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:1,sub:"Itens, runas e feitiços que vocês mais levam"},
-  {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"O UDA e o Afundado de cada mês"},
-  {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com o porquê"},
+  {k:"jogadores",n:"Jogadores",i:I.user,g:"Grupo",q:1,sub:"Um cartão por pessoa. A ficha completa, com foto"},
+  {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo insiste em jogar, e no que dá"},
+  {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:1,sub:"Itens, runas e feitiços que vocês repetem até cansar"},
+  {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"A coroa e a lanterna de cada mês, para a posteridade"},
+  {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com a prova do lado"},
   {k:"zoeira",n:"Troféus",i:I.award,g:"Zoeira",q:1,sub:"As métricas que existem só para zoar"},
   {k:"autopsia",n:"Autópsia",i:I.target,g:"Zoeira",q:1,sub:"Não quanto você morre — como você morre"},
   {k:"mapa",n:"O Mapa",i:I.grid,g:"Zoeira",q:1,sub:"Onde exatamente cada um cai, com a coordenada da Riot"},
@@ -6180,13 +6202,13 @@ function pCampeoes(){
         tip:tip(top.champion,[["Partidas",ni(top.games)],
           ["Resultado",`${top.wins}V ${top.losses}D`],
           ["Aproveitamento",nf(top.winrate,1)+"%"],["KDA médio",nf(top.kda,2)]],
-          "o campeão que mais aparece nas partidas do grupo")})}
+          "o campeão que mais aparece nas partidas do grupo, para o bem de ninguém")})}
       ${melhor?heroKpi({acc:"var(--teal)",icon:I.target,k:"Melhor aproveitamento",
         raw:melhor.winrate,dec:0,v:nf(melhor.winrate,0),unit:"%",
         sub:`${melhor.champion} · ${melhor.games} jogos`,serie:wrs,
         tip:tip(melhor.champion,[["Aproveitamento",nf(melhor.winrate,1)+"%","var(--teal)"],
           ["Partidas",ni(melhor.games)],["KDA médio",nf(melhor.kda,2)]],
-          "mínimo de 5 partidas para entrar nesta conta")}):""}
+          "mínimo de 5 partidas para entrar nesta conta — jogar pouco não salva")}):""}
       ${pior?heroKpi({acc:"var(--red)",icon:I.skull,k:"O que mais afunda",
         raw:pior.winrate,dec:0,v:nf(pior.winrate,0),unit:"%",
         sub:`${pior.champion} · ${pior.games} jogos`,serie:wrs,
@@ -6296,7 +6318,7 @@ function pAutopsia(){
        ["Na torre inimiga",ni(x.torreInimiga),"var(--teal)"],
        ["Na saia da própria",ni(x.souTorre),"var(--red)"],
        ["Ousadia",nf(x.ousadia,1)+"%"]],
-       "abates feitos perto de alguma torre")}>
+       "abates feitos perto de alguma torre — a sua ou a dele")}>
       <i style="width:${x.ousadia}%;background:${x.ousadia>=50?"var(--teal)":"var(--red)"}"></i>
       </div>`, nf(x.ousadia,0)+"%")).join("");
 
@@ -6481,7 +6503,7 @@ function pServidor(){
     ${x.maestria.length?`<div><div class="rot" style="margin-bottom:5px">Maestria</div>
       <div class="mst">${x.maestria.map(m=>`<img src="${champImg(m.cid)}"${FB}
         ${tip(CDET&&CDET[m.cid]?h(CDET[m.cid].name):"Campeão",
-          [["Nível",ni(m.nivel)],["Pontos",ni(m.pontos)]],"maestria acumulada")}>`).join("")}</div>
+          [["Nível",ni(m.nivel)],["Pontos",ni(m.pontos)]],"maestria acumulada, que não garante absolutamente nada")}>`).join("")}</div>
       </div>`:""}
   </div>`).join("");
 
@@ -6778,6 +6800,32 @@ function dobrar(){
   });
 }
 MQ_DOBRA.addEventListener("change",dobrar);
+
+/* Copia sem depender do navigator.clipboard, que so existe em contexto seguro:
+   o painel tambem e aberto direto do arquivo (file://), onde ele nao esta
+   disponivel. O textarea temporario com execCommand funciona nos dois casos. */
+function copiarTexto(txt){
+  if(navigator.clipboard&&window.isSecureContext)
+    return navigator.clipboard.writeText(txt).then(()=>true,()=>false);
+  const ta=document.createElement("textarea");
+  ta.value=txt; ta.setAttribute("readonly","");
+  ta.style.cssText="position:fixed;left:-9999px;top:0";
+  document.body.appendChild(ta); ta.select();
+  let ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+  ta.remove(); return Promise.resolve(ok);
+}
+
+document.addEventListener("click",ev=>{
+  const b=ev.target.closest("[data-zoada]");
+  if(!b) return;
+  ev.stopPropagation();          /* nao pode abrir a evidencia junto */
+  copiarTexto(b.getAttribute("data-zoada")).then(ok=>{
+    const antes=b.textContent;
+    b.textContent=ok?"copiado!":"falhou";
+    b.classList.toggle("feito",ok);
+    setTimeout(()=>{b.textContent=antes;b.classList.remove("feito");},1400);
+  });
+});
 
 function ligarZoeira(){
   /* clicar no degrau abre as partidas daquela pessoa naquele trofeu */

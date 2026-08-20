@@ -89,7 +89,9 @@ títulos acumulados.
 período (tudo / 90 / 30 / 7 dias).
 
 **Troféus** — 64 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
-num degrau do pódio abre as partidas que produziram aquele número.
+num degrau do pódio abre as partidas que produziram aquele número, e o botão
+*copiar* no canto do cartão põe a zoeira montada na área de transferência,
+pronta para colar no grupo.
 
 **Autópsia** — não quanto você morre, mas **como**: de que tipo de dano cada um
 apanha (físico / mágico / verdadeiro), onde se sente seguro para matar (na saia
