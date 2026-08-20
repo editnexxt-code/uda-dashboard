@@ -88,7 +88,7 @@ títulos acumulados.
 **Paredão** — as piores partidas de cada um, com o porquê medido. Tem filtro de
 período (tudo / 90 / 30 / 7 dias).
 
-**Troféus** — 61 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
+**Troféus** — 64 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
 num degrau do pódio abre as partidas que produziram aquele número.
 
 **Autópsia** — não quanto você morre, mas **como**: de que tipo de dano cada um
@@ -242,7 +242,7 @@ uda/store.py          SQLite, migração de schema e backfill
 uda/fetch.py          coleta incremental, retomável
 uda/kpi.py            KPIs, UDA Score, grupos por fila
 uda/evolucao.py       séries temporais
-uda/zoeira.py         os 61 troféus de carreira
+uda/zoeira.py         os 64 troféus de carreira
 uda/vexames.py        as piores partidas, com motivo
 uda/mural.py          UDA e Afundado do mês
 uda/arsenal.py        itens, runas e feitiços

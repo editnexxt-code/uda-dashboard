@@ -4679,8 +4679,8 @@ function fitaCorpo(seqs){
 
 function fita(seqs){
   FITA_D=seqs||[];
-  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.bolt,"Sequências",
-    "a maior sequência de cada um, e como está agora — mesma régua pra todo mundo, sem desculpa")}</div>
+  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.bolt,"Embalos e afundamentos",
+    "a maior sequência de cada um, e como está agora — mesma régua pra todo mundo, sem desculpa de lag")}</div>
     ${fitaCorpo(FITA_D)}</div>`;
 }
 
@@ -5610,7 +5610,8 @@ function pArsenal(){
           <span class="w ${i.winrate>=50?"good":"bad"}">${nf(i.winrate,0)}%</span></span>
       </div>`).join("")}</div></div></section>
     <section><div class="grid g2">
-      <div class="card">${chead(I.bolt,"Runas principais","a keystone que vocês mais equipam","gold")}
+      <div class="card">${chead(I.bolt,"Runas principais",
+    "a keystone que vocês mais equipam — variedade nunca foi o forte da casa","gold")}
         <div>${a.runas.map(r=>`<div class="hbar"${tip(h(r.nome),[
             ["Árvore",h(r.arvore)],["Partidas",ni(r.partidas)],
             ["Fatia",nf(r.share,1)+"%"],
@@ -5620,7 +5621,8 @@ function pArsenal(){
           <div class="ht"><i style="width:${r.share/(a.runas[0].share||1)*100}%"></i></div>
           <div class="hq">${ni(r.partidas)}</div>
           <span class="pill ${r.winrate>=50?"t":"r"}">${nf(r.winrate,0)}%</span></div>`).join("")}</div></div>
-      <div class="card">${chead(I.target,"Duplas de feitiço","o par que vocês levam pra rota")}
+      <div class="card">${chead(I.target,"Duplas de feitiço",
+    "o par que vocês levam pra rota, e que quase nunca muda")}
         <div>${a.feiticos.map(f=>`<div class="hbar"${tip(h(f.nome),[
             ["Partidas",ni(f.partidas)],["Fatia",nf(f.share,1)+"%"],
             ["Aproveitamento",nf(f.winrate,1)+"%",f.winrate>=50?"var(--teal)":"var(--red)"]])}>
@@ -5918,7 +5920,7 @@ function pVisao(){
       <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div></section>
     ${g.lcu?medidorCasa(g):medidorPadrao(g,t,acima)}
     <section data-sec="feed"><div class="card">${chead(I.clock,"Últimas partidas",
-      "uma placa por partida — clique num campeão para abrir o dossiê")}
+    "uma placa por partida — clique num campeão para ver o estrago de perto")}
       ${feedRecentes(g.recent)}</div></section>`;
 }
 
@@ -5948,7 +5950,7 @@ function medidorCasa(g){
 
 function medidorPadrao(g,t,acima){
   return `<section data-sec="medidor"><div class="grid g3">
-      <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
+      <div class="card">${chead(I.target,"Aproveitamento do grupo","o placar frio da fila selecionada")}
         ${gauge({valor:t.winrate,rotulo:`${ni(t.wins)}V · ${ni(t.losses)}D`,
           pill:acima?"Acima de 50%":"Abaixo de 50%",
           tone:acima?"var(--teal)":"var(--red)",
@@ -5965,9 +5967,10 @@ function medidorPadrao(g,t,acima){
               ["Partidas",ni(mb.games)],["Semana de",rotSemana(mb.week)]])}>
               <div class="k">Melhor semana</div><div class="v">${nf(mb.winrate,0)}%</div></div>
           </div>`;})()}</div>
-      <div class="card">${chead(I.user,"Rotas do grupo","quanto vocês jogam de cada uma, e com que aproveitamento")}
+      <div class="card">${chead(I.user,"Rotas do grupo",
+    "quanto vocês jogam de cada uma, e com que resultado — dá pra ver de longe qual rota ninguém quer pegar")}
         ${barrasHoriz(g.roles,"role","games","winrate","share")}</div>
-      <div class="card">${chead(I.grid,"Filas","distribuição das partidas")}
+      <div class="card">${chead(I.grid,"Filas","onde vocês gastam as noites")}
         ${barrasHoriz(g.queues,"queue","matches","winrate","share")}</div>
     </div></section>`;
 }
@@ -6065,7 +6068,7 @@ function pEvolucao(){
   const temSerie=!!(ev&&((ev.scoreMensal&&ev.scoreMensal.length)||(ev.mediaMovel&&ev.mediaMovel.length)));
 
   meia.push(cartao(chead(I.cal,"Aproveitamento por semana",
-      "cada barra é uma semana; os anéis marcam a melhor e a pior"),
+    "cada barra é uma semana; os anéis marcam a melhor e a pior — uma das duas vocês preferem esquecer"),
       cx("wk","leg",w=>barLine(g.trend,w))));
 
   if(ev&&ev.scoreMensal&&ev.scoreMensal.length)
@@ -6076,7 +6079,7 @@ function pEvolucao(){
 
   if(ev&&ev.mediaMovel&&ev.mediaMovel.length)
     meia.push(cartao(chead(I.heart,"Forma recente",
-        "média móvel de KDA nas 10 últimas partidas de cada um"),
+    "média móvel de KDA nas 10 últimas partidas — quem está subindo e quem está afundando agora"),
         cx("mm","leg",w=>serieChart(ev.mediaMovel,{W:w,campo:"kda",
           eixo:"partidas, da mais antiga à mais recente",yFmt:v=>nf(v,1)}))));
 
@@ -6114,8 +6117,10 @@ function pEquipe(){
     <section><div class="card">${chead(I.users,"Matriz de sinergia",`aproveitamento de cada dupla no mesmo time · mínimo de ${x.matrix.minPair} partidas`)}
       ${matriz(x.matrix)}</div></section>
     <section><div class="grid g2">
-      <div class="card">${chead(I.users,"Formações","trios, quartetos e time completo")}${formacoes(x.lineups)}</div>
-      <div class="card">${chead(I.sword,"Confrontos internos","quando caem em times opostos","red")}${confrontos(x.clashes)}</div>
+      <div class="card">${chead(I.users,"Formações",
+    "trios, quartetos e time completo — juntar mais gente da UDA nem sempre melhora o resultado")}${formacoes(x.lineups)}</div>
+      <div class="card">${chead(I.sword,"Confrontos internos",
+    "quando o sorteio separa vocês e a amizade fica pra depois da partida","red")}${confrontos(x.clashes)}</div>
     </div></section>`;
 }
 
