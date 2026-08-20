@@ -29,56 +29,107 @@ def _n(valor) -> float:
 # Cada motivo: (chave, peso, teste(ctx) -> bool, frase(ctx) -> str)
 # ctx traz a linha, a media do proprio jogador e o contexto da partida.
 
+def _variante(frases, semente: str) -> str:
+    """Uma das redacoes, sempre a mesma para a mesma partida.
+
+    crc32 e nao hash(): o Python embaralha o hash de string a cada processo, e
+    a frase mudaria a cada geracao do painel.
+    """
+    if isinstance(frases, str):
+        return frases
+    return frases[zlib.crc32(semente.encode("utf-8")) % len(frases)]
+
+
 def _motivos(ctx) -> list[dict]:
     r, med, par = ctx["row"], ctx["media"], ctx["partida"]
     minutos = max(_n(r["game_duration"]) / 60.0, 1)
     mortes = _n(r["deaths"])
     saida = []
 
+    semente = str(r["match_id"])
+
     def add(chave, peso, texto, valor=None):
-        saida.append({"chave": chave, "peso": peso, "texto": texto, "valor": valor})
+        # `texto` pode ser uma lista de redacoes: a escolha e estavel por
+        # partida+chave, entao dois motivos da mesma partida nao caem no
+        # mesmo indice.
+        saida.append({"chave": chave, "peso": peso,
+                      "texto": _variante(texto, semente + chave), "valor": valor})
 
     # --- morte
     if mortes >= 10:
-        add("mortes", 3, f"Morreu {int(mortes)} vezes em {int(minutos)} minutos. "
-                         f"Uma a cada {_pt(minutos / mortes)} min — dava pra marcar no relógio.", int(mortes))
+        add("mortes", 3, [
+            f"Morreu {int(mortes)} vezes em {int(minutos)} minutos. "
+            f"Uma a cada {_pt(minutos / mortes)} min — dava pra marcar no relógio.",
+            f"{int(mortes)} mortes em {int(minutos)} minutos: uma a cada "
+            f"{_pt(minutos / mortes)} min, com hora marcada.",
+            f"Morreu {int(mortes)} vezes. Em {int(minutos)} minutos de jogo, "
+            f"isso é uma entrega a cada {_pt(minutos / mortes)} min.",
+        ], int(mortes))
     elif mortes >= max(6, med["deaths"] * 1.6):
         add("mortes", 2, f"{int(mortes)} mortes. A média dele é {_pt(med['deaths'])} — "
                          f"hoje resolveu caprichar.",
             int(mortes))
 
     if par["piorKda"] and mortes >= 5:
-        add("piorDaPartida", 3, "Pior KDA dos dez. Não do time: da partida inteira.")
+        add("piorDaPartida", 3, [
+            "Pior KDA dos dez. Não do time: da partida inteira.",
+            "Último em KDA entre os dez. E tinha concorrência.",
+            "Dos dez jogadores em campo, o pior KDA foi o dele.",
+            "Nenhum dos outros nove conseguiu ser tão ruim.",
+        ])
 
     # --- tempo morto
     morto = _n(r["time_dead"])
     jogado = _n(r["time_played"]) or _n(r["game_duration"])
     if jogado and morto / jogado >= 0.22:
-        add("telaCinza", 2,
+        add("telaCinza", 2, [
             f"Passou {int(morto / 60)} minutos morto — "
             f"{round(morto / jogado * 100)}% do jogo encarando a tela cinza.",
-            f"{round(morto / jogado * 100)}%")
+            f"{round(morto / jogado * 100)}% da partida no cinza. "
+            f"São {int(morto / 60)} minutos de contemplação.",
+            f"{int(morto / 60)} minutos esperando renascer. "
+            "Deu pra pensar na vida umas quatro vezes.",
+        ], f"{round(morto / jogado * 100)}%")
 
     # --- participacao
     kp = _n(r["kp"]) * 100
     if kp and kp <= 35 and _n(r["team_kills"]) >= 12:
-        add("ausente", 2, f"Participou de {round(kp)}% dos abates. "
-                          "O time brigou sozinho e nem sentiu falta.", f"{round(kp)}%")
+        add("ausente", 2, [
+            f"Participou de {round(kp)}% dos abates. "
+            "O time brigou sozinho e nem sentiu falta.",
+            f"{round(kp)}% de participação: enquanto o time trocava tiro, "
+            "ele estava em outro CEP.",
+            f"Só {round(kp)}% dos abates passaram por ele. O resto foi sem convite.",
+        ], f"{round(kp)}%")
 
     # --- dano
     dpm = _n(r["dpm"])
     if dpm and dpm <= med["dpm"] * 0.6:
-        add("semDano", 2, f"{int(dpm)} de dano por minuto, contra os {int(med['dpm'])} de sempre. "
-                          "Presença confirmada; dano, não.",
-            int(dpm))
+        add("semDano", 2, [
+            f"{int(dpm)} de dano por minuto, contra os {int(med['dpm'])} de sempre. "
+            "Presença confirmada; dano, não.",
+            f"Deu {int(dpm)} de dano por minuto. A média dele é {int(med['dpm'])} — "
+            "hoje foi só de corpo presente.",
+            f"{int(dpm)} de dano por minuto. O inimigo mal percebeu que ele estava lá.",
+        ], int(dpm))
     if par["menorDano"] and minutos >= 20:
-        add("menorDano", 2, "Menor dano da partida. Dos dez, contando o suporte.")
+        add("menorDano", 2, [
+            "Menor dano da partida. Dos dez, contando o suporte.",
+            "O menor dano dos dez. Nem o suporte fez tão pouco.",
+            "Último em dano na partida inteira. Podia ter ficado na base.",
+        ])
 
     # --- farm
     cs_diff = r["cs_diff"] if r["cs_diff"] is not None else 0
     if cs_diff <= -40:
-        add("farm", 2, f"Levou {abs(int(cs_diff))} de CS a menos que o oponente de rota. "
-                       "Uma vila inteira de minion.", int(cs_diff))
+        add("farm", 2, [
+            f"Levou {abs(int(cs_diff))} de CS a menos que o oponente de rota. "
+            "Uma vila inteira de minion.",
+            f"O oponente de rota farmou {abs(int(cs_diff))} a mais. "
+            "Deu pra montar item inteiro com a diferença.",
+            f"{abs(int(cs_diff))} de CS atrás do adversário direto. "
+            "Os minions passaram e ele acenou.",
+        ], int(cs_diff))
 
     # --- carteira
     sobrou = _n(r["gold"]) - _n(r["gold_spent"])
@@ -89,9 +140,12 @@ def _motivos(ctx) -> list[dict]:
     # --- apanhou
     dado, levado = _n(r["damage_champions"]), _n(r["damage_taken"])
     if dado and levado / max(dado, 1) >= 2.5 and minutos >= 20:
-        add("apanhou", 1, f"Levou {_pt(levado / max(dado, 1))}x mais dano do que causou. "
-                          "Boneco de treino oficial da partida.",
-            f"{_pt(levado / max(dado, 1))}x")
+        add("apanhou", 1, [
+            f"Levou {_pt(levado / max(dado, 1))}x mais dano do que causou. "
+            "Boneco de treino oficial da partida.",
+            f"Apanhou {_pt(levado / max(dado, 1))}x mais do que bateu. "
+            "O outro time usou ele pra calibrar build.",
+        ], f"{_pt(levado / max(dado, 1))}x")
 
     # --- vergonhas categoricas
     if r["was_afk"]:
@@ -102,10 +156,20 @@ def _motivos(ctx) -> list[dict]:
         add("deficit", 1, f"Chegou a estar {int(_n(r['max_kill_deficit']))} abates atrás. "
                           "Isso não é placar, é dívida.", int(_n(r["max_kill_deficit"])))
     if _n(r["ping_mia"]) >= 8:
-        add("ping", 1, f"Deu {int(_n(r['ping_mia']))} pings de interrogação. "
-                       "A culpa, óbvio, era dos outros nove.", int(_n(r["ping_mia"])))
+        add("ping", 1, [
+            f"Deu {int(_n(r['ping_mia']))} pings de interrogação. "
+            "A culpa, óbvio, era dos outros nove.",
+            f"{int(_n(r['ping_mia']))} interrogações no mapa. "
+            "Escreveu mais do que jogou.",
+            f"Apertou o ping de interrogação {int(_n(r['ping_mia']))} vezes. "
+            "Nenhuma delas apontando pro espelho.",
+        ], int(_n(r["ping_mia"])))
     if r["surrender"] and not r["win"]:
-        add("rendeu", 1, "Terminou em rendição. Nem deu o troco.")
+        add("rendeu", 1, [
+            "Terminou em rendição. Nem deu o troco.",
+            "Acabou no /ff. Sem revanche, sem nada.",
+            "Rendeu. A partida terminou antes da vergonha passar.",
+        ])
 
     saida.sort(key=lambda m: -m["peso"])
     return saida
