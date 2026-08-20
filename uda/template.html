@@ -1813,6 +1813,12 @@ svg circle[data-tip]:hover{opacity:.75}
   max-width:1220px;margin-inline:auto}
 /* display:grid venceria o [hidden] do HTML -- sem esta linha as tres abas
    apareceriam empilhadas de uma vez. */
+/* O atributo hidden do HTML vale display:none pela folha do navegador, que tem
+   especificidade ZERO. Qualquer regra de classe com `display` ganha dele: era o
+   caso de .zrow{display:flex}, e as 898 linhas dobradas dos trofeus apareciam
+   todas -- com o botao "ver o resto do elenco" logo abaixo, prometendo mostrar
+   o que ja estava na tela. Uma regra global resolve e impede a proxima. */
+[hidden]{display:none!important}
 .rgrid[hidden]{display:none}
 @container content (min-width:560px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container content (min-width:1040px){.rgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -3291,7 +3297,7 @@ function gauge(o){
 
 function scatter(players){
   const pool=players.filter(p=>p.rank!=null);
-  if(pool.length<2) return noData("SEM JOGADORES","Ninguém atingiu o mínimo de partidas nesta fila.");
+  if(pool.length<2) return noData("SEM JOGADORES","Ninguém jogou o mínimo pra entrar no ranking. Preguiça também é dado.");
   const W=1080,H=430,PL=GX.PL,PR=GX.PR,PT=GX.PT,PB=60,iw=W-PL-PR,ih=H-PT-PB;
   const xs=pool.map(p=>p.stats.deaths_10min),ys=pool.map(p=>p.stats.dmg_min);
   /* padding ADITIVO: o multiplicativo antigo (min*.86, max*1.1) jogava fora ~35%
@@ -3685,7 +3691,7 @@ function statRow(g){
 
 /* barras horizontais reaproveitadas por rota e por fila */
 function barrasHoriz(itens,campoNome,campoQtd,campoWr,campoShare){
-  if(!itens||!itens.length) return noData("SEM DADOS","Nada para mostrar nesta fila.");
+  if(!itens||!itens.length) return noData("SEM DADOS","Não tem nada aqui. Joguem mais, ou joguem melhor.");
   const max=Math.max(...itens.map(i=>i[campoQtd]));
   /* a cor da barra deixa de ser teal chapado e passa a sair do aproveitamento:
      volume na largura, resultado na cor, no MESMO objeto */
@@ -3911,7 +3917,7 @@ function afundados(g){
     if(s.cs_min<mCs) c.push([`${nf(s.cs_min,1)} cs/min`,`média ${nf(mCs,1)}`]);
     return c.slice(0,4);};
   return `<div class="card">${chead(I.skull,"Os afundados",
-      "a régua é o próprio grupo — alguém tinha que ficar embaixo","red")}
+      "a régua é o próprio grupo — alguém tem que segurar a lanterna, e olha eles aí","red")}
     <div class="sunk">${l.map(p=>{
       const e=eloTxt(p.ranks.solo), w=p.worstGame, motivos=why(p);
       return `<div class="sk">
@@ -4290,7 +4296,7 @@ function estante(g){
   if(!l.length) return `<section class="hall hall-est"><div class="hall-head">
     <span class="eyebrow">União dos Afundados · ${h((g&&g.label)||"")}</span>
     <h2 class="poster-title engraved">A Estante</h2><hr class="rule"></div>
-    ${noData("SEM CAMPEÕES","Nenhum campeão atingiu 3 partidas nesta fila.")}</section>`;
+    ${noData("SEM CAMPEÕES","Nenhum campeão chegou a 3 partidas aqui. Nem pra escolher favorito dá.")}</section>`;
   const mapa=estPilotos(g);
   const papeis=EST_PAPEL.filter(t=>l.some(c=>estTags(c.championId).indexOf(t)>=0));
   const curta=l.filter(c=>c.games<EST_MIN).length;
@@ -4504,8 +4510,8 @@ function halteresCorpo(list){
 
 function halteres(list){
   HL_D=list||[];
-  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.trend,"Junto ou sozinho?",
-    "cada haltere é um jogador: prata é sozinho, ouro é com a UDA no time — o osso é a diferença")}</div>
+  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.trend,"Precisa de babá?",
+    "cada haltere é um jogador: prata é sozinho, ouro é com a UDA no time — o osso no meio é o tamanho da muleta")}</div>
     ${halteresCorpo(HL_D)}</div>`;
 }
 
@@ -4589,7 +4595,7 @@ function fitaCorpo(seqs){
 function fita(seqs){
   FITA_D=seqs||[];
   return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.bolt,"Sequências",
-    "a maior sequência de cada um, e como está agora — a régua é a mesma para todos")}</div>
+    "a maior sequência de cada um, e como está agora — mesma régua pra todo mundo, sem desculpa")}</div>
     ${fitaCorpo(FITA_D)}</div>`;
 }
 
@@ -4603,7 +4609,7 @@ function ligarFita(){
 }
 
 function matriz(m){
-  if(!m.order.length) return noData("SEM DUPLAS","Ninguém jogou junto o suficiente.");
+  if(!m.order.length) return noData("SEM DUPLAS","Ninguém aguentou jogar junto tempo suficiente.");
   const cor=w=>w>=50?`background:rgba(10,200,185,${.1+(w-50)/50*.6})`:`background:rgba(229,72,77,${.1+(50-w)/50*.6})`;
   const cur=n=>short(n).slice(0,10);
 
@@ -4662,7 +4668,7 @@ function matriz(m){
     <span>número pequeno = partidas juntos</span></div></details>`;
 }
 
-const formacoes=(l)=>!l.length?noData("SEM FORMAÇÕES","Ninguém jogou junto o suficiente ainda."):
+const formacoes=(l)=>!l.length?noData("SEM FORMAÇÕES","Ninguém aguentou jogar junto tempo suficiente ainda."):
   l.map(f=>`<div class="lrow"><span class="ims">${f.icons.slice(0,5).map(i=>`<img src="${iconImg(i)}"${FB}>`).join("")}</span>
     <span class="nm"><span class="pill n" style="font-size:10px;padding:3px 8px">${h(f.label)}</span>
     <div style="margin-top:5px;font-size:12.5px">${f.members.map(h).join(" · ")}</div></span>
@@ -4863,7 +4869,7 @@ function arsenal(g){
    verde e meio vermelho. */
 function ihTabela(t){
   const js=t.jogadores||[];
-  if(js.length<2) return noData("SEM CONFRONTOS","Ninguém se enfrentou ainda.");
+  if(js.length<2) return noData("SEM CONFRONTOS","Ninguém teve coragem de se enfrentar ainda.");
   const ord=js.map(p=>p.chave), nome={}, icone={}, conv={};
   js.forEach(p=>{nome[p.chave]=p.nome;icone[p.chave]=p.icon;conv[p.chave]=p.convidado;});
   const cur=n=>short(n).slice(0,10);
@@ -4923,7 +4929,7 @@ function ihTabela(t){
    à direita. Piso de duelos contra a MESMA pessoa — quem não chega lá mantém o
    cartão tracejado dizendo que faltou amostra, em vez de sumir da página. */
 function ihNemesis(l,piso){
-  if(!l||!l.length) return noData("SEM DUELOS","Ninguém se enfrentou ainda.");
+  if(!l||!l.length) return noData("SEM DUELOS","Ninguém teve coragem de se enfrentar ainda.");
   /* "4 – 1" nao dizia de quem era cada numero. Vira frase: perdeu/ganhou Nx,
      e o placar cru fica embaixo, pequeno, so como conferencia. */
   const lado=(p,mau)=>!p?`<div class="nem-s vazio"><span>—</span></div>`
@@ -5008,7 +5014,7 @@ function ihDivorcio(l,piso){
    construção e não mede nada. */
 function ihBalanca(b){
   const l=b.partidas||[];
-  if(!l.length) return noData("SEM PARTIDAS","Nada para pesar nesta fila.");
+  if(!l.length) return noData("SEM PARTIDAS","Nada pra pesar nesta fila. Nem pra zoar.");
   const ESC=20;   /* fundo de escala em % de diferença de ouro */
   const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
   const quando=(ms)=>{const d=new Date(ms);
@@ -5117,8 +5123,8 @@ function ihEspelhoCorpo(e){
 
 function ihEspelho(e){
   ESP_D=e;
-  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.eye,"O espelho",
-    "como cada um joga contra o servidor, e como joga contra os amigos — mesmo mapa, mesmo modo")}</div>
+  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.eye,"O espelho não mente",
+    "como cada um joga contra o servidor, e como joga contra os amigos — mesmo mapa, mesmo modo, coragem diferente")}</div>
     ${ihEspelhoCorpo(e)}</div>`;
 }
 
@@ -5161,7 +5167,7 @@ function ligarInhouse(){
    é a presença: quem apareceu em cada noite, e quem nunca foi chamado. */
 function ihChamada(c){
   const n=(c.noites||[]).length;
-  if(!n) return noData("SEM NOITES","Nenhuma personalizada registrada.");
+  if(!n) return noData("SEM NOITES","Nenhuma personalizada registrada. Marcaram e não foram, né?");
   return `<div class="cham" style="--n:${n}">
     <div class="ch-hd"><span class="ch-w">quem</span>
       ${c.noites.map(x=>`<span class="ch-n"${tip("Noite de "+h(x.rotulo),
@@ -5236,7 +5242,7 @@ function ihDuelos(l){
 }
 
 /* --------------------------------------------------------- MODOS DA CASA */
-const ihModos=(l)=>!l||!l.length?noData("SEM MODOS","Nada registrado."):
+const ihModos=(l)=>!l||!l.length?noData("SEM MODOS","Nada registrado. Nem uma partidinha."):
   `<div>${l.map(m=>`<div class="hbar"${tip(h(m.modo),[["Partidas",ni(m.partidas)],
       ["Fatia do total",nf(m.share,1)+"%"]],"aproveitamento não entra: numa partida da casa alguém da UDA sempre vence")}>
     <div class="hn">${h(m.modo)}</div>
@@ -5307,12 +5313,12 @@ function pInhouse(){
       `placar de todos contra todos · a linha ganha da coluna · mínimo de ${x.pisos.duelo} duelos para a célula pesar`,"gold")}
       ${ihTabela(x.tabela)}</div></section>
     <section><div class="card">${chead(I.skull,"Algoz e freguês",
-      `quem mais te derrota, e quem você mais derrota · mínimo de ${x.pisos.duelo} duelos contra a mesma pessoa`,"red")}
+      `quem te bate sempre, e quem você usa de saco de pancada · mínimo de ${x.pisos.duelo} duelos contra a mesma pessoa`,"red")}
       ${ihNemesis(x.nemesis,x.pisos.duelo)}</div></section>
     <section><div class="card">${chead(I.users,"A dupla e o divórcio",
       `o que a dupla faz junta, e o que acontece quando o sorteio separa os dois · mínimo de ${x.pisos.dupla} partidas juntos`)}
       ${ihDivorcio(x.divorcio,x.pisos.dupla)}</div></section>
-    <section><div class="card">${chead(I.target,"A balança",
+    <section><div class="card">${chead(I.target,"O tamanho da surra",
       "uma régua por partida: o quanto os times terminaram distantes em ouro","gold")}
       ${ihBalanca(x.balanca)}</div></section>
     <section>${ihEspelho(x.espelho)}</section>
@@ -5320,7 +5326,7 @@ function pInhouse(){
       <div class="card">${chead(I.grid,"Modos da casa","o que vocês jogam quando jogam entre si")}
         ${ihModos(x.modos)}</div>
       <div class="card">${chead(I.cal,"A chamada",
-        "quem apareceu em cada noite — e quem nunca foi chamado")}
+        "quem apareceu em cada noite — e quem nunca foi chamado, o que também diz muita coisa")}
         ${ihChamada(x.chamada)}</div>
     </div></section>
     <section>${ihAviso(x)}</section>
@@ -5544,9 +5550,9 @@ function pArsenal(){
 function pMural(){
   const meses=DATA.mural||[], titulos=DATA.titulos||[];
   if(!meses.length) return noData("MURAL VAZIO",
-    "É preciso pelo menos um mês fechado com partidas suficientes para eleger alguém.");
+    "Precisa de um mês fechado com partidas suficientes pra coroar alguém — e pra humilhar alguém.");
   return `${titulos.length?`<section><div class="sh-plain">${chead(I.award,"Quadro de títulos",
-      "coroas de UDA do mês e vexames de Afundado, no período inteiro","gold")}</div>
+      "coroas de UDA do mês e vexames de Afundado no período inteiro — o currículo de um lado, a ficha corrida do outro","gold")}</div>
     ${titulos.filter(x=>x.reis).length>1?`<div style="max-width:430px;margin:0 auto 18px">${podio3(
       titulos.filter(x=>x.reis).slice(0,3).map(x=>({nome:x.gameName,icon:x.icon,valor:x.reis,
         tip:tip(h(x.gameName),[["Coroas de UDA do mês",String(x.reis)],
@@ -5655,7 +5661,7 @@ function pRotaBloco(){
         <span class="d">${f.duelos} duelos · ${nf(f.mortes,1)} mortes · ${nf(f.winrate,0)}%</span>
         <span class="v ${f.csDiff>=0?"good":"bad"}">${f.csDiff>0?"+":""}${nf(f.csDiff,0)} CS</span>
       </div>`).join("")}</div></div></section>
-    ${r.porJogador.length?`<section><div class="card">${chead(I.user,"O algoz de cada um",
+    ${r.porJogador.length?`<section><div class="card">${chead(I.user,"O carrasco pessoal",
       `o campeão que mais destrói cada um na rota · mínimo de ${r.minPessoa} duelos contra o mesmo`,"red")}
       <div class="rota-g">${r.porJogador.map(j=>`<div class="rota-l"${
         j.algoz.matchIds&&j.algoz.matchIds.length?linkPartida(j.algoz.matchIds[0]):""}${tip(
@@ -5676,7 +5682,7 @@ function pRotaBloco(){
 /* ============================================================= VEXAMES */
 function pVexames(){
   const v=vexamesDaFila();
-  if(!v||!v.jogadores||!v.jogadores.length) return noData("NINGUÉM VACILOU NESTA FILA",
+  if(!v||!v.jogadores||!v.jogadores.length) return noData("NINGUÉM VACILOU AQUI. AINDA",
     "É preciso pelo menos 5 partidas de mais de 10 minutos por pessoa para o paredão abrir.");
 
   const bruto=v.jogadores.flatMap(j=>j.piores.length);
@@ -5702,7 +5708,7 @@ function pVexames(){
   return `<section>${barraPeriodo(totalBruto,totalJanela)}</section>
     <section>
       <div class="sh-plain">${chead(I.skull,"O paredão",
-        "as três piores partidas já registradas no grupo — sem defesa possível","red")}</div>
+        "as três piores partidas já registradas no grupo — não tem defesa, só tem print","red")}</div>
       ${topo.length>1?`<div style="max-width:470px;margin:0 auto 18px">${podio3(
         topo.map(p=>({nome:p.dono.gameName,icon:p.dono.icon,valor:p.nota,
           tip:tip(h(p.dono.gameName),[["Nota de vergonha",nf(p.nota,0)],
@@ -5719,7 +5725,7 @@ function pVexames(){
         <div class="ver">“${h(p.veredito)}”</div></div>`).join("")}</div>
     </section>
     <section><div class="sh-plain">${chead(I.user,"Por jogador",
-      `clique num nome para abrir os vexames · clique numa partida para ver o placar dos dez`,"red")}</div>
+      `clique num nome pra abrir a ficha corrida · clique numa partida pra ver o placar dos dez`,"red")}</div>
       ${jogadores.map((j,idx)=>`<div class="vx-jog" data-vx="${h(j.puuid)}" ${idx===0?"aberto":""}>
         <div class="vx-h" data-vxh="${h(j.puuid)}">
           <span class="seta">▶</span>
@@ -5988,7 +5994,7 @@ function pEvolucao(){
 
   if(ev&&ev.saldo&&ev.saldo.length)
     meia.push(cartao(chead(I.trend,"Saldo acumulado",
-        "vitórias menos derrotas ao longo do tempo — acima de zero é lucro"),
+        "vitórias menos derrotas ao longo do tempo — abaixo de zero é prejuízo acumulado"),
         cx("saldo","leg",w=>serieChart(ev.saldo,{W:w,campo:"saldo",zero:0,
           eixo:"partidas, da mais antiga à mais recente",yFmt:v=>sg(v,0)}))));
 

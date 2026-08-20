@@ -39,6 +39,14 @@ SOMAS = [
     "dragon_td", "baron_td", "herald_td", "void_kills", "aces_15",
     "spell4_casts", "perfect_souls",
     "multikill_spell", "assist_streak_12", "first_turret_time", "quick_first_turret",
+    # v3 -- destravadas do JSON bruto nesta migracao:
+    "exec_torre_10", "scuttle_kills", "kills_own_turret", "kills_enemy_turret",
+    "kills_alcove", "kills_fountain", "quick_solo_kills", "team_early_ff",
+    "perfect_game", "taken_physical", "taken_magic", "taken_true",
+    "spell1_casts", "spell2_casts", "spell3_casts", "pick_with_ally",
+    "immob_kill_ally", "kill_hidden_ally", "full_team_td", "ward_takedowns",
+    "wards_guarded", "stealth_wards", "killing_sprees", "solo_turrets_late",
+    "survived_immob", "lane_gold_adv", "inhib_td",
 ]
 
 
@@ -68,6 +76,28 @@ def _agregar(rows_by_player, players) -> dict[str, dict[str, float]]:
         # Aqui a conta corre so sobre topo, meio e atirador.
         lane = [r for r in linhas if (r["position"] or "").upper()
                 in ("TOP", "MIDDLE", "BOTTOM")]
+        # --- morte sem culpado (torre, minion, monstro, execucao) ------------
+        # deaths_by_champs so existe em ~88% das partidas. Onde o campo falta ele
+        # vem 0, e `deaths - 0` marcaria TODA morte como burra. Por isso a conta
+        # roda apenas nas partidas onde o campo esta comprovadamente preenchido
+        # (>0), e o denominador acompanha. Erra para menos, nunca para mais.
+        comCulpado = [r for r in linhas if _n(r["deaths_by_champs"]) > 0]
+        acc["bobas_partidas"] = len(comCulpado)
+        acc["mortes_bobas"] = sum(
+            max(0.0, _n(r["deaths"]) - _n(r["deaths_by_champs"])) for r in comCulpado)
+
+        # --- selva: cada recorte so vale para quem joga a funcao --------------
+        # jungle_cs10 e farm de selva, entao so o jungler entra. E o inverso vale
+        # para ally_jungle_cs: no jungler isso e o farm dele, nao roubo -- roubo
+        # e quando o LANER come o camp do proprio jungler.
+        selva = [r for r in linhas if (r["position"] or "").upper() == "JUNGLE"]
+        naoSelva = [r for r in linhas if (r["position"] or "").upper() != "JUNGLE"]
+        acc["selva_partidas"] = len(selva)
+        acc["jungle_cs10_selva"] = sum(_n(r["jungle_cs10"]) for r in selva)
+        acc["scuttle_selva"] = sum(_n(r["scuttle_kills"]) for r in selva)
+        acc["naoselva_partidas"] = len(naoSelva)
+        acc["camp_roubado_aliado"] = sum(_n(r["ally_jungle_cs"]) for r in naoSelva)
+
         acc["torre_partidas"] = sum(1 for r in linhas if _n(r["first_turret_time"]) > 0)
         acc["lane_partidas"] = len(lane)
         acc["lane_cs10_lane"] = sum(_n(r["lane_cs10"]) for r in lane)
@@ -79,168 +109,221 @@ def _agregar(rows_by_player, players) -> dict[str, dict[str, float]]:
 # key, titulo, grupo, legenda, calculo(acc), unidade, casas, maior_e_melhor
 TROFEUS: list[tuple] = [
     # --------------------------------------------------------------- gloria
-    ("rei1v1", "Rei do 1v1", "gloria",
-     "Abates sem dividir credito com ninguem. O mais honesto que existe.",
+    ("rei1v1", "Mão de Sangue", "gloria",
+     "Abate solo, sem dividir com ninguém. Encostou, morreu. O time só chega pra ver o corpo.",
      lambda a: _safe_div(a["solo_kills"], a["partidas"]), "solo kills por partida", 2, True),
-    ("contraTodos", "Contra Todos", "gloria",
-     "Abates feitos em menor numero. O 1v2 que sempre vira clipe no grupo.",
+    ("contraTodos", "Um Contra o Mundo", "gloria",
+     "Abate feito em desvantagem numérica. Enquanto o time recuava chorando, esse ficou e levou os dois.",
      lambda a: a["outnumbered_kills"], "abates em desvantagem", 0, True),
-    ("ladrao", "Ladrao de Objetivo", "gloria",
-     "Barao e dragao roubados do time inimigo. Puro deboche.",
+    ("ladrao", "Punga de Objetivo", "gloria",
+     "Barão e dragão roubados na cara do inimigo. Quarenta minutos de setup pro lixo por causa de um smite.",
      lambda a: a["epic_steals"], "objetivos roubados", 0, True),
-    ("matrix", "Modo Matrix", "gloria",
-     "Skillshots desviados por minuto. Parece que joga com delay negativo.",
+    ("matrix", "Desvia Até de Ping", "gloria",
+     "Skillshot desviado por minuto. O inimigo mira, ele já não está mais lá. Dá ódio jogar contra.",
      lambda a: _safe_div(a["skillshots_dodged"], a["minutos"]), "desvios por minuto", 2, True),
-    ("demolidor", "Demolidor", "gloria",
-     "Placas de torre derrubadas. Alguem tinha que lembrar do objetivo.",
+    ("demolidor", "Come Torre no Café", "gloria",
+     "Placa de torre derrubada. Enquanto vocês brigam no meio do mapa, ele está almoçando a base.",
      lambda a: a["turret_plates"], "placas derrubadas", 0, True),
-    ("imortal", "O Imortal", "gloria",
-     "Minutos vividos por morte. Sabe a hora de voltar pra base.",
+    ("imortal", "Não Morre Nem de Graça", "gloria",
+     "Minutos vivo por morte. O resto do elenco decorou o caminho da fonte; esse aqui nem sabe onde fica.",
      lambda a: _safe_div(a["minutos"], max(a["deaths"], 1)), "minutos por morte", 1, True),
-    ("cacador", "Caca-Recompensas", "gloria",
-     "Ouro de recompensa embolsado. Sempre acha o alimentado do outro time.",
+    ("cacador", "Cobrador de Dívida", "gloria",
+     "Ouro de recompensa embolsado. Se você está alimentado do outro lado, ele já anotou seu nome.",
      lambda a: a["bounty_gold"], "de ouro em recompensas", 0, True),
-    ("multikill", "Colecionador de Caixoes", "gloria",
-     "Multikills somados, com peso maior para os mais raros.",
+    ("multikill", "Enterrador", "gloria",
+     "Multikill somado, com peso maior nos raros. Não mata: organiza funeral coletivo.",
      lambda a: a["double_kills"] + a["triple_kills"] * 3
      + a["quadra_kills"] * 9 + a["penta_kills"] * 27,
      "pontos de multikill", 0, True),
-    ("muralha", "A Muralha", "gloria",
-     "Dano absorvido por partida. Segurou a porrada pra galera passar.",
+    ("muralha", "Segura o Rojão", "gloria",
+     "Dano absorvido por partida. Fica na frente enquanto o resto do time descobre onde fica o botão de recuar.",
      lambda a: _safe_div(a["self_mitigated"], a["partidas"]),
      "de dano absorvido por jogo", 0, True),
 
     # ------------------------------------------------------------- vergonha
-    ("caixaoAmbulante", "O Caixao Ambulante", "vergonha",
-     "Mortes por partida. Nao e azar de uma noite, e o padrao de vida.",
+    ("caixaoAmbulante", "Doador de Ouro", "vergonha",
+     "Morte por partida. O inimigo nem precisa caçar: é só esperar ele aparecer sozinho.",
      lambda a: _safe_div(a["deaths"], a["partidas"]), "mortes por partida", 2, True),
-    ("telaCinza", "Assinante da Tela Cinza", "vergonha",
-     "Tempo total olhando o cronometro de renascimento. Da pra ver uma serie.",
+    ("telaCinza", "Mora na Tela Cinza", "vergonha",
+     "Tempo total encarando o cronômetro de renascimento. Dava pra ver uma temporada inteira nesse tempo.",
      lambda a: a["time_dead"] / 3600.0, "horas morto", 1, True),
-    ("meioJogo", "Metade Fantasma", "vergonha",
-     "Fatia da partida passada morto. Nao jogou, assistiu.",
+    ("meioJogo", "Comprou Ingresso pro Próprio Jogo", "vergonha",
+     "Fatia da partida passada morto. Não jogou: assistiu, e de camarote.",
      lambda a: _safe_div(a["time_dead"], a["time_played"] or a["game_duration"]) * 100,
      "% do tempo morto", 1, True),
-    ("cadeMid", "Cade o Mid?", "vergonha",
-     "Pings de interrogacao por partida. Olhar o mapa custava menos.",
+    ("cadeMid", "A Culpa É Sempre do Outro", "vergonha",
+     "Ping de interrogação por partida. O mapa está ali do lado, mas é mais fácil digitar '?'.",
      lambda a: _safe_div(a["ping_mia"], a["partidas"]), "pings ? por partida", 1, True),
-    ("bancoCentral", "Banco Central", "vergonha",
-     "Ouro que morreu no bolso. Item nao se compra sozinho.",
+    ("bancoCentral", "Morreu Rico", "vergonha",
+     "Ouro que apodreceu no bolso. Juntou a vida inteira pra morrer com a poupança cheia.",
      lambda a: _safe_div(a["gold"] - a["gold_spent"], a["partidas"]),
      "de ouro parado por jogo", 0, True),
-    ("sacoPancada", "Saco de Pancada", "vergonha",
-     "Dano levado dividido pelo dano dado. Apanhar tambem e uma escolha.",
+    ("sacoPancada", "Boneco de Treino", "vergonha",
+     "Dano levado dividido pelo dano dado. O outro time usa ele pra testar build nova.",
      lambda a: _safe_div(a["damage_taken"], max(a["damage_champions"], 1)),
      "x mais apanha do que bate", 2, True),
-    ("rendeFacil", "Dedo no WW", "vergonha",
-     "Fatia das partidas terminadas em rendicao. Resiliencia zero.",
+    ("rendeFacil", "Dedo no /ff", "vergonha",
+     "Fatia das partidas terminadas em rendição. Aos 15 já está votando. Resiliência de papel molhado.",
      lambda a: _safe_div(a["surrender"], a["partidas"]) * 100, "% de rendicoes", 0, True),
     ("nexusAberto", "Nexus Escancarado", "vergonha",
-     "Partidas que chegaram a ter o nexus aberto. Vergonha estrutural.",
+     "Partida que chegou a ter o nexus aberto. Não perdeu: foi humilhado com hora marcada.",
      lambda a: a["had_open_nexus"], "vezes com nexus aberto", 0, True),
-    ("cego", "Jogando de Olhos Fechados", "vergonha",
-     "Sentinelas de controle por partida. Visao e opcional pra alguns.",
+    ("cego", "Joga de Olho Fechado", "vergonha",
+     "Sentinela de controle por partida. Visão é opcional. Morrer no escuro, aparentemente, também.",
      lambda a: _safe_div(a["control_wards_placed"], a["partidas"]),
      "sentinelas de controle por jogo", 2, False),
-    ("torresPerdidas", "Guardiao Ausente", "vergonha",
-     "Torres perdidas por partida. A estrutura caiu e ninguem viu.",
+    ("torresPerdidas", "Guardião de Coisa Nenhuma", "vergonha",
+     "Torre perdida por partida. A estrutura caiu e ele nem virou a câmera pra ver.",
      lambda a: _safe_div(a["turrets_lost"], a["partidas"]),
      "torres perdidas por jogo", 1, True),
 
     # ---------------------------------------------------------- curiosidade
-    ("sinfonia", "Sinfonia de Pings", "curiosidade",
-     "Pings por partida. Comunicacao e importante; isso ja e outro departamento.",
+    ("sinfonia", "Sinfonia de Ping", "curiosidade",
+     "Ping por partida. O teclado dele grita bem mais alto do que ele joga.",
      lambda a: _safe_div(a["pings_total"], a["partidas"]), "pings por partida", 1, True),
-    ("dedoFlash", "Dedo no Flash", "curiosidade",
-     "Acionamentos do flash por partida. Boa parte foi so ansiedade.",
+    ("dedoFlash", "Flash de Ansiedade", "curiosidade",
+     "Flash acionado por partida. Metade foi pânico puro; boa parte da outra metade foi pra dentro da parede.",
      lambda a: _safe_div(a["flash_casts"], a["partidas"]), "acionamentos por jogo", 1, True),
     ("colecionador", "Rato de Loja", "curiosidade",
-     "Itens comprados por partida. Cada volta na base, uma ideia nova.",
+     "Item comprado por partida. A cada volta na base, uma build nova. Nenhuma delas funciona.",
      lambda a: _safe_div(a["items_purchased"], a["partidas"]), "itens por partida", 1, True),
-    ("pocao", "Dependente de Pocao", "curiosidade",
-     "Consumiveis por partida. Metade do ouro virou bebida.",
+    ("pocao", "Vive de Poção", "curiosidade",
+     "Consumível por partida. Metade do ouro virou bebida. A outra metade também.",
      lambda a: _safe_div(a["consumables"], a["partidas"]), "consumiveis por jogo", 1, True),
-    ("dancarino", "Dancou com o Arauto", "curiosidade",
-     "Parou no meio da partida pra dancar em cima do Arauto. Prioridades.",
+    ("dancarino", "Dançou em Cima do Arauto", "curiosidade",
+     "Parou a partida pra dançar. O time apanhando no mapa e ele ensaiando coreografia.",
      lambda a: a["danced_herald"], "dancas", 0, True),
-    ("amigao", "Amigao do Rift", "curiosidade",
-     "Bateu punho com o aliado. O gesto mais sincero do jogo.",
+    ("amigao", "Bateu Punho", "curiosidade",
+     "Bateu punho com o aliado. O gesto mais sincero de um jogo movido a mentira.",
      lambda a: a["fist_bumps"], "toques de punho", 0, True),
-    ("poro", "Terror dos Poros", "curiosidade",
-     "Explodiu poro no ARAM. Nao julgamos, so registramos.",
+    ("poro", "Terror dos Poro", "curiosidade",
+     "Poro explodido no ARAM. Bateu em quem não podia revidar. Que coragem.",
      lambda a: a["poro_explosions"], "poros explodidos", 0, True),
-    ("neve", "Mira de Bola de Neve", "curiosidade",
-     "Acertos de bola de neve no ARAM. Precisao que some na ranqueada.",
+    ("neve", "Mira que Some na Ranqueada", "curiosidade",
+     "Bola de neve acertada no ARAM. Precisão cirúrgica justo no modo que não vale nada.",
      lambda a: a["snowballs_hit"], "bolas acertadas", 0, True),
     ("fantasma", "Recall Fantasma", "curiosidade",
-     "Voltou pra base sem ninguem ver. Furtividade de quem fez besteira.",
+     "Voltou pra base sem ninguém ver. Furtividade de quem fez besteira e sumiu antes da cobrança.",
      lambda a: a["unseen_recalls"], "recalls invisiveis", 0, True),
-    ("vento", "Voando de Vento", "curiosidade",
-     "Usou o Cone de Explosao pra atravessar o mapa. Estilo acima de tudo.",
+    ("vento", "Voou de Vento", "curiosidade",
+     "Atravessou o mapa no Cone de Explosão. Estilo primeiro, resultado depois. Bem depois.",
      lambda a: a["blast_cone"], "voos de cone", 0, True),
     ("afk", "O Desaparecido", "curiosidade",
-     "Partidas em que simplesmente sumiu. A internet leva a culpa.",
+     "Partida em que simplesmente sumiu. A internet leva a culpa, como sempre.",
      lambda a: a["was_afk"], "partidas AFK", 0, True),
     # ---------------------------- vindos das colunas que estavam paradas
-    ("donoDaRota", "Dono da Rota", "gloria",
-     "Maior vantagem de CS ja aberta sobre o oponente de rota, por partida.",
+    ("donoDaRota", "Cobra Aluguel na Rota", "gloria",
+     "Maior vantagem de CS já aberta sobre o oponente. Não ganhou a rota: fez o cara de refém.",
      lambda a: _safe_div(a["cs_adv"], a["partidas"]), "de CS de vantagem", 0, True),
-    ("prendedor", "O Prendedor", "gloria",
-     "Inimigos imobilizados por minuto. Se voce parou, voce ja era.",
+    ("prendedor", "Se Parou, Já Era", "gloria",
+     "Inimigo imobilizado por minuto. Nem precisa matar: ele prende e o time faz o serviço.",
      lambda a: _safe_div(a["immobilizations"], a["minutos"]),
      "imobilizacoes por minuto", 2, True),
-    ("salvaVidas", "Salva-Vidas", "gloria",
-     "Aliados arrancados da morte no ultimo instante. O verdadeiro suporte.",
+    ("salvaVidas", "Tira do Caixão", "gloria",
+     "Aliado arrancado da morte no último segundo. Salva gente que sinceramente não merecia.",
      lambda a: a["save_ally"], "aliados salvos", 0, True),
-    ("invasor", "O Invasor", "gloria",
-     "Monstros roubados da selva inimiga. Educacao zero, lucro alto.",
+    ("invasor", "Almoça na Casa dos Outros", "gloria",
+     "Monstro roubado da selva inimiga. Entra sem bater, come tudo e ainda sai reclamando do tempero.",
      lambda a: a["enemy_jungle_kills"], "campos invadidos", 0, True),
-    ("cacaObjetivo", "Caca-Objetivo", "gloria",
-     "Participacao em dragao, barao e arauto somada. Quem lembra do mapa.",
+    ("cacaObjetivo", "O Único que Olha o Mapa", "gloria",
+     "Participação em dragão, barão e arauto. Enquanto vocês brigam por abate, ele está ganhando o jogo.",
      lambda a: a["dragon_td"] + a["baron_td"] + a["herald_td"],
      "objetivos disputados", 0, True),
-    ("acePrecoce", "Ace Antes dos 15", "gloria",
-     "Times inimigos apagados inteiros antes dos 15 minutos. Sem piedade.",
+    ("acePrecoce", "Fecha o Caixão Antes dos 15", "gloria",
+     "Time inimigo apagado inteiro antes dos 15 minutos. Não deu nem tempo do coitado montar o primeiro item.",
      lambda a: a["aces_15"], "aces precoces", 0, True),
-    ("cacadorMonstro", "Cacador de Monstro", "gloria",
-     "Dano nos objetivos neutros por partida. O barao nao se mata sozinho.",
+    ("cacadorMonstro", "Bate no Barão Sozinho", "gloria",
+     "Dano nos objetivos neutros por partida. Barão não cai no grito: alguém tem que bater.",
      lambda a: _safe_div(a["damage_epic"], a["partidas"]),
      "de dano em objetivos", 0, True),
 
-    ("farmDoDez", "Farm dos Dez Minutos", "vergonha",
-     "CS aos dez minutos, contando so partidas de rota. Jungler e suporte ficam"
-     " de fora: farmar pouco la e a funcao, nao vexame.",
+    ("farmDoDez", "Mão de Alface", "vergonha",
+     "CS aos dez minutos, contando só partida de rota. Minion passa do lado e ele deixa ir.",
      lambda a: _safe_div(a["lane_cs10_lane"], a["lane_partidas"]),
      "de CS aos 10 min", 0, False),
     ("cegoDaRota", "Cego de Rota", "vergonha",
-     "Vantagem de visao sobre o oponente de rota, so em partidas de rota."
-     " Negativo quer dizer que ele te via primeiro.",
+     "Vantagem de visão sobre o oponente de rota. Joga no escuro e depois pergunta de onde veio.",
      lambda a: _safe_div(a["vision_adv_lane"], a["lane_partidas"]),
      "de vantagem de visao", 2, False),
 
     ("dedoNervoso", "Dedo Nervoso", "curiosidade",
-     "Habilidades usadas por minuto. O teclado que nao descansa.",
+     "Habilidade usada por minuto. Aperta tudo, acerta pouco, culpa o delay.",
      lambda a: _safe_div(a["ability_uses"], a["minutos"]),
      "habilidades por minuto", 1, True),
-    ("botaoExtra", "Dedo no Quarto Botao", "curiosidade",
-     "Acionamentos do feitico de item. Metade foi ansiedade, como sempre.",
+    ("botaoExtra", "Dedo no Quarto Botão", "curiosidade",
+     "Feitiço de item acionado. Ansiedade, só que com tempo de recarga.",
      lambda a: _safe_div(a["spell4_casts"], a["partidas"]),
      "acionamentos por jogo", 1, True),
 
-    ("comboMortal", "Combo Mortal", "gloria",
-     "Multikills feitos com uma habilidade so. Um botao, dois caixoes.",
+    ("comboMortal", "Um Botão, Dois Caixões", "gloria",
+     "Multikill feito com uma habilidade só. Apertou uma tecla e limpou a tela.",
      lambda a: a["multikill_spell"], "multikills de um botao", 0, True),
-    ("assistencia", "Maquina de Assistencia", "gloria",
-     "Sequencias de 12 assistencias seguidas. Nunca da o ultimo golpe, mas esta sempre la.",
+    ("assistencia", "Só Encosta", "gloria",
+     "Sequência de 12 assistências seguidas. Nunca dá o último tapa, mas aparece em toda foto.",
      lambda a: a["assist_streak_12"], "sequencias de 12", 0, True),
-    ("torreCedo", "Torre Madrugadora", "gloria",
-     "Primeira torre derrubada mais cedo, em media. Lembra que o objetivo e o nexus.",
+    ("torreCedo", "Acorda Cedo pra Derrubar Torre", "gloria",
+     "Primeira torre derrubada mais cedo, na média. Lembra que o objetivo é o nexus, não o KDA.",
      lambda a: _safe_div(a["first_turret_time"], max(a["torre_partidas"], 1)) / 60.0,
      "minutos ate a primeira torre", 1, False),
 
-    ("milagre", "Sobreviveu ao Impossivel", "curiosidade",
-     "Ficou com um fio de vida e escapou. Sorte tambem e habilidade.",
+    ("milagre", "Escapou com um Fio", "curiosidade",
+     "Ficou com um fio de vida e fugiu. Nem a morte quis ficar com ele.",
      lambda a: a["survived_low_hp"], "escapadas milagrosas", 0, True),
+    # ------------------------------------------------------- v3: gloria
+    ("fonteInimiga", "Matou Dentro da Fonte Inimiga", "gloria",
+     "Abate feito na base do inimigo, no chão dele. Não bastava ganhar: tinha que ser dentro de casa.",
+     lambda a: a["kills_fountain"], "abates na fonte", 0, True),
+    ("farmDaSelva", "Farm da Selva aos 10", "gloria",
+     "CS de selva aos dez minutos, só de quem estava na selva. O jungler também tem farm — e agora tem cobrança.",
+     lambda a: _safe_div(a["jungle_cs10_selva"], a["selva_partidas"]), "CS de selva aos 10", 1, True),
+    ("reiCaranguejo", "Rei do Caranguejo", "gloria",
+     "Caranguejo abatido por partida na selva. A briga mais ridícula do mapa, e alguém tinha que vencer.",
+     lambda a: _safe_div(a["scuttle_selva"], a["selva_partidas"]), "caranguejos por partida", 2, True),
+    ("torreSozinho", "Derruba Torre Sozinho", "gloria",
+     "Torre derrubada sozinho no fim de jogo. Enquanto o time discute no chat, ele está trabalhando.",
+     lambda a: a["solo_turrets_late"], "torres solo", 0, True),
+    ("emboscada", "Emboscada no Mato", "gloria",
+     "Abate feito dentro da alcova. Entrou no mato, esperou, e o outro nunca viu de onde veio.",
+     lambda a: a["kills_alcove"], "abates na alcova", 0, True),
+    ("matadorRapido", "Nem Deu Tempo de Reagir", "gloria",
+     "Abate solo fechado em poucos segundos. O inimigo ainda estava pensando no que fazer.",
+     lambda a: a["quick_solo_kills"], "abates relâmpago", 0, True),
+    ("cacaWard", "Caça-Sentinela", "gloria",
+     "Sentinela inimiga destruída por partida. Cega o outro time e depois passeia no escuro deles.",
+     lambda a: _safe_div(a["ward_takedowns"], a["partidas"]), "sentinelas destruídas", 2, True),
+    ("duroDeMatar", "Escapou de Três Prisões", "gloria",
+     "Sobreviveu depois de ser imobilizado três vezes na mesma briga. Levou tudo e ainda saiu andando.",
+     lambda a: a["survived_immob"], "fugas impossíveis", 0, True),
+    # ----------------------------------------------------- v3: vergonha
+    ("morteBurra", "Morreu de Bobeira", "vergonha",
+     "Mortes sem nenhum campeão inimigo por perto: torre, minion, monstro ou execução. Ninguém matou. Ele se entregou sozinho.",
+     lambda a: a["mortes_bobas"], "mortes sem culpado", 0, True),
+    ("execTorre", "Executado pela Torre", "vergonha",
+     "Vezes que a torre inimiga o executou antes dos dez minutos. A torre não persegue ninguém: ele foi até lá.",
+     lambda a: a["exec_torre_10"], "execuções", 0, True),
+    ("ratoDeCamp", "Rato de Camp", "vergonha",
+     "Camp do PRÓPRIO jungler comido por partida, contando só quem não era o jungler. Rouba de casa e ainda reclama do gank.",
+     lambda a: _safe_div(a["camp_roubado_aliado"], a["naoselva_partidas"]), "camps do aliado por partida", 1, True),
+    # -------------------------------------------------- v3: curiosidade
+    ("umBotaoSo", "Jogador de Um Botão Só", "curiosidade",
+     "Fatia dos usos que foram na habilidade preferida. Tem três teclas, usa uma. As outras são decoração.",
+     lambda a: _safe_div(max(a["spell1_casts"], a["spell2_casts"], a["spell3_casts"]),
+                         a["spell1_casts"] + a["spell2_casts"] + a["spell3_casts"]) * 100,
+     "% no botão favorito", 1, True),
+    ("covardeTorre", "Só no Colo da Torre", "curiosidade",
+     "Abate feito debaixo da própria torre por partida. Corajoso, desde que a torre esteja olhando.",
+     lambda a: _safe_div(a["kills_own_turret"], a["partidas"]), "abates na saia da torre", 2, True),
+    ("apanhaDeMago", "Apanha de Mago", "curiosidade",
+     "Fatia do dano levado que veio de magia. Comprar resistência mágica continua sendo opcional, pelo visto.",
+     lambda a: _safe_div(a["taken_magic"],
+                         a["taken_magic"] + a["taken_physical"] + a["taken_true"]) * 100,
+     "% do dano levado é mágico", 1, True),
+    ("guardaCostas", "Guarda-Costas de Sentinela", "curiosidade",
+     "Sentinela defendida de quem tentou destruir. Protege um totem melhor do que protege o carregador.",
+     lambda a: a["wards_guarded"], "sentinelas defendidas", 0, True),
+    ("nuncaSozinho", "Nunca Mata Sozinho", "curiosidade",
+     "Abate fechado junto de um aliado, por partida. Coragem em dupla; sozinho, recua.",
+     lambda a: _safe_div(a["pick_with_ally"], a["partidas"]), "abates acompanhados", 2, True),
 ]
 
 GRUPO_ORDEM = {"gloria": 0, "vergonha": 1, "curiosidade": 2}
@@ -289,6 +372,22 @@ COLUNA_POR_TROFEU = {
     "comboMortal": "multikill_spell",
     "assistencia": "assist_streak_12",
     "botaoExtra": "spell4_casts",
+    # v3 -- so entra aqui quem tem UMA coluna que explica o numero. Metrica de
+    # razao (umBotaoSo, apanhaDeMago) fica de fora: nao existe "a partida que
+    # causou esse percentual", e apontar uma seria mentira com cara de prova.
+    "execTorre": "exec_torre_10",
+    "ratoDeCamp": "ally_jungle_cs",
+    "fonteInimiga": "kills_fountain",
+    "reiCaranguejo": "scuttle_kills",
+    "torreSozinho": "solo_turrets_late",
+    "emboscada": "kills_alcove",
+    "matadorRapido": "quick_solo_kills",
+    "cacaWard": "ward_takedowns",
+    "duroDeMatar": "survived_immob",
+    "covardeTorre": "kills_own_turret",
+    "guardaCostas": "wards_guarded",
+    "nuncaSozinho": "pick_with_ally",
+    "farmDaSelva": "jungle_cs10",
 }
 
 # Como escrever o valor daquela partida na tela.
@@ -347,6 +446,16 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS,
     # por acaso lideraria sobre quem derruba sempre. Exige amostra.
     SO_TORRE = {"torreCedo"}
     MIN_TORRE = 10
+    # Metrica de selva so vale para quem jogou selva: cobrar farm de selva de um
+    # atirador e o mesmo erro que cobrar CS de rota do jungler.
+    SO_SELVA = {"farmDaSelva", "reiCaranguejo"}
+    MIN_SELVA = 6
+    # "Rato de camp" e o inverso: no jungler, comer camp aliado E o farm dele.
+    SO_NAOSELVA = {"ratoDeCamp"}
+    MIN_NAOSELVA = 8
+    # Morte sem culpado depende de um campo que falta em ~12% das partidas.
+    SO_BOBA = {"morteBurra"}
+    MIN_BOBA = 8
 
     saida = []
     for key, titulo, grupo, legenda, calc, unidade, casas, maior in TROFEUS:
@@ -355,6 +464,12 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS,
             if key in SO_LANE and acc.get("lane_partidas", 0) < MIN_LANE:
                 continue
             if key in SO_TORRE and acc.get("torre_partidas", 0) < MIN_TORRE:
+                continue
+            if key in SO_SELVA and acc.get("selva_partidas", 0) < MIN_SELVA:
+                continue
+            if key in SO_NAOSELVA and acc.get("naoselva_partidas", 0) < MIN_NAOSELVA:
+                continue
+            if key in SO_BOBA and acc.get("bobas_partidas", 0) < MIN_BOBA:
                 continue
             try:
                 valor = float(calc(acc))

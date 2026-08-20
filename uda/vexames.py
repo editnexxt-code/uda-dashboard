@@ -38,71 +38,70 @@ def _motivos(ctx) -> list[dict]:
 
     # --- morte
     if mortes >= 10:
-        add("mortes", 3, f"Morreu {int(mortes)} vezes numa partida de "
-                         f"{int(minutos)} minutos. Uma a cada "
-                         f"{_pt(minutos / mortes)} min.", int(mortes))
+        add("mortes", 3, f"Morreu {int(mortes)} vezes em {int(minutos)} minutos. "
+                         f"Uma a cada {_pt(minutos / mortes)} min — dava pra marcar no relógio.", int(mortes))
     elif mortes >= max(6, med["deaths"] * 1.6):
-        add("mortes", 2, f"{int(mortes)} mortes, contra as "
-                         f"{_pt(med['deaths'])} que ele costuma dar de presente.",
+        add("mortes", 2, f"{int(mortes)} mortes. A média dele é {_pt(med['deaths'])} — "
+                         f"hoje resolveu caprichar.",
             int(mortes))
 
     if par["piorKda"] and mortes >= 5:
-        add("piorDaPartida", 3, "Foi o pior KDA dos dez jogadores. Dos DEZ.")
+        add("piorDaPartida", 3, "Pior KDA dos dez. Não do time: da partida inteira.")
 
     # --- tempo morto
     morto = _n(r["time_dead"])
     jogado = _n(r["time_played"]) or _n(r["game_duration"])
     if jogado and morto / jogado >= 0.22:
         add("telaCinza", 2,
-            f"Ficou {int(morto / 60)} minutos morto — "
-            f"{round(morto / jogado * 100)}% da partida assistindo.",
+            f"Passou {int(morto / 60)} minutos morto — "
+            f"{round(morto / jogado * 100)}% do jogo encarando a tela cinza.",
             f"{round(morto / jogado * 100)}%")
 
     # --- participacao
     kp = _n(r["kp"]) * 100
     if kp and kp <= 35 and _n(r["team_kills"]) >= 12:
         add("ausente", 2, f"Participou de {round(kp)}% dos abates. "
-                          "O time brigou sozinho.", f"{round(kp)}%")
+                          "O time brigou sozinho e nem sentiu falta.", f"{round(kp)}%")
 
     # --- dano
     dpm = _n(r["dpm"])
     if dpm and dpm <= med["dpm"] * 0.6:
-        add("semDano", 2, f"{int(dpm)} de dano por minuto, contra os "
-                          f"{int(med['dpm'])} de sempre. Estava lá de corpo presente.",
+        add("semDano", 2, f"{int(dpm)} de dano por minuto, contra os {int(med['dpm'])} de sempre. "
+                          "Presença confirmada; dano, não.",
             int(dpm))
     if par["menorDano"] and minutos >= 20:
-        add("menorDano", 2, "Deu o menor dano da partida inteira.")
+        add("menorDano", 2, "Menor dano da partida. Dos dez, contando o suporte.")
 
     # --- farm
     cs_diff = r["cs_diff"] if r["cs_diff"] is not None else 0
     if cs_diff <= -40:
-        add("farm", 2, f"Levou {abs(int(cs_diff))} de CS a menos que o oponente "
-                       "de rota. Uma vila inteira.", int(cs_diff))
+        add("farm", 2, f"Levou {abs(int(cs_diff))} de CS a menos que o oponente de rota. "
+                       "Uma vila inteira de minion.", int(cs_diff))
 
     # --- carteira
     sobrou = _n(r["gold"]) - _n(r["gold_spent"])
     if sobrou >= 2000:
-        add("carteira", 1, f"Acabou com {int(sobrou)} de ouro no bolso. "
-                           "Item não se compra sozinho.", int(sobrou))
+        add("carteira", 1, f"Terminou com {int(sobrou)} de ouro no bolso. "
+                           "Item não se compra sozinho, e ele descobriu tarde.", int(sobrou))
 
     # --- apanhou
     dado, levado = _n(r["damage_champions"]), _n(r["damage_taken"])
     if dado and levado / max(dado, 1) >= 2.5 and minutos >= 20:
-        add("apanhou", 1, f"Levou {_pt(levado / max(dado, 1))}x mais dano do que "
-                          "causou. Serviu de saco de pancada.",
+        add("apanhou", 1, f"Levou {_pt(levado / max(dado, 1))}x mais dano do que causou. "
+                          "Boneco de treino oficial da partida.",
             f"{_pt(levado / max(dado, 1))}x")
 
     # --- vergonhas categoricas
     if r["was_afk"]:
-        add("afk", 3, "Simplesmente sumiu no meio da partida.")
+        add("afk", 3, "Simplesmente sumiu no meio da partida. O time ficou de quatro.")
     if r["had_open_nexus"]:
-        add("nexus", 2, "Terminou com o nexus escancarado.")
+        add("nexus", 2, "Terminou com o nexus escancarado. Nem a decência de perder rápido.")
     if _n(r["max_kill_deficit"]) >= 15:
-        add("deficit", 1, f"Chegou a estar {int(_n(r['max_kill_deficit']))} abates "
-                          "atrás no placar.", int(_n(r["max_kill_deficit"])))
+        add("deficit", 1, f"Chegou a estar {int(_n(r['max_kill_deficit']))} abates atrás. "
+                          "Isso não é placar, é dívida.", int(_n(r["max_kill_deficit"])))
     if _n(r["ping_mia"]) >= 8:
         add("ping", 1, f"Deu {int(_n(r['ping_mia']))} pings de interrogação. "
-                       "A culpa, claro, era dos outros.", int(_n(r["ping_mia"])))
+                       "A culpa, óbvio, era dos outros nove.", int(_n(r["ping_mia"])))
     if r["surrender"] and not r["win"]:
         add("rendeu", 1, "Terminou em rendição. Nem deu o troco.")
 
@@ -120,26 +119,29 @@ def _pt(valor, casas: int = 1) -> str:
 # real do banco (mediana 82, p90 101, maximo 132): cortes em 90 deixavam quase
 # todo mundo com a mesma frase, que e o oposto de zoar.
 VEREDITOS = {
-    "mortes": [(115, "Isso não foi partida, foi um serviço de entrega de ouro."),
-               (95, "O time inimigo passou a partida agradecendo."),
-               (0, "Morreu tanto que decorou o caminho de volta.")],
-    "piorDaPartida": [(100, "O pior dos dez, e com folga. Um feito."),
-                      (0, "Dos dez jogadores em campo, foi o pior. Dos dez.")],
-    "semDano": [(0, "Estava lá. Fisicamente, pelo menos.")],
-    "ausente": [(0, "O time jogou de quatro a partida inteira.")],
-    "telaCinza": [(0, "Assistiu mais partida do que jogou.")],
-    "farm": [(0, "O oponente de rota farmou por dois.")],
-    "afk": [(0, "Sumiu. Sem explicação, sem aviso, sem volta.")],
-    "apanhou": [(0, "Serviu de boneco de treino com barra de vida.")],
-    "carteira": [(0, "Morreu rico. De ouro no bolso, não de item.")],
-    "ping": [(0, "Passou a partida achando culpado. Nunca no espelho.")],
-    "rendeu": [(0, "Nem deu o troco. Rendeu e foi dormir.")],
-    "nexus": [(0, "Nexus aberto. Dá pra ser pior? Dificilmente.")],
-    "deficit": [(0, "Ficou tão atrás no placar que dava pra ver o buraco.")],
+    "mortes": [(115, "Isso não foi partida, foi entrega em domicílio. "
+                     "O inimigo nem precisou sair de casa."),
+               (95, "O outro time terminou o jogo agradecendo nominalmente."),
+               (0, "Morreu tanto que a fonte já reconhece ele pelo nome.")],
+    "piorDaPartida": [(100, "O pior dos dez. Não por pouco: com folga e com sobra."),
+                      (0, "Dos dez jogadores em campo, foi o pior. Dos DEZ.")],
+    "semDano": [(0, "Estava lá. Fisicamente. O dano ficou em casa.")],
+    "ausente": [(0, "O time jogou de quatro o jogo inteiro e ninguém sentiu falta.")],
+    "telaCinza": [(0, "Assistiu mais partida do que jogou. Faltou a pipoca.")],
+    "farm": [(0, "O oponente de rota farmou por dois. Um deles era ele.")],
+    "afk": [(0, "Sumiu. Sem explicação, sem aviso, sem vergonha.")],
+    "apanhou": [(0, "Serviu de saco de pancada com barra de vida e nome em cima.")],
+    "carteira": [(0, "Morreu rico e morreu burro. O ouro foi enterrado junto.")],
+    "ping": [(0, "Passou a partida procurando culpado. Nunca no lugar certo.")],
+    "rendeu": [(0, "Rendeu e foi dormir. Nem o troco deu.")],
+    "nexus": [(0, "Nexus escancarado. Dá pra ser pior? Tecnicamente, não.")],
+    "deficit": [(0, "Ficou tão atrás no placar que o buraco aparecia do espaço.")],
+    "menorDano": [(0, "Menor dano da partida. Podia ter ficado na fonte, dava na mesma.")],
 }
-VEREDITO_PADRAO = [(100, "Um vexame com hora marcada."),
-                   (80, "Daqueles jogos que a gente finge que não aconteceu."),
-                   (0, "Dia ruim. Acontece — só que ficou registrado.")]
+VEREDITO_PADRAO = [(100, "Vexame com hora marcada e dez testemunhas."),
+                   (80, "Daqueles jogos que a gente finge que nunca aconteceu. "
+                        "Só que ficou gravado."),
+                   (0, "Dia ruim. Acontece. Pena que tem print.")]
 
 
 def _veredito(nota: float, motivos: list[dict]) -> str:

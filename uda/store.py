@@ -10,12 +10,57 @@ from typing import Iterable
 
 # Versao do schema. Subir este numero dispara o backfill uma unica vez; depois a
 # marca fica em meta e o run seguinte nao varre as 1200+ partidas de novo.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Colunas destravadas do JSON que ja esta no banco (custo zero de API). A MESMA
 # lista alimenta o CREATE TABLE e o ALTER TABLE da migracao: banco novo e banco
 # velho nunca podem divergir campo a campo.
 NOVAS_PARTICIPANTS: list[tuple[str, str]] = [
+    # ---------------------------------------------------------------- v3
+    # Morte que NAO foi causada por campeao inimigo: torre, minion, monstro
+    # neutro ou execucao. deaths - deaths_by_champs = a morte sem culpado.
+    ("deaths_by_champs", "INTEGER DEFAULT 0"),
+    ("exec_torre_10", "INTEGER DEFAULT 0"),
+    # Selva: comer o camp do PROPRIO jungler e o furto que ninguem admite.
+    ("ally_jungle_cs", "INTEGER DEFAULT 0"),
+    ("enemy_jungle_cs", "INTEGER DEFAULT 0"),
+    ("jungle_cs10", "REAL DEFAULT 0"),
+    ("scuttle_kills", "INTEGER DEFAULT 0"),
+    # Covardia e ousadia medidas pelo lugar do abate.
+    ("kills_own_turret", "INTEGER DEFAULT 0"),
+    ("kills_enemy_turret", "INTEGER DEFAULT 0"),
+    ("kills_alcove", "INTEGER DEFAULT 0"),
+    ("kills_fountain", "INTEGER DEFAULT 0"),
+    ("quick_solo_kills", "INTEGER DEFAULT 0"),
+    # Vergonhas categoricas raras.
+    ("team_early_ff", "INTEGER DEFAULT 0"),
+    ("lost_inhib", "INTEGER DEFAULT 0"),
+    ("perfect_game", "INTEGER DEFAULT 0"),
+    # Autopsia: de que tipo de dano cada um apanha.
+    ("taken_physical", "INTEGER DEFAULT 0"),
+    ("taken_magic", "INTEGER DEFAULT 0"),
+    ("taken_true", "INTEGER DEFAULT 0"),
+    # Qual botao o dedo mais castiga.
+    ("spell1_casts", "INTEGER DEFAULT 0"),
+    ("spell2_casts", "INTEGER DEFAULT 0"),
+    ("spell3_casts", "INTEGER DEFAULT 0"),
+    # Trabalho em conjunto -- so conta quando teve aliado junto.
+    ("pick_with_ally", "INTEGER DEFAULT 0"),
+    ("immob_kill_ally", "INTEGER DEFAULT 0"),
+    ("kill_hidden_ally", "INTEGER DEFAULT 0"),
+    ("full_team_td", "INTEGER DEFAULT 0"),
+    # Visao ofensiva e defensiva.
+    ("ward_takedowns", "INTEGER DEFAULT 0"),
+    ("wards_guarded", "INTEGER DEFAULT 0"),
+    ("stealth_wards", "INTEGER DEFAULT 0"),
+    # Diversos com dado suficiente.
+    ("killing_sprees", "INTEGER DEFAULT 0"),
+    ("largest_multikill", "INTEGER DEFAULT 0"),
+    ("inhib_td", "INTEGER DEFAULT 0"),
+    ("solo_turrets_late", "INTEGER DEFAULT 0"),
+    ("survived_immob", "INTEGER DEFAULT 0"),
+    ("lane_gold_adv", "INTEGER DEFAULT 0"),
+    ("champ_xp", "INTEGER DEFAULT 0"),
     # tempo e sobrevivencia
     ("time_dead", "INTEGER DEFAULT 0"),
     ("time_played", "INTEGER DEFAULT 0"),
@@ -119,6 +164,9 @@ NOVAS_PARTICIPANTS: list[tuple[str, str]] = [
 ]
 
 NOVAS_MATCHES: list[tuple[str, str]] = [
+    # Em que versao do extrator esta linha foi lida. E o que torna o backfill
+    # repetivel a cada migracao -- ver o comentario em backfill().
+    ("schema_v", "INTEGER DEFAULT 0"),
     ("bans_json", "TEXT"),
     ("objectives_json", "TEXT"),
     ("patch", "TEXT"),
@@ -565,6 +613,44 @@ def extrair(match: dict, tracked: set[str]) -> tuple[dict, list[dict]]:
             "assist_streak_12": _i(ch.get("12AssistStreakCount")),
             "placement": _i(p.get("placement") or p.get("subteamPlacement")),
             "augments": json.dumps(augs, separators=(",", ":")) if any(augs) else None,
+            # ------------------------------------------------------------ v3
+            # deathsByEnemyChamps conta so a morte com culpado. A diferenca
+            # para `deaths` e a morte sem ninguem por perto: torre, minion,
+            # monstro neutro ou execucao.
+            "deaths_by_champs": _i(ch.get("deathsByEnemyChamps")),
+            "exec_torre_10": _i(ch.get("outerTurretExecutesBefore10Minutes")),
+            "ally_jungle_cs": _i(p.get("totalAllyJungleMinionsKilled")),
+            "enemy_jungle_cs": _i(p.get("totalEnemyJungleMinionsKilled")),
+            "jungle_cs10": _f(ch.get("jungleCsBefore10Minutes")),
+            "scuttle_kills": _i(ch.get("scuttleCrabKills")),
+            "kills_own_turret": _i(ch.get("killsUnderOwnTurret")),
+            "kills_enemy_turret": _i(ch.get("killsNearEnemyTurret")),
+            "kills_alcove": _i(ch.get("takedownsInAlcove")),
+            "kills_fountain": _i(ch.get("takedownsInEnemyFountain")),
+            "quick_solo_kills": _i(ch.get("quickSoloKills")),
+            "team_early_ff": 1 if p.get("teamEarlySurrendered") else 0,
+            "lost_inhib": _i(ch.get("lostAnInhibitor")),
+            "perfect_game": _i(ch.get("perfectGame")),
+            "taken_physical": _i(p.get("physicalDamageTaken")),
+            "taken_magic": _i(p.get("magicDamageTaken")),
+            "taken_true": _i(p.get("trueDamageTaken")),
+            "spell1_casts": _i(p.get("spell1Casts")),
+            "spell2_casts": _i(p.get("spell2Casts")),
+            "spell3_casts": _i(p.get("spell3Casts")),
+            "pick_with_ally": _i(ch.get("pickKillWithAlly")),
+            "immob_kill_ally": _i(ch.get("immobilizeAndKillWithAlly")),
+            "kill_hidden_ally": _i(ch.get("killAfterHiddenWithAlly")),
+            "full_team_td": _i(ch.get("fullTeamTakedown")),
+            "ward_takedowns": _i(ch.get("wardTakedowns")),
+            "wards_guarded": _i(ch.get("wardsGuarded")),
+            "stealth_wards": _i(ch.get("stealthWardsPlaced")),
+            "killing_sprees": _i(p.get("killingSprees")),
+            "largest_multikill": _i(p.get("largestMultiKill")),
+            "inhib_td": _i(p.get("inhibitorTakedowns")),
+            "solo_turrets_late": _i(ch.get("soloTurretsLategame")),
+            "survived_immob": _i(ch.get("survivedThreeImmobilizesInFight")),
+            "lane_gold_adv": _i(ch.get("laningPhaseGoldExpAdvantage")),
+            "champ_xp": _i(p.get("champExperience")),
         }
         linhas.append(row)
     return m_row, linhas
@@ -606,8 +692,14 @@ def backfill(conn: sqlite3.Connection, lote: int = 200) -> int:
     if get_meta(conn, "schema_version") == str(SCHEMA_VERSION):
         return 0
 
+    # A pendencia e POR VERSAO. Antes isto era "patch IS NULL", que so funciona
+    # UMA vez: assim que a v2 rodou, toda partida ganhou patch e a proxima
+    # migracao encontraria zero pendentes -- gravaria schema_version=3 e
+    # deixaria as colunas novas zeradas em 1400 partidas, para sempre, sem
+    # reclamar. Agora cada linha guarda em que versao foi extraida.
     pendentes = [r[0] for r in conn.execute(
-        "SELECT match_id FROM matches WHERE patch IS NULL"
+        "SELECT match_id FROM matches "
+        "WHERE raw IS NOT NULL AND COALESCE(schema_v, 0) < ?", (SCHEMA_VERSION,)
     )]
     total = len(pendentes)
     if not total:
@@ -628,17 +720,20 @@ def backfill(conn: sqlite3.Connection, lote: int = 200) -> int:
         bruto = linha["raw"] if linha else None
         if not bruto:
             # Sem raw nao da para reextrair; marca para nao tentar de novo.
-            conn.execute("UPDATE matches SET patch='' WHERE match_id=?", (match_id,))
+            conn.execute("UPDATE matches SET patch='', schema_v=? "
+                         "WHERE match_id=?", (SCHEMA_VERSION, match_id))
             continue
         try:
             match = json.loads(zlib.decompress(bruto).decode("utf-8"))
         except (zlib.error, ValueError, UnicodeDecodeError):
-            conn.execute("UPDATE matches SET patch='' WHERE match_id=?", (match_id,))
+            conn.execute("UPDATE matches SET patch='', schema_v=? "
+                         "WHERE match_id=?", (SCHEMA_VERSION, match_id))
             continue
 
         m_row, linhas = extrair(match, tracked)
         if not linhas:
-            conn.execute("UPDATE matches SET patch='' WHERE match_id=?", (match_id,))
+            conn.execute("UPDATE matches SET patch='', schema_v=? "
+                         "WHERE match_id=?", (SCHEMA_VERSION, match_id))
             continue
 
         # raw fica de fora do UPDATE: ja esta gravado e recomprimir seria so custo.
@@ -649,6 +744,8 @@ def backfill(conn: sqlite3.Connection, lote: int = 200) -> int:
         )
         for row in linhas:
             _gravar_participante(conn, row)
+        conn.execute("UPDATE matches SET schema_v=? WHERE match_id=?",
+                     (SCHEMA_VERSION, match_id))
         feitas += 1
 
         if i % lote == 0:

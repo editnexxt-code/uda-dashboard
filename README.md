@@ -88,7 +88,7 @@ títulos acumulados.
 **Paredão** — as piores partidas de cada um, com o porquê medido. Tem filtro de
 período (tudo / 90 / 30 / 7 dias).
 
-**Troféus** — 45 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
+**Troféus** — 61 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
 num degrau do pódio abre as partidas que produziram aquele número.
 
 **Regras** — como o UDA Score é calculado.
@@ -126,11 +126,26 @@ A Riot cria IDs novos sem avisar e a lista pública dela fica desatualizada.
 
 Remakes e partidas de menos de 5 minutos também saem.
 
+### Campos destravados sem gastar API
+
+O JSON completo de cada partida fica comprimido em `matches.raw`, então dá para
+extrair campo novo do histórico inteiro sem uma única chamada. A migração v3
+destravou 34 colunas — morte sem culpado, camp do próprio jungler, execução pela
+torre, dano levado por tipo, uso por habilidade — e repopulou 1664 partidas.
+
+> O backfill é versionado por linha (`matches.schema_v`). Antes ele perguntava
+> "esta partida tem `patch` nulo?", o que só funciona **uma vez**: depois da v2
+> nenhuma linha tinha patch nulo, e a v3 acharia zero pendentes, gravaria a nova
+> versão e deixaria as colunas novas zeradas para sempre — sem erro nenhum.
+
 ### Métricas que dependem de rota
 
 "Farm dos Dez Minutos" e "Cego de Rota" contam **só** topo, meio e atirador, e
 exigem 8 partidas de rota. Sem esse recorte, o jungler apareceria como "quem
-menos farma" — o que não é vexame, é a função dele.
+menos farma" — o que não é vexame, é a função dele. O inverso também vale:
+"Farm da Selva aos 10" e "Rei do Caranguejo" só contam quem estava na selva, e
+"Rato de Camp" (comer o camp do próprio jungler) exclui o jungler, para quem
+aquilo é simplesmente o farm da função.
 
 ## 5. Atualização automática
 
@@ -180,7 +195,7 @@ uda/store.py          SQLite, migração de schema e backfill
 uda/fetch.py          coleta incremental, retomável
 uda/kpi.py            KPIs, UDA Score, grupos por fila
 uda/evolucao.py       séries temporais
-uda/zoeira.py         os 45 troféus de carreira
+uda/zoeira.py         os 61 troféus de carreira
 uda/vexames.py        as piores partidas, com motivo
 uda/mural.py          UDA e Afundado do mês
 uda/arsenal.py        itens, runas e feitiços
