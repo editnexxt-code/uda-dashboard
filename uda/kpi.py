@@ -993,6 +993,10 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     squad_index = _squad_index(all_rows)
     groups_payload = {}
     evolucao_payload: dict[str, Any] = {}
+    zoeira_payload: dict[str, Any] = {}
+    vexames_payload: dict[str, Any] = {}
+    arsenal_payload: dict[str, Any] = {}
+    from . import arsenal as _arsenal, vexames as _vexames, zoeira as _zoeira
 
     def _keep(row, teste, squad_only) -> bool:
         if teste is not None and not teste(row["queue_id"], row["game_mode"]):
@@ -1118,17 +1122,32 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
             if extra:
                 groups_payload[gkey]["inhouseExtra"] = extra
 
+        # Linhas do grupo agrupadas por jogador: servem para evolucao, trofeus,
+        # vexames e arsenal. Montadas uma vez so, aqui.
+        rows_grupo: dict[str, list] = defaultdict(list)
+        for r in group_rows:
+            if r["puuid"] in players:
+                rows_grupo[r["puuid"]].append(r)
+
         # Series temporais: so para as abas que a tela realmente desenha.
         # "inhouse" fica de fora de proposito: sao 17 partidas em 4 noites, e uma
         # media movel de 10 partidas ou uma corrida MENSAL nao tem o que dizer.
         if gkey in ("all", "solo", "flex", "squad"):
             from . import evolucao as _ev
-            rows_grupo = defaultdict(list)
-            for r in group_rows:
-                rows_grupo[r["puuid"]].append(r)
             evolucao_payload[gkey] = _ev.construir(
                 group_rows, rows_grupo, players, min_games
             )
+
+        # Trofeus, vexames e arsenal por FILA. Medido antes de fazer: as seis
+        # filas juntas custam +0,7 MB, porque so "Todas", Solo e Flex tem volume
+        # -- as outras sao pequenas e quase nao pesam. Vale o preco: zoar
+        # "quem mais morre no ARAM" e outra piada, diferente de "quem mais morre".
+        if not squad_only:
+            zoeira_payload[gkey] = _zoeira.construir(rows_grupo, players)
+            vexames_payload[gkey] = _vexames.construir(
+                conn, rows_grupo, players, verbose=False)
+            arsenal_payload[gkey] = _arsenal.construir(
+                group_rows, players, ddragon_ver, verbose=False)
 
         if squad_only:
             ordem = [e["puuid"] for e in entries]
@@ -1178,16 +1197,15 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     # Blocos que nao dependem de fila: sao a carreira inteira do elenco.
     # Importados aqui, como evolucao, para nao arrastar requests em quem so
     # quer os KPIs.
-    from . import arsenal as _arsenal, mural as _mural, zoeira as _zoeira
-    payload["zoeira"] = _zoeira.construir(rows_by_player, players)
-    payload["arsenal"] = _arsenal.construir(all_rows, players, ddragon_ver)
+    from . import mural as _mural
+    payload["zoeira"] = zoeira_payload
+    payload["arsenal"] = arsenal_payload
     payload["mural"] = _mural.construir(rows_by_player, players, min_games,
                                         champ_index)
     payload["titulos"] = _mural.resumo_titulos(payload["mural"])
 
     # Placares por ultimo: so entram as partidas que o payload ja referencia.
-    from . import vexames as _vexames
-    payload["vexames"] = _vexames.construir(conn, rows_by_player, players)
+    payload["vexames"] = vexames_payload
 
     # Placares por ultimo: so entram as partidas que o payload ja referencia,
     # e os vexames acabaram de acrescentar um monte delas.
