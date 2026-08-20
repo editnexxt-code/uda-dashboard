@@ -91,6 +91,11 @@ período (tudo / 90 / 30 / 7 dias).
 **Troféus** — 61 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
 num degrau do pódio abre as partidas que produziram aquele número.
 
+**Autópsia** — não quanto você morre, mas **como**: de que tipo de dano cada um
+apanha (físico / mágico / verdadeiro), onde se sente seguro para matar (na saia
+da própria torre ou na cara da inimiga), qual dos três botões o dedo castiga, e
+o pódio das mortes sem nenhum culpado por perto.
+
 **Regras** — como o UDA Score é calculado.
 
 Tudo é recalculado **por fila**: Todas, Solo, Flex, Normais, ARAM,
@@ -200,6 +205,7 @@ uda/vexames.py        as piores partidas, com motivo
 uda/mural.py          UDA e Afundado do mês
 uda/arsenal.py        itens, runas e feitiços
 uda/rota.py           o algoz de rota
+uda/autopsia.py       como cada um morre, e de que
 uda/partidas.py       placar completo das partidas citadas
 uda/inhouse.py        importa e analisa as personalizadas
 uda/assets.py         embute ícones e a ficha dos campeões

@@ -2641,6 +2641,41 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   color:var(--mut);padding:9px;font:500 11.5px/1 var(--body);cursor:pointer}
 .zmais:hover{color:var(--teal)}
 
+/* =========================================================== AUTÓPSIA */
+.aut{display:flex;flex-direction:column;gap:9px}
+.autpod{max-width:430px;margin:0 auto}
+.autr{display:grid;grid-template-columns:132px 1fr 60px;align-items:center;gap:11px}
+.autr .nm{display:flex;align-items:center;gap:7px;min-width:0}
+.autr .nm img{width:22px;height:22px;border-radius:5px;flex:none}
+.autr .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12px;font-weight:600}
+.autr .vl{text-align:right;font-size:12px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+/* barra empilhada: as tres fatias somam 100% da largura */
+.emp{display:flex;height:15px;border-radius:5px;overflow:hidden;background:var(--card2)}
+.emp i{display:block;height:100%}
+.emp i.f{background:var(--gold)}
+.emp i.m{background:var(--teal)}
+.emp i.v{background:var(--red)}
+.autleg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:11px;font-size:11px;color:var(--dim)}
+.autleg b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
+  vertical-align:middle}
+/* barra simples com regua ao fundo */
+.autb{height:15px;border-radius:5px;background:var(--card2);overflow:hidden;position:relative}
+.autb::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0,transparent 24.6%,
+    var(--line) 24.6%,var(--line) 25%)}
+.autb i{display:block;height:100%;border-radius:5px 0 0 5px}
+/* o dedo: uma pastilha por habilidade */
+.dedo{display:flex;gap:5px}
+.dedo b{flex:1;text-align:center;font-size:10.5px;font-weight:700;padding:4px 0;
+  border-radius:5px;background:var(--card2);color:var(--dim)}
+.dedo b.on{background:var(--teal);color:#04201d}
+@container content (max-width:640px){
+  .autr{grid-template-columns:96px 1fr 52px;gap:8px}
+  .autr .nm span{font-size:11px}
+}
+
 /* =========================================================== ARSENAL */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -5765,6 +5800,7 @@ const PAGES=[
   {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"O UDA e o Afundado de cada mês"},
   {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com o porquê"},
   {k:"zoeira",n:"Troféus",i:I.award,g:"Zoeira",q:1,sub:"As métricas que existem só para zoar"},
+  {k:"autopsia",n:"Autópsia",i:I.target,g:"Zoeira",q:1,sub:"Não quanto você morre — como você morre"},
   {k:"regras",n:"Regras",i:I.book,g:"Ajuda",q:0,sub:"Como o UDA Score é calculado"},
 ];
 let page="visao",fila="all";
@@ -6140,7 +6176,83 @@ function pRegras(){
 
 const vazio=()=>noData("SEM PARTIDAS NESTA FILA",
   `Ninguém do grupo jogou <b>${h((DATA.groups.find(x=>x.key===fila)||{}).label||fila)}</b> na janela analisada.`);
-const RENDER={visao:pVisao,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
+/* ------------------------------------------------------------ AUTÓPSIA
+   Nao e ranking de qualidade: e anatomia. Quase tudo aqui e percentual DENTRO
+   da propria pessoa, para nao punir quem jogou menos -- "43% do que voce leva
+   e magico" fala de voce sozinho, independente do volume. */
+function pAutopsia(){
+  const a=(DATA.autopsia||{})[filaDados()]||{};
+  const f=a.fichas||[];
+  if(!f.length) return noData("SEM CORPO PRA AUTOPSIAR",
+    `Ninguém atingiu ${a.minPartidas||5} partidas nesta fila.`);
+
+  const linha=(x,meio,valor)=>`<div class="autr">
+    <div class="nm"><img src="${iconImg(x.icon)}"${FB}><span>${h(x.gameName)}</span></div>
+    ${meio}<div class="vl">${valor}</div></div>`;
+
+  /* 1 — de que dano cada um apanha */
+  const dano=f.filter(x=>x.temDano).map(x=>linha(x,
+    `<div class="emp"${tip(h(x.gameName),[
+       ["Físico",nf(x.fisico,1)+"%","var(--gold)"],
+       ["Mágico",nf(x.magico,1)+"%","var(--teal)"],
+       ["Verdadeiro",nf(x.verdadeiro,1)+"%","var(--red)"],
+       ["Dano levado por partida",ni(x.levadoPorMin)]],
+       `${ni(x.partidas)} partidas`)}>
+      <i class="f" style="width:${x.fisico}%"></i>
+      <i class="m" style="width:${x.magico}%"></i>
+      <i class="v" style="width:${x.verdadeiro}%"></i></div>`,
+    nf(x.magico,0)+"%")).join("");
+
+  /* 2 — onde ele se sente seguro para matar */
+  const ous=f.filter(x=>x.temTorre).slice().sort((p,q)=>q.ousadia-p.ousadia);
+  const ousado=ous.map(x=>linha(x,
+    `<div class="autb"${tip(h(x.gameName),[
+       ["Na torre inimiga",ni(x.torreInimiga),"var(--teal)"],
+       ["Na saia da própria",ni(x.souTorre),"var(--red)"],
+       ["Ousadia",nf(x.ousadia,1)+"%"]],
+       "abates feitos perto de alguma torre")}>
+      <i style="width:${x.ousadia}%;background:${x.ousadia>=50?"var(--teal)":"var(--red)"}"></i>
+      </div>`, nf(x.ousadia,0)+"%")).join("");
+
+  /* 3 — qual botao o dedo castiga */
+  const dedos=f.filter(x=>x.temBotao).slice()
+    .sort((p,q)=>q.botaoPct-p.botaoPct).map(x=>linha(x,
+    `<div class="dedo"${tip(h(x.gameName),
+       x.botoes.map(b=>[b.t,nf(b.pct,1)+"%"]),
+       "fatia dos usos entre Q, W e E")}>
+      ${x.botoes.map(b=>`<b class="${b.t===x.botao?"on":""}">${b.t} ${nf(b.pct,0)}%</b>`).join("")}
+      </div>`, x.botao)).join("");
+
+  /* 4 — podio da morte sem culpado */
+  const bobas=f.filter(x=>x.temBobas&&x.bobas>0)
+    .slice().sort((p,q)=>q.bobas-p.bobas).slice(0,3)
+    .map(x=>({nome:x.gameName,icon:x.icon,valor:x.bobas,
+      tip:tip(h(x.gameName),[["Sem culpado",ni(x.bobas)],
+        ["Mortes no total",ni(x.mortes)],["Partidas",ni(x.partidas)]],
+        "torre, minion, monstro neutro ou execução")}));
+
+  return `
+  ${bobas.length?`<section><div class="sh-plain">${chead(I.skull,"Morreu sem ninguém encostar",
+    "torre, minion, monstro ou execução — não teve inimigo, teve decisão","red")}</div>
+    <div class="autpod">${podio3(bobas,"verg")}</div></section>`:""}
+
+  <section><div class="sh-plain">${chead(I.target,"De que você apanha",
+    "a fatia do dano levado, por tipo · quem lidera em mágico é quem nunca comprou resistência mágica na vida","gold")}</div>
+    <div class="autleg"><span><b style="background:var(--gold)"></b>físico</span>
+      <span><b style="background:var(--teal)"></b>mágico</span>
+      <span><b style="background:var(--red)"></b>verdadeiro</span></div>
+    <div class="aut">${dano}</div></section>
+
+  ${ousado?`<section><div class="sh-plain">${chead(I.sword,"Onde você tem coragem",
+    "abates feitos na cara da torre inimiga contra abates feitos na saia da sua · quanto mais alto, menos medo")}</div>
+    <div class="aut">${ousado}</div></section>`:""}
+
+  ${dedos?`<section><div class="sh-plain">${chead(I.bolt,"O botão favorito",
+    `de Q, W e E, qual o dedo castiga · mínimo de ${ni(a.minUsos||200)} usos · tem gente que comprou o teclado inteiro pra usar uma tecla`)}</div>
+    <div class="aut">${dedos}</div></section>`:""}`;
+}
+
+const RENDER={visao:pVisao,autopsia:pAutopsia,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
   inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 
