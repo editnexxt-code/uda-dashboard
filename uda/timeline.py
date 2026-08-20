@@ -180,7 +180,9 @@ def coletar(client, conn: sqlite3.Connection, tracked: set[str],
         gravar(conn, linhas)
         conn.execute("UPDATE matches SET tl_done=1 WHERE match_id=?", (mid,))
         feitas += 1
-        if i % 25 == 0:
+        # Commit curto de proposito: a cada 25 a transacao ficava aberta ~31 s
+        # e qualquer outro processo que quisesse escrever batia no busy_timeout.
+        if i % 10 == 0:
             conn.commit()
             if verbose:
                 print(f"  {i}/{len(ids)}  ({feitas} com dado da UDA)")

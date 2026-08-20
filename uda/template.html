@@ -2676,6 +2676,31 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   .autr .nm span{font-size:11px}
 }
 
+/* ============================================================== O MAPA */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}
+.rift{width:100%;aspect-ratio:1;border-radius:10px;background:var(--card2);
+  border:1px solid var(--line);display:block}
+.rift .terr{fill:none;stroke:#7c8189;stroke-width:1;opacity:.3}
+.rift .rio{stroke:#6fb7d8;stroke-width:7;opacity:.1;stroke-linecap:round}
+.rift .base{fill:var(--line);opacity:.5}
+.rift .cel{shape-rendering:crispEdges}
+.mapleg{display:flex;flex-direction:column;gap:9px;font-size:11.5px;color:var(--dim)}
+.mapleg .esc{display:flex;align-items:center;gap:0}
+.mapleg .esc i{flex:1;height:9px}
+.mapleg .esc i:first-child{border-radius:3px 0 0 3px}
+.mapleg .esc i:last-child{border-radius:0 3px 3px 0}
+/* mini-mapas: um por pessoa, lado a lado */
+.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:11px}
+.mini{background:var(--card2);border:1px solid var(--line);border-radius:9px;
+  padding:8px;display:flex;flex-direction:column;gap:6px}
+.mini .cab{display:flex;align-items:center;gap:6px;min-width:0}
+.mini .cab img{width:19px;height:19px;border-radius:4px;flex:none}
+.mini .cab span{font-size:11px;font-weight:600;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mini .pe{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+@container content (max-width:760px){ .mapwrap{grid-template-columns:1fr} }
+
 /* =========================================================== ARSENAL */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -5801,6 +5826,7 @@ const PAGES=[
   {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com o porquê"},
   {k:"zoeira",n:"Troféus",i:I.award,g:"Zoeira",q:1,sub:"As métricas que existem só para zoar"},
   {k:"autopsia",n:"Autópsia",i:I.target,g:"Zoeira",q:1,sub:"Não quanto você morre — como você morre"},
+  {k:"mapa",n:"O Mapa",i:I.grid,g:"Zoeira",q:1,sub:"Onde exatamente cada um cai, com a coordenada da Riot"},
   {k:"regras",n:"Regras",i:I.book,g:"Ajuda",q:0,sub:"Como o UDA Score é calculado"},
 ];
 let page="visao",fila="all";
@@ -6252,7 +6278,105 @@ function pAutopsia(){
     <div class="aut">${dedos}</div></section>`:""}`;
 }
 
-const RENDER={visao:pVisao,autopsia:pAutopsia,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
+/* -------------------------------------------------------------- O MAPA
+   O Rift e desenhado, nao baixado: a minimapa oficial custaria ~300 KB
+   embutidos e ficaria com a cara do jogo, nao com a do painel. Tres lanes, o
+   rio na diagonal contraria e as duas bases bastam para orientar o olho.
+   A grade ja chega do Python com o eixo Y invertido -- indice 0 e o canto de
+   cima, que e a base vermelha. */
+const RIFT=`<path class="terr" d="M8 88 L8 8 L88 8"/>
+  <path class="terr" d="M12 92 L92 92 L92 12"/>
+  <path class="terr" d="M16 84 L84 16"/>
+  <line class="rio" x1="6" y1="6" x2="94" y2="94"/>
+  <circle class="base" cx="7" cy="93" r="7"/><circle class="base" cx="93" cy="7" r="7"/>`;
+
+/* Duas tentativas antes desta, as duas erradas, e vale registrar por que:
+
+   1) fracao do maximo com raiz quadrada -- a contagem tem cauda longa (a frente
+      da torre do meio contra centenas de celulas com 1 morte), entao 3 de cada
+      4 celulas caiam na mesma tinta. Medido: mediana 0,47 e p75 0,54. Borrao.
+   2) quantil -- espalhou o contraste, mas MENTINDO: por construcao um quinto
+      das celulas vira "as mais quentes" mesmo quando sao so marginalmente mais
+      quentes. O mapa virou xadrez laranja sem padrao espacial nenhum.
+
+   O que faltava nao era escala, era DESFOQUE. Mapa de calor le como campo
+   continuo, nao como grade de 256 quadradinhos. Com feGaussianBlur a escala
+   pode voltar a ser honesta (magnitude elevada a 0,6, que so comprime a cauda)
+   porque o olho passa a ler concentracao em vez de celula isolada. */
+const RAMPA=["#4a2a2e","#8b3033","#c33c33","#f06035","#ffab5c"];
+const RAMPA_T=["#1e2f30","#1d4d4a","#1d6f66","#22a08d","#3fd6b0"];
+const DEFS_MAPA=`<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><filter id="borrao" x="-12%" y="-12%" width="124%" height="124%">
+    <feGaussianBlur stdDeviation="1.9"/></filter></defs></svg>`;
+
+function calor(grade,tam,frio){
+  if(!grade||!grade.length) return "";
+  const passo=100/tam, cores=frio?RAMPA_T:RAMPA;
+  const max=Math.max(...grade.map(g=>g[1]));
+  const cels=grade.map(([i,n])=>{
+    const c=i%tam, l=Math.floor(i/tam);
+    const f=Math.pow(n/max,.6);                 // comprime a cauda, nao inverte a ordem
+    const k=Math.min(cores.length-1,Math.floor(f*cores.length));
+    return `<rect x="${(c*passo).toFixed(2)}" y="${(l*passo).toFixed(2)}"
+      width="${passo.toFixed(2)}" height="${passo.toFixed(2)}"
+      fill="${cores[k]}" opacity="${(.45+f*.55).toFixed(3)}"/>`;
+  }).join("");
+  return `<g class="cel" filter="url(#borrao)">${cels}</g>`;
+}
+const riftSVG=(grade,tam,frio)=>`<svg class="rift" viewBox="0 0 100 100"
+  preserveAspectRatio="none">${calor(grade,tam,frio)}${RIFT}</svg>`;
+
+function pMapa(){
+  const a=(DATA.mapa||{})[filaDados()]||{};
+  const f=a.fichas||[], tam=a.grade||16;
+  if(!f.length) return noData("MAPA AINDA SEM CORPO",
+    "O mapa de calor só existe para Summoner's Rift, e só depois que a timeline "
+    +"daquelas partidas for coletada. ARAM não entra: usa outra escala de coordenada.");
+
+  const pod=f.slice().sort((p,q)=>p.primeiraMorte-q.primeiraMorte).slice(0,3)
+    .map(x=>({nome:x.gameName,icon:x.icon,valor:x.primeiraMorte,
+      tip:tip(h(x.gameName),[["1ª morte (mediana)",nf(x.primeiraMorte,1)+" min"],
+        ["Mortes medidas",ni(x.mortes)],["Partidas",ni(x.partidas)]],
+        "metade das partidas dele a primeira morte veio antes disso")}));
+
+  const minis=f.filter(x=>x.temGrade).map(x=>`<div class="mini"${tip(h(x.gameName),[
+      ["Mortes no mapa",ni(x.mortes)],
+      ["Em território inimigo",nf(x.foraDeCasa,1)+"%"],
+      ["1ª morte",nf(x.primeiraMorte,1)+" min"],
+      ["Ouro aos 10",ni(x.ouro10)]],`${ni(x.partidas)} partidas de Rift`)}>
+    <div class="cab"><img src="${iconImg(x.icon)}"${FB}><span>${h(x.gameName)}</span></div>
+    ${riftSVG(x.gradeMortes,tam)}
+    <div class="pe"><span>${ni(x.mortes)} mortes</span><b>${nf(x.foraDeCasa,0)}% fora</b></div>
+    </div>`).join("");
+
+  return `${DEFS_MAPA}
+  <section><div class="sh-plain">${chead(I.target,"Onde o grupo morre",
+    "cada morte de Summoner's Rift, com a coordenada exata que a Riot registrou · quanto mais claro, mais gente caiu ali","red")}</div>
+    <div class="mapwrap">
+      ${riftSVG(a.gradeGrupo,tam)}
+      <div class="mapleg">
+        <div><b style="color:var(--txt)">Como ler</b></div>
+        <div class="esc">${RAMPA.map((c,k)=>
+          `<i style="background:${c};opacity:${(.34+k*.165).toFixed(2)}"></i>`).join("")}</div>
+        <div>da esquerda para a direita: pouca morte → muita morte na mesma
+          célula. A escala é por quantidade real, então mancha grande é
+          concentração de verdade, não efeito da régua.</div>
+        <div>A base azul fica embaixo à esquerda, a vermelha em cima à direita.
+          A faixa na diagonal é o rio.</div>
+        <div>ARAM fica de fora: o Abismo Uivante usa outra escala de coordenada,
+          e misturar os dois viraria borrão.</div>
+      </div></div></section>
+
+  ${pod.length?`<section><div class="sh-plain">${chead(I.skull,"Quem morre primeiro",
+    "a mediana do minuto da primeira morte · metade das partidas dele acabou pior que isso","red")}</div>
+    <div class="autpod">${podio3(pod,"verg",v=>nf(v,1)+" min")}</div></section>`:""}
+
+  ${minis?`<section><div class="sh-plain">${chead(I.users,"Um mapa por pessoa",
+    `mínimo de ${ni(a.minMortes||25)} mortes registradas · o número embaixo é a fatia que aconteceu em território inimigo`)}</div>
+    <div class="minis">${minis}</div></section>`:""}`;
+}
+
+const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
   inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 

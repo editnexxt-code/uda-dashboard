@@ -315,6 +315,12 @@ def connect(db_path: Path) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
+    # Sem isto o busy_timeout e ZERO: qualquer lock vira "database is locked" no
+    # ato, em vez de esperar. Acontece de verdade -- rodar `run.py --build`
+    # enquanto a coleta automatica escreve derrubava o build inteiro. O WAL ja
+    # deixa ler durante a escrita; o que faltava era paciencia no CREATE/ALTER.
+    # 30 s nao bastava: o coletor de timeline segurava a transacao por ~31 s.
+    conn.execute("PRAGMA busy_timeout=60000")
     conn.executescript(SCHEMA)
     migrate(conn)
     return conn
