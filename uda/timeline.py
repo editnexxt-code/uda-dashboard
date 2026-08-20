@@ -140,9 +140,14 @@ def pendentes(conn: sqlite3.Connection, limite: int) -> list[str]:
     Da recente para a antiga de proposito: se a coleta nunca terminar, o que
     existir e o periodo que as pessoas lembram de ter jogado.
     """
+    # `raw IS NULL` marca partida que veio do coletor local de personalizadas,
+    # nao da API. Jogo customizado nao existe na Match-V5: pedir a timeline dele
+    # devolve 404 toda vez. Sem este filtro seriam 17 chamadas desperdicadas em
+    # TODA execucao, para sempre.
     return [r[0] for r in conn.execute(
-        "SELECT match_id FROM matches WHERE COALESCE(tl_done, 0) = 0 "
-        "ORDER BY game_creation DESC LIMIT ?", (limite,))]
+        "SELECT match_id FROM matches "
+        " WHERE COALESCE(tl_done, 0) = 0 AND raw IS NOT NULL "
+        " ORDER BY game_creation DESC LIMIT ?", (limite,))]
 
 
 def coletar(client, conn: sqlite3.Connection, tracked: set[str],

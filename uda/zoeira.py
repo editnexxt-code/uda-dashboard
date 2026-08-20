@@ -11,6 +11,7 @@ em ver onde VOCE caiu na lista.
 from __future__ import annotations
 
 import sqlite3
+import json as _json
 from collections import defaultdict
 
 from .kpi import _r, _safe_div
@@ -47,6 +48,8 @@ SOMAS = [
     "immob_kill_ally", "kill_hidden_ally", "full_team_td", "ward_takedowns",
     "wards_guarded", "stealth_wards", "killing_sprees", "solo_turrets_late",
     "survived_immob", "lane_gold_adv", "inhib_td",
+    # da timeline, via LEFT JOIN no SELECT do kpi:
+    "ouro10", "ouro15", "xp10",
 ]
 
 
@@ -76,6 +79,34 @@ def _agregar(rows_by_player, players) -> dict[str, dict[str, float]]:
         # Aqui a conta corre so sobre topo, meio e atirador.
         lane = [r for r in linhas if (r["position"] or "").upper()
                 in ("TOP", "MIDDLE", "BOTTOM")]
+        # --- timeline: largada e repeticao de build --------------------------
+        # SO CLASSIC. O ouro aos 10 depende do MODO, nao so do jogador -- medido
+        # no proprio banco: CLASSIC 3566, ULTBOOK 5358, SWIFTPLAY 6913, URF 7032,
+        # ARAM 7679. Misturar coroaria quem joga URF, nao quem farma bem: o
+        # primeiro colocado da versao anterior liderava com 5575 porque 65 das
+        # 100 partidas dele eram URF e Ultimate Spellbook. Elogio falso e tao
+        # ruim quanto acusacao falsa.
+        # O mesmo vale para a abertura de build: cada modo tem a sua, e quem
+        # varia de MODO apareceria como quem varia de build.
+        rift = [r for r in linhas if (r["game_mode"] or "") == "CLASSIC"]
+        comTl = [r for r in rift if _n(r["ouro10"]) > 0]
+        acc["tl_partidas"] = len(comTl)
+        acc["tl_ouro10"] = sum(_n(r["ouro10"]) for r in comTl)
+
+        # "Sempre a mesma build": pega os TRES primeiros itens de cada partida e
+        # ve quantas vezes a abertura mais repetida aparece. Tres e o suficiente
+        # para caracterizar a abertura sem confundir quem so varia a bota.
+        aberturas = defaultdict(int)
+        for r in rift:
+            try:
+                itens = _json.loads(r["itens_json"] or "[]")[:3]
+            except (ValueError, TypeError, IndexError, KeyError):
+                continue
+            if len(itens) == 3:
+                aberturas[tuple(itens)] += 1
+        acc["build_partidas"] = sum(aberturas.values())
+        acc["build_repetida"] = max(aberturas.values()) if aberturas else 0
+
         # --- morte sem culpado (torre, minion, monstro, execucao) ------------
         # deaths_by_champs so existe em ~88% das partidas. Onde o campo falta ele
         # vem 0, e `deaths - 0` marcaria TODA morte como burra. Por isso a conta
@@ -321,6 +352,14 @@ TROFEUS: list[tuple] = [
     ("guardaCostas", "Guarda-Costas de Sentinela", "curiosidade",
      "Sentinela defendida de quem tentou destruir. Protege um totem melhor do que protege o carregador.",
      lambda a: a["wards_guarded"], "sentinelas defendidas", 0, True),
+    # ------------------------------------------------- timeline (minuto a minuto)
+    ("ricoAos10", "Rico aos Dez", "gloria",
+     "Ouro acumulado aos 10 minutos, só em Summoner's Rift. Quem sai da fase de rota com o bolso cheio já ganhou metade.",
+     lambda a: _safe_div(a["tl_ouro10"], a["tl_partidas"]), "de ouro aos 10 min", 0, True),
+    ("mesmaBuild", "Sempre a Mesma Coisa", "curiosidade",
+     "Fatia das partidas de Rift abertas com exatamente os mesmos três itens. Criatividade em fase terminal.",
+     lambda a: _safe_div(a["build_repetida"], a["build_partidas"]) * 100,
+     "% na abertura favorita", 1, True),
     ("nuncaSozinho", "Nunca Mata Sozinho", "curiosidade",
      "Abate fechado junto de um aliado, por partida. Coragem em dupla; sozinho, recua.",
      lambda a: _safe_div(a["pick_with_ally"], a["partidas"]), "abates acompanhados", 2, True),
@@ -456,6 +495,11 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS,
     # Morte sem culpado depende de um campo que falta em ~12% das partidas.
     SO_BOBA = {"morteBurra"}
     MIN_BOBA = 8
+    # Metricas de timeline so valem onde a timeline existe (~94% das partidas).
+    SO_TL = {"ricoAos10"}
+    MIN_TL = 8
+    SO_BUILD = {"mesmaBuild"}
+    MIN_BUILD = 10
 
     saida = []
     for key, titulo, grupo, legenda, calc, unidade, casas, maior in TROFEUS:
@@ -470,6 +514,10 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS,
             if key in SO_NAOSELVA and acc.get("naoselva_partidas", 0) < MIN_NAOSELVA:
                 continue
             if key in SO_BOBA and acc.get("bobas_partidas", 0) < MIN_BOBA:
+                continue
+            if key in SO_TL and acc.get("tl_partidas", 0) < MIN_TL:
+                continue
+            if key in SO_BUILD and acc.get("build_partidas", 0) < MIN_BUILD:
                 continue
             try:
                 valor = float(calc(acc))

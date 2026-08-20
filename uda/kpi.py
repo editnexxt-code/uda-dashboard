@@ -133,12 +133,17 @@ def _load_rows(conn: sqlite3.Connection, window_days: int) -> list[sqlite3.Row]:
     linhas = list(conn.execute(
         """
         SELECT p.*, m.game_mode,
+               t.primeira_morte, t.primeiro_abate, t.itens_json, t.skills_json,
+               t.ouro10, t.ouro15, t.ouro20, t.cs10 AS tl_cs10,
+               t.xp10, t.xp15, t.wards_tl,
                (SELECT SUM(q.damage_champions) FROM participants q
                  WHERE q.match_id = p.match_id AND q.team_id = p.team_id) AS team_damage,
                (SELECT SUM(q.gold) FROM participants q
                  WHERE q.match_id = p.match_id AND q.team_id = p.team_id) AS team_gold
         FROM participants p
         JOIN matches m ON m.match_id = p.match_id
+        LEFT JOIN timeline_stats t
+               ON t.match_id = p.match_id AND t.puuid = p.puuid
         WHERE p.tracked = 1
           AND p.game_creation >= ?
           AND p.game_duration >= 300
