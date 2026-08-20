@@ -38,6 +38,7 @@ SOMAS = [
     "save_ally", "enemy_jungle_kills", "damage_epic", "ability_uses",
     "dragon_td", "baron_td", "herald_td", "void_kills", "aces_15",
     "spell4_casts", "perfect_souls",
+    "multikill_spell", "assist_streak_12", "first_turret_time", "quick_first_turret",
 ]
 
 
@@ -67,6 +68,7 @@ def _agregar(rows_by_player, players) -> dict[str, dict[str, float]]:
         # Aqui a conta corre so sobre topo, meio e atirador.
         lane = [r for r in linhas if (r["position"] or "").upper()
                 in ("TOP", "MIDDLE", "BOTTOM")]
+        acc["torre_partidas"] = sum(1 for r in linhas if _n(r["first_turret_time"]) > 0)
         acc["lane_partidas"] = len(lane)
         acc["lane_cs10_lane"] = sum(_n(r["lane_cs10"]) for r in lane)
         acc["vision_adv_lane"] = sum(_n(r["vision_adv"]) for r in lane)
@@ -225,6 +227,17 @@ TROFEUS: list[tuple] = [
      lambda a: _safe_div(a["spell4_casts"], a["partidas"]),
      "acionamentos por jogo", 1, True),
 
+    ("comboMortal", "Combo Mortal", "gloria",
+     "Multikills feitos com uma habilidade so. Um botao, dois caixoes.",
+     lambda a: a["multikill_spell"], "multikills de um botao", 0, True),
+    ("assistencia", "Maquina de Assistencia", "gloria",
+     "Sequencias de 12 assistencias seguidas. Nunca da o ultimo golpe, mas esta sempre la.",
+     lambda a: a["assist_streak_12"], "sequencias de 12", 0, True),
+    ("torreCedo", "Torre Madrugadora", "gloria",
+     "Primeira torre derrubada mais cedo, em media. Lembra que o objetivo e o nexus.",
+     lambda a: _safe_div(a["first_turret_time"], max(a["torre_partidas"], 1)) / 60.0,
+     "minutos ate a primeira torre", 1, False),
+
     ("milagre", "Sobreviveu ao Impossivel", "curiosidade",
      "Ficou com um fio de vida e escapou. Sorte tambem e habilidade.",
      lambda a: a["survived_low_hp"], "escapadas milagrosas", 0, True),
@@ -273,6 +286,8 @@ COLUNA_POR_TROFEU = {
     "cacadorMonstro": "damage_epic",
     "farmDoDez": "lane_cs10",
     "dedoNervoso": "ability_uses",
+    "comboMortal": "multikill_spell",
+    "assistencia": "assist_streak_12",
     "botaoExtra": "spell4_casts",
 }
 
@@ -327,12 +342,18 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list
     # Trofeu de rota so aceita quem tem amostra de rota.
     SO_LANE = {"farmDoDez", "cegoDaRota"}
     MIN_LANE = 8
+    # "Torre Madrugadora" premia media de TEMPO: quem derrubou duas torres cedo
+    # por acaso lideraria sobre quem derruba sempre. Exige amostra.
+    SO_TORRE = {"torreCedo"}
+    MIN_TORRE = 10
 
     saida = []
     for key, titulo, grupo, legenda, calc, unidade, casas, maior in TROFEUS:
         linhas = []
         for puuid, acc in elegiveis.items():
             if key in SO_LANE and acc.get("lane_partidas", 0) < MIN_LANE:
+                continue
+            if key in SO_TORRE and acc.get("torre_partidas", 0) < MIN_TORRE:
                 continue
             try:
                 valor = float(calc(acc))
