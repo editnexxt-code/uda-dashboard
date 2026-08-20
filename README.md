@@ -1,12 +1,19 @@
 # UNIÃO DOS AFUNDADOS — Dashboard
 
-Painel local de desempenho dos 12 membros da UDA, alimentado pela API oficial da Riot.
-Roda 100% na sua máquina, sem servidor e sem nuvem. O resultado é um único arquivo
-`dashboard.html` que você abre no navegador.
+Painel de desempenho dos 18 membros da UDA, alimentado pela API oficial da Riot.
+O resultado é um único arquivo `dashboard.html`, autossuficiente: os ícones vão
+embutidos, então ele abre offline e funciona quando você manda pro grupo.
+
+**No ar:** <https://editnexxt-code.github.io/uda-dashboard/> — o GitHub Actions
+recoleta e republica de duas em duas horas.
+
+O painel existe para zoar. Isso não é piada de rodapé: é o critério de projeto.
+Toda métrica precisa render uma frase que alguém vá mandar no grupo, e toda
+acusação vem com a prova do lado — dá pra clicar e ver a partida.
 
 ---
 
-## 1. Instalação (uma vez só)
+## 1. Instalação
 
 ```bash
 pip install -r requirements.txt
@@ -14,131 +21,133 @@ pip install -r requirements.txt
 
 ## 2. Chave da Riot
 
-1. Entre em <https://developer.riotgames.com> com sua conta Riot.
-2. Copie a **Development Key** (`RGAPI-...`).
-3. Renomeie `.env.example` para `.env` e cole a chave:
-
-```
-RIOT_API_KEY=RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```bash
+python configurar.py
 ```
 
-> **A Development Key expira a cada 24 horas.** Para a atualização diária
-> funcionar sozinha, peça uma **Personal API Key** no mesmo portal
-> (Register Product → Personal API Key). Mesma cota, mas não expira.
-> Enquanto isso não sai, é só regerar a dev key e colar no `.env` de novo.
+Pede a chave, não mostra o que você digita, grava no `.env` e faz uma chamada
+real pra provar que funciona antes de você gastar a coleta inteira.
+
+> **Development Key morre em 24h.** Para a atualização automática, peça uma
+> **Personal API Key** em <https://developer.riotgames.com> (Register Product →
+> Personal API Key): mesma cota, não expira. No GitHub, a chave vive no secret
+> `RIOT_API_KEY` do repositório.
 
 ## 3. Rodar
 
 ```bash
-python run.py --open
+python verificar.py      # audita as contas ANTES de gastar a coleta
+python run.py --open     # coleta e abre o painel
 ```
 
-A primeira execução baixa até 100 partidas por jogador e leva **20–30 minutos**
-por causa do limite de 100 requisições a cada 2 minutos. As execuções seguintes
-levam menos de 1 minuto: partida já baixada nunca é baixada de novo, e quando
-vários membros da UDA jogam juntos a partida conta como um download só.
+O `verificar.py` responde, por conta, em ~1 minuto: o Riot ID existe? tem
+invocador de LoL no BR? de que servidor são as partidas de verdade (lê o prefixo
+`BR1_` do ID)? qual o elo? Use `--sugerir` para ele tentar variações de tag nos
+que falharem.
 
 | Comando | O que faz |
 |---|---|
 | `python run.py` | busca o que há de novo e regera o HTML |
-| `python run.py --open` | idem, e abre o dashboard no navegador |
-| `python run.py --build` | só recalcula o HTML, sem tocar na API (não precisa de chave) |
-| `python run.py --build --days 0` | usa todo o histórico do banco, sem janela de tempo |
+| `python run.py --build` | só recalcula, sem tocar na API (não precisa de chave) |
+| `python run.py --build --days 0` | usa o histórico inteiro do banco |
 | `python run.py --days 30` | analisa só os últimos 30 dias |
-| `python demo.py` | dashboard de demonstração com dados **falsos** |
+| `python demo.py` | painel de demonstração com dados **falsos** |
 
----
+A primeira coleta leva 20–30 min (limite de 100 requisições a cada 2 minutos).
+As seguintes levam menos de 1 minuto: partida baixada fica no SQLite pra sempre,
+e quando vários membros jogam juntos a partida conta como um download só.
 
-## 4. Atualização diária automática
+## 4. As abas
 
-`atualizar.bat` roda a coleta e grava um log em `data\log.txt`.
-Para agendar todo dia às 09:00, abra o **PowerShell como administrador** e rode:
+**Visão geral** — panorama, pódio, os afundados, halls da fama e da vergonha,
+dispersão de "carrega ou alimenta", rotas, filas e as últimas partidas.
 
-```powershell
-schtasks /create /tn "UDA Dashboard" /tr "'C:\Users\Willi\OneDrive\Documentos\UDA Dashboard Piores\atualizar.bat' /silent" /sc daily /st 09:00 /f
-```
+**Classificação** — todos os jogadores em 19 colunas ordenáveis.
 
-Para conferir, remover ou rodar na hora:
+**Evolução** — corrida do UDA Score por mês, forma recente, saldo acumulado,
+mapa de quando vocês jogam e sequências. Tem seletor de jogador: clique num chip
+para isolar alguém.
 
-```powershell
-schtasks /query /tn "UDA Dashboard"
-schtasks /run   /tn "UDA Dashboard"
-schtasks /delete /tn "UDA Dashboard" /f
-```
+**Em equipe** — só as partidas com 2+ membros no mesmo time. Junto ou sozinho,
+matriz de sinergia, formações e confrontos internos.
 
-Se a tarefa falhar em silêncio, quase sempre é a chave de 24h que expirou —
-o motivo fica escrito em `data\log.txt`.
+**Personalizadas** — as partidas que vocês jogam entre si. Tabela de todos contra
+todos, algoz e freguês, a dupla e o divórcio, a balança, o espelho.
 
----
+**Jogadores** — um cartão por pessoa com radar comparativo, rotas, melhor e pior
+partida.
 
-## 5. O que o dashboard mostra
+**Campeões** — o que o grupo joga, o arsenal e **os algozes da rota**: contra qual
+campeão cada um apanha na fase de rota.
 
-**Abas:** Todas · Ranked Solo · Ranked Flex · Normais · ARAM · **Em equipe**.
-Tudo abaixo é recalculado por aba.
+**Arsenal** — itens, runas principais e duplas de feitiço mais usados.
 
-### Aba "Em equipe"
+**Mural do mês** — o 👑 UDA e o 💀 Afundado de cada mês, com pódio, e o quadro de
+títulos acumulados.
 
-Considera só as partidas em que **2 ou mais membros da UDA estavam no mesmo time**.
-Além de tudo que as outras abas mostram, ela traz quatro blocos exclusivos:
+**Paredão** — as piores partidas de cada um, com o porquê medido. Tem filtro de
+período (tudo / 90 / 30 / 7 dias).
 
-- **Junto ou sozinho?** — o mesmo jogador nos dois cenários, lado a lado. A coluna Δ
-  mostra quanto ele muda com a UDA no time: vitórias, KDA, mortes, participação e dano.
-  Só aparece quem tem amostra suficiente **dos dois lados** (senão a comparação mente).
-- **Matriz de sinergia** — grade de todos contra todos com o aproveitamento de cada
-  dupla no mesmo time. Verde = vencem juntos, vermelho = afundam juntos. O número
-  pequeno em cada célula é quantas partidas aquela dupla tem.
-- **Formações** — duplas, trios, quartetos e time completo, com aproveitamento de cada
-  composição exata.
-- **Confrontos internos** — placar de quem leva a melhor quando dois membros caem em
-  times opostos.
+**Troféus** — 45 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
+num degrau do pódio abre as partidas que produziram aquele número.
 
-### Filas que ficam de fora de tudo
+**Regras** — como o UDA Score é calculado.
 
-Partidas contra **bots** (Co-op vs AI), **tutorial** e **Arena** são descartadas de todos
-os cálculos. Bots inflariam KDA e vitórias artificialmente; Arena é 2v2v2v2, então
-"abates do time" e "% do dano" não significam a mesma coisa que no 5v5 e misturar os
-dois distorce as métricas de todo mundo.
+Tudo é recalculado **por fila**: Todas, Solo, Flex, Normais, ARAM,
+Personalizadas e Outros modos.
 
-- **Visão geral** — partidas, aproveitamento do grupo, KDA médio, perfil da partida
-  média, total de mortes, melhor e pior do momento.
-- **O pódio & os afundados** — top 3 e bottom 3 pelo UDA Score.
-- **Classificação geral** — tabela ordenável por qualquer coluna: elo, jogos,
-  vitórias, KDA, participação em abates, CS/min, ouro/min, dano/min, % do dano do
-  time, visão/min, mortes por 10 min e UDA Score. Clicar numa linha pula para o
-  card daquele jogador.
-- **Hall da fama / Hall da vergonha** — 12 prêmios: O Carregador, Máquina de Abate,
-  O Imortal, O Farmador, A Sentinela, Onipresente, Doador de Ouro, O Cego,
-  O Fantasma, O Turista, O Azarado, O Figurante.
-- **Carrega ou alimenta?** — dispersão de dano/min contra mortes/10min, com as
-  médias do grupo marcadas.
-- **Aproveitamento por semana** e **Recordes** (maior massacre, maior dano numa
-  partida, a vergonha máxima).
-- **Campeões do grupo** e **Duplas** (quem joga junto e com que aproveitamento).
-- **Jogador por jogador** — card com radar comparativo, partida média, 12 métricas,
-  as últimas 12 partidas e os campeões mais jogados.
+### O placar
+
+Qualquer partida citada na tela é clicável e abre a tela de fim de jogo com os
+dez jogadores, nomes reais, itens, runas, objetivos e selos MVP/ACE. Funciona
+também nas personalizadas, que não vêm da API: ali o placar é montado da tabela
+`participants` com os nomes do cadastro local.
 
 ### O UDA Score
 
-Nota de 1 a 99 que compara cada jogador **contra o próprio grupo**, não contra o
-servidor. Cada métrica vira um z-score dentro da UDA e entra com um peso:
+Compara **vocês com vocês**, não com o servidor — 50 é a média exata da UDA.
+Cada métrica vira z-score dentro do grupo e entra com um peso: vitórias 28%,
+KDA 18%, dano/min 14%, participação 12%, CS/min 10%, sobrevivência 10%,
+visão/min 8%. Mínimo de 5 partidas na fila para entrar no ranking. Em ARAM e
+Outros modos os pesos mudam: CS e visão saem, dano sobe.
 
-| Métrica | Peso |
-|---|---|
-| Vitórias | 28% |
-| KDA | 18% |
-| Dano por minuto | 14% |
-| Participação em abates | 12% |
-| CS por minuto | 10% |
-| Sobrevivência (minutos por morte) | 10% |
-| Visão por minuto | 8% |
+A Riot não publica estatísticas agregadas do BR, então não existe "média do
+Esmeralda" para comparar. Por isso a régua é o próprio grupo.
 
-No ARAM os pesos mudam: CS e visão saem, dano e sobrevivência sobem.
-Score 50 é exatamente a média da UDA. Só entra no ranking quem tem pelo menos
-`MIN_GAMES` partidas na fila (padrão 5) — evita alguém liderar com 2 jogos.
+### O que fica de fora
 
----
+Partidas contra **bots**, **tutorial**, o **modo Prática** e a **Arena** são
+descartadas de todos os cálculos. Bots inflariam vitórias e KDA; a Arena é
+2v2v2v2 e a API agrupa os jogadores de um jeito em que "abates do time" somaria
+9 pessoas, destruindo participação e % de dano.
 
-## 6. Ajustes
+A classificação é por `gameMode`, que vem dentro da partida — não por ID de fila.
+A Riot cria IDs novos sem avisar e a lista pública dela fica desatualizada.
+
+Remakes e partidas de menos de 5 minutos também saem.
+
+### Métricas que dependem de rota
+
+"Farm dos Dez Minutos" e "Cego de Rota" contam **só** topo, meio e atirador, e
+exigem 8 partidas de rota. Sem esse recorte, o jungler apareceria como "quem
+menos farma" — o que não é vexame, é a função dele.
+
+## 5. Atualização automática
+
+O `.github/workflows/atualizar.yml` roda de 2 em 2 horas: restaura o banco do
+cache, chama `python run.py` com o secret `RIOT_API_KEY`, e publica em GitHub
+Pages. Dá pra disparar na mão com `gh workflow run atualizar.yml --ref main`.
+
+Localmente, `atualizar.bat` faz o mesmo e grava log em `data\log.txt`.
+
+## 6. Personalizadas
+
+Elas **não existem na API da Riot** — só no cliente do jogo. O coletor
+`personalizadas.py` grava os JSON em `personalizadas/bruto/`, que **vai para o
+git**; o `uda/inhouse.py` importa essa pasta para o banco a cada execução, tanto
+no seu PC quanto no GitHub Actions.
+
+## 7. Ajustes
 
 Tudo no `.env`:
 
@@ -148,50 +157,63 @@ Tudo no `.env`:
 | `WINDOW_DAYS` | 90 | janela de análise; `0` usa o histórico inteiro |
 | `MIN_GAMES` | 5 | mínimo de partidas para entrar no ranking |
 
-Para trocar quem aparece no painel, edite `players.json` (Riot ID completo,
-`Nome#TAG`) e rode `python run.py`.
+Para mudar quem aparece, edite `players.json` com o Riot ID completo (`Nome#TAG`)
+e rode `python run.py`.
 
----
+> Quem entra no elenco depois recebe carga completa automaticamente. A marca
+> `fullload:<puuid>` na tabela `meta` controla isso — deduzir de "já tem partida
+> no banco" não funcionava, porque quem entra depois já tem participações
+> gravadas vindas das partidas dos outros.
 
-## 7. Como está montado
+## 8. Como está montado
 
 ```
-run.py              entrada: coleta + cálculo + render
-demo.py             dashboard de demonstração com dados falsos
-players.json        os 12 Riot IDs
-uda/config.py       lê .env e players.json
-uda/riot.py         cliente da API com rate limit e retry
-uda/store.py        SQLite (partidas ficam salvas para sempre)
-uda/kpi.py          todos os KPIs e o UDA Score
-uda/render.py       injeta o JSON no template
-uda/template.html   o visual (CSS + JS puro, sem framework)
-data/uda.sqlite3    banco local
-dashboard.html      o resultado
+run.py                entrada: coleta + cálculo + render
+verificar.py          audita as contas contra a API
+configurar.py         grava a chave no .env sem exibir
+demo.py               painel de demonstração com dados falsos
+personalizadas.py     coletor das partidas personalizadas (lê o cliente)
+players.json          os Riot IDs
+uda/config.py         lê .env e players.json, limpa caractere invisível
+uda/riot.py           cliente da API: rate limit por host, calibrado pelos headers
+uda/store.py          SQLite, migração de schema e backfill
+uda/fetch.py          coleta incremental, retomável
+uda/kpi.py            KPIs, UDA Score, grupos por fila
+uda/evolucao.py       séries temporais
+uda/zoeira.py         os 45 troféus de carreira
+uda/vexames.py        as piores partidas, com motivo
+uda/mural.py          UDA e Afundado do mês
+uda/arsenal.py        itens, runas e feitiços
+uda/rota.py           o algoz de rota
+uda/partidas.py       placar completo das partidas citadas
+uda/inhouse.py        importa e analisa as personalizadas
+uda/assets.py         embute ícones e a ficha dos campeões
+uda/render.py         injeta o JSON no template
+uda/template.html     o painel inteiro (CSS + JS puro, sem framework)
 ```
-
-Os gráficos são SVG gerado na hora, sem biblioteca. Ícones de campeão, invocador
-e emblema de elo vêm do Data Dragon e do Community Dragon — precisam de internet
-para aparecer, mas não precisam de chave.
 
 ### Notas de implementação
 
-- **Dois hosts, sempre.** `americas.api.riotgames.com` para Account-V1 e Match-V5;
-  `br1.api.riotgames.com` para Summoner-V4 e League-V4. Trocar isso devolve 404.
-- Partidas com menos de 5 minutos ou encerradas por *remake* são descartadas de
-  todos os cálculos.
-- Os 10 participantes de cada partida são gravados, não só os da UDA — é o que
-  permite calcular participação em abates e % do dano do time.
+- **Dois hosts, sempre.** `americas` para Account-V1 e Match-V5; `br1` para
+  Summoner-V4 e League-V4. Trocar devolve 404.
+- **Rate limit calibrado pelos headers.** O cliente lê `X-App-Rate-Limit` e
+  `X-App-Rate-Limit-Count` e mantém um balde por host — a Riot conta separado
+  por roteamento. Sem isso, um processo que começa logo depois de outro dispara
+  em cima de uma janela já cheia e toma 429.
+- **Os 10 participantes** de cada partida são gravados, não só os da UDA. É o
+  que permite calcular participação em abates, % do dano do time e o placar.
+- **Coleta retomável.** Todo ID descoberto entra numa fila em tabela e só sai
+  quando é baixado. Sem isso, uma queda no meio deixaria buracos que a marca
+  d'água esconderia para sempre.
+- **Densidade.** Blocos repetidos dobram (`dobrar()`) e seções recolhem
+  (`secoesDobraveis()`), com limites diferentes para celular e desktop.
 
----
+## 9. Limites conhecidos
 
-## 8. Limites conhecidos
-
-- A Riot **não** expõe estatísticas agregadas do servidor. Não dá para comparar a
-  UDA contra "a média do Esmeralda BR" — o LeagueOfGraphs consegue porque baixa
-  milhões de partidas por conta própria. Por isso o UDA Score compara vocês entre
-  vocês.
-- Match-V5 guarda o histórico recente. Partidas muito antigas não voltam mais.
-- Sem GPU envolvida: a carga é de rede e o cálculo é aritmética simples sobre
-  algumas milhares de linhas. Roda em segundos na CPU.
+- A Riot **não** expõe estatísticas agregadas do servidor, então não dá para
+  comparar a UDA com "a média do Esmeralda BR".
+- Match-V5 guarda o histórico recente; partidas muito antigas não voltam mais.
+- O HTML passa de 6 MB por causa dos ícones e dos placares embutidos. É o preço
+  de funcionar offline e em qualquer visualizador.
 
 Este projeto não é endossado pela Riot Games.
