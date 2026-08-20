@@ -10,6 +10,8 @@ De proposito NAO existe lista de partidas boas. O site nao e curriculo.
 
 from __future__ import annotations
 
+import zlib
+
 import sqlite3
 from collections import defaultdict
 
@@ -119,37 +121,80 @@ def _pt(valor, casas: int = 1) -> str:
 # real do banco (mediana 82, p90 101, maximo 132): cortes em 90 deixavam quase
 # todo mundo com a mesma frase, que e o oposto de zoar.
 VEREDITOS = {
-    "mortes": [(115, "Isso não foi partida, foi entrega em domicílio. "
-                     "O inimigo nem precisou sair de casa."),
-               (95, "O outro time terminou o jogo agradecendo nominalmente."),
-               (0, "Morreu tanto que a fonte já reconhece ele pelo nome.")],
-    "piorDaPartida": [(100, "O pior dos dez. Não por pouco: com folga e com sobra."),
-                      (0, "Dos dez jogadores em campo, foi o pior. Dos DEZ.")],
-    "semDano": [(0, "Estava lá. Fisicamente. O dano ficou em casa.")],
-    "ausente": [(0, "O time jogou de quatro o jogo inteiro e ninguém sentiu falta.")],
-    "telaCinza": [(0, "Assistiu mais partida do que jogou. Faltou a pipoca.")],
-    "farm": [(0, "O oponente de rota farmou por dois. Um deles era ele.")],
-    "afk": [(0, "Sumiu. Sem explicação, sem aviso, sem vergonha.")],
-    "apanhou": [(0, "Serviu de saco de pancada com barra de vida e nome em cima.")],
-    "carteira": [(0, "Morreu rico e morreu burro. O ouro foi enterrado junto.")],
-    "ping": [(0, "Passou a partida procurando culpado. Nunca no lugar certo.")],
-    "rendeu": [(0, "Rendeu e foi dormir. Nem o troco deu.")],
-    "nexus": [(0, "Nexus escancarado. Dá pra ser pior? Tecnicamente, não.")],
-    "deficit": [(0, "Ficou tão atrás no placar que o buraco aparecia do espaço.")],
-    "menorDano": [(0, "Menor dano da partida. Podia ter ficado na fonte, dava na mesma.")],
+    # Faixa real das notas: 29 a 132, mediana 82, p90 100. Os cortes seguem a
+    # distribuicao, nao numeros redondos escolhidos no olho.
+    "mortes": [
+        (120, ["Isso não foi partida, foi entrega em domicílio.",
+               "O inimigo não precisou caçar: bastou esperar na fila do caixão.",
+               "Serviço de entrega de ouro, com pontualidade britânica."]),
+        (105, ["O outro time terminou o jogo agradecendo nominalmente.",
+               "Alimentou tanto que devia constar na build do inimigo.",
+               "Não foi derrota, foi doação em espécie."]),
+        (90, ["Morreu tanto que a fonte já reconhece ele pelo nome.",
+              "Passou mais tempo escolhendo respawn do que jogando.",
+              "O caminho da base virou rota decorada."]),
+        (75, ["Morreu além da conta, e a conta já era generosa.",
+              "Cada briga tinha ele no chão antes do fim.",
+              "Entregou de graça o que devia custar caro."]),
+        (0, ["Morreu mais do que devia, e devia pouco.",
+             "Não foi catástrofe, mas foi vexame.",
+             "Dia de dar mais do que receber."]),
+    ],
+    "piorDaPartida": [
+        (100, ["O pior dos dez. Não por pouco: com folga e com sobra.",
+               "Dos dez em campo, o último. E olha que tinha concorrência."]),
+        (0, ["Dos dez jogadores em campo, foi o pior. Dos DEZ.",
+             "Último lugar entre dez. Nem o suporte inimigo ficou atrás."]),
+    ],
+    "semDano": [(0, ["Estava lá. Fisicamente. O dano ficou em casa.",
+                     "Presença confirmada, contribuição não.",
+                     "Bateu no minion e chamou de participação."])],
+    "ausente": [(0, ["O time jogou de quatro o jogo inteiro e ninguém sentiu falta.",
+                     "Sumiu do mapa sem sumir da partida.",
+                     "Estava em outra briga. Sempre na outra."])],
+    "telaCinza": [(0, ["Assistiu mais partida do que jogou. Faltou a pipoca.",
+                       "Passou o jogo no cinza, esperando a próxima chance de morrer."])],
+    "farm": [(0, ["O oponente de rota farmou por dois. Um deles era ele.",
+                  "Deixou uma vila inteira de minion passar batido."])],
+    "afk": [(0, ["Sumiu. Sem explicação, sem aviso, sem vergonha.",
+                 "A internet levou a culpa, como sempre."])],
+    "apanhou": [(0, ["Serviu de saco de pancada com barra de vida e nome em cima.",
+                     "O outro time testou build nele e aprovou."])],
+    "carteira": [(0, ["Morreu rico e morreu burro. O ouro foi enterrado junto.",
+                      "Juntou a partida inteira pra não comprar nada."])],
+    "ping": [(0, ["Passou a partida procurando culpado. Nunca no lugar certo.",
+                  "Digitou mais interrogação do que deu dano."])],
+    "rendeu": [(0, ["Rendeu e foi dormir. Nem o troco deu.",
+                    "Votou sim antes de tentar não."])],
+    "nexus": [(0, ["Nexus escancarado. Dá pra ser pior? Tecnicamente, não.",
+                   "Perdeu com a porta aberta e a luz acesa."])],
+    "deficit": [(0, ["Ficou tão atrás no placar que o buraco aparecia do espaço.",
+                     "O placar virou dívida, e ninguém pagou."])],
+    "menorDano": [(0, ["Menor dano da partida. Podia ter ficado na fonte, dava na mesma.",
+                       "Dos dez, o que menos incomodou o inimigo."])],
 }
-VEREDITO_PADRAO = [(100, "Vexame com hora marcada e dez testemunhas."),
-                   (80, "Daqueles jogos que a gente finge que nunca aconteceu. "
-                        "Só que ficou gravado."),
-                   (0, "Dia ruim. Acontece. Pena que tem print.")]
+VEREDITO_PADRAO = [
+    (100, ["Vexame com hora marcada e dez testemunhas."]),
+    (80, ["Daqueles jogos que a gente finge que nunca aconteceu. Só que ficou gravado."]),
+    (0, ["Dia ruim. Acontece. Pena que tem print."]),
+]
 
 
-def _veredito(nota: float, motivos: list[dict]) -> str:
+def _veredito(nota: float, motivos: list[dict], semente: str = "") -> str:
+    """Frase do degrau certo, variante sorteada pelo ID da partida.
+
+    O sorteio TEM que ser estavel entre execucoes: com hash() a mesma partida
+    mudaria de frase a cada geracao, porque o Python embaralha o hash de string
+    por processo. crc32 devolve sempre o mesmo numero para a mesma entrada.
+    """
     escala = VEREDITOS.get(motivos[0]["chave"]) if motivos else None
-    for corte, frase in (escala or VEREDITO_PADRAO):
+    for corte, frases in (escala or VEREDITO_PADRAO):
         if nota >= corte:
-            return frase
-    return VEREDITO_PADRAO[-1][1]
+            if not frases:
+                break
+            i = zlib.crc32(semente.encode("utf-8")) % len(frases) if semente else 0
+            return frases[i]
+    return VEREDITO_PADRAO[-1][1][0]
 
 
 # ------------------------------------------------------------------- calculo
@@ -258,7 +303,8 @@ def construir(conn: sqlite3.Connection, rows_by_player, players,
                 "kda": _r(_safe_div(_n(r["kills"]) + _n(r["assists"]),
                                     max(_n(r["deaths"]), 1))),
                 "win": bool(r["win"]),
-                "nota": nota, "veredito": _veredito(nota, motivos),
+                "nota": nota,
+                "veredito": _veredito(nota, motivos, r["match_id"]),
                 "motivos": motivos[:5],
                 "piorDaPartida": ctx["partida"]["piorKda"],
             })

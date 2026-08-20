@@ -2653,7 +2653,7 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .zcopy{position:absolute;top:9px;right:9px;appearance:none;border:1px solid var(--line);
   background:var(--card2);color:var(--mut);border-radius:6px;padding:4px 8px;
   font:600 10px/1 var(--body);cursor:pointer;opacity:0;transition:opacity .15s,color .15s}
-.ztrof{position:relative}
+.ztrof,.mumes,.vx-podio{position:relative}
 .ztrof:hover .zcopy,.zcopy:focus-visible{opacity:1}
 .zcopy:hover{color:var(--teal);border-color:var(--teal)}
 .zcopy.feito{opacity:1;color:var(--teal);border-color:var(--teal)}
@@ -5701,6 +5701,13 @@ function pMural(){
     </div>`).join("")}</div></section>`:""}
     <section><div class="mugrid">${meses.map(m=>`
       <div class="mumes ${m.emDisputa?"aberto":""}">
+        <button class="zcopy" type="button" title="copiar para mandar no grupo"
+          data-zoada="${h([
+            `UDA E AFUNDADO DE ${m.rotulo.toUpperCase()}`,
+            `👑 ${m.rei.gameName} — ${m.rei.motivo}`,
+            `💀 ${m.afundado.gameName} — ${m.afundado.motivo} (UDA Score ${nf(m.afundado.score,1)})`,
+            `${ni(m.partidas)} partidas · ${nf(m.winrate,1)}% de vitórias · KDA ${nf(m.kda,2)}`,
+          ].join("\n"))}">copiar</button>
         <div class="muh"><div><div class="mes">${h(m.rotulo)}</div>
           <div class="meta">${ni(m.partidas)} partidas · ${nf(m.winrate,1)}% de vitórias ·
             KDA ${nf(m.kda,2)} · ${m.concorrentes} concorrentes</div></div>
@@ -5838,8 +5845,17 @@ function pVexames(){
   const chips=(p)=>p.motivos.slice(0,4).map((m,i)=>
     `<span class="vx-chip ${m.peso>=3?"forte":""}"${tip("Por quê",[m.texto])}>${h(m.texto.split(".")[0])}</span>`).join("");
 
+  /* A frase do paredao: as tres piores do grupo, com o veredito de cada uma.
+     Sai montada porque `topo` ja tem dono, placar, nota e veredito juntos. */
+  const zoadaParedao=["O PAREDÃO — as três piores partidas da UDA"]
+    .concat(topo.map((p,i)=>
+      `${i+1}º ${p.dono.gameName} — ${p.k}/${p.d}/${p.a} de ${p.champion} · nota ${nf(p.nota,0)}\n   "${p.veredito}"`))
+    .join("\n");
+
   return `<section>${barraPeriodo(totalBruto,totalJanela)}</section>
-    <section>
+    <section class="vx-podio">
+      ${topo.length>1?`<button class="zcopy" type="button" data-zoada="${h(zoadaParedao)}"
+        title="copiar para mandar no grupo">copiar</button>`:""}
       <div class="sh-plain">${chead(I.skull,"O paredão",
         "as três piores partidas já registradas no grupo — não tem defesa, só tem print","red")}</div>
       ${topo.length>1?`<div style="max-width:470px;margin:0 auto 18px">${podio3(

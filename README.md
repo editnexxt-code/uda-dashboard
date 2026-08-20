@@ -86,7 +86,12 @@ campeão cada um apanha na fase de rota.
 títulos acumulados.
 
 **Paredão** — as piores partidas de cada um, com o porquê medido. Tem filtro de
-período (tudo / 90 / 30 / 7 dias).
+período (tudo / 90 / 30 / 7 dias) e botão de copiar no pódio.
+
+> O veredito de cada vexame sai de uma escala calibrada pela distribuição real
+> das notas (29 a 132, mediana 82), com variantes sorteadas pelo ID da partida.
+> O sorteio usa  e não : o Python embaralha o hash de string a
+> cada processo, e a mesma partida mudaria de frase a cada geração.
 
 **Troféus** — 64 métricas de carreira, em Glória, Vergonha e Curiosidade. Clicar
 num degrau do pódio abre as partidas que produziram aquele número, e o botão
