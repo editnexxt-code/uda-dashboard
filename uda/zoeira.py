@@ -173,6 +173,76 @@ GRUPO_ORDEM = {"gloria": 0, "vergonha": 1, "curiosidade": 2}
 GRUPO_LABEL = {"gloria": "Gloria", "vergonha": "Vergonha", "curiosidade": "Curiosidade"}
 
 
+
+
+# Qual coluna de `participants` prova cada trofeu, partida a partida. Sem isto o
+# trofeu diz "9,06 mortes por partida" e nao da para clicar e ver ONDE isso
+# aconteceu -- que e metade da zoacao.
+# None = agregado sem equivalente por partida (razoes, tempo total).
+COLUNA_POR_TROFEU = {
+    "rei1v1": "solo_kills",
+    "contraTodos": "outnumbered_kills",
+    "ladrao": "epic_steals",
+    "demolidor": "turret_plates",
+    "cacador": "bounty_gold",
+    "muralha": "self_mitigated",
+    "caixaoAmbulante": "deaths",
+    "telaCinza": "time_dead",
+    "cadeMid": "ping_mia",
+    "torresPerdidas": "turrets_lost",
+    "sinfonia": "pings_total",
+    "dedoFlash": "flash_casts",
+    "colecionador": "items_purchased",
+    "pocao": "consumables",
+    "dancarino": "danced_herald",
+    "amigao": "fist_bumps",
+    "poro": "poro_explosions",
+    "neve": "snowballs_hit",
+    "fantasma": "unseen_recalls",
+    "vento": "blast_cone",
+    "afk": "was_afk",
+    "milagre": "survived_low_hp",
+    "nexusAberto": "had_open_nexus",
+    "matrix": "skillshots_dodged",
+}
+
+# Como escrever o valor daquela partida na tela.
+FORMATO = {
+    "telaCinza": lambda v: f"{int(v // 60)} min morto",
+    "time_dead": lambda v: f"{int(v // 60)} min morto",
+    "bounty_gold": lambda v: f"{int(v)} de recompensa",
+    "self_mitigated": lambda v: f"{int(v)} absorvido",
+}
+
+
+def _evidencia(linhas, coluna: str, quantas: int = 3) -> list[dict]:
+    """As partidas que mais empurraram aquele numero para cima."""
+    if not coluna:
+        return []
+    marcadas = []
+    for r in linhas:
+        try:
+            valor = _n(r[coluna])
+        except (IndexError, KeyError):
+            continue
+        if valor <= 0:
+            continue
+        marcadas.append((valor, r))
+    marcadas.sort(key=lambda x: -x[0])
+    fmt = FORMATO.get(coluna, lambda v: f"{int(v)}")
+    saida = []
+    for valor, r in marcadas[:quantas]:
+        saida.append({
+            "matchId": r["match_id"],
+            "champion": r["champion_name"], "championId": r["champion_id"],
+            "k": r["kills"], "d": r["deaths"], "a": r["assists"],
+            "minutes": round(_n(r["game_duration"]) / 60),
+            "date": r["game_creation"],
+            "valor": fmt(valor),
+        })
+    return saida
+
+
 def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list[dict]:
     """Um trofeu por metrica, cada um com o ranking completo do elenco."""
     agregados = _agregar(rows_by_player, players)
@@ -206,6 +276,14 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list
             item["pos"] = i
             item.pop("_bruto", None)
         media = sum(x["valor"] for x in linhas) / len(linhas)
+        # So o podio ganha evidencia: sao 31 trofeus x 14 pessoas, e anexar as
+        # partidas de todo mundo multiplicaria o payload sem ninguem clicar.
+        coluna = COLUNA_POR_TROFEU.get(key)
+        if coluna:
+            for item in linhas[:3]:
+                item["evidencia"] = _evidencia(
+                    rows_by_player.get(item["puuid"], []), coluna)
+
         saida.append({
             "key": key, "titulo": titulo, "grupo": grupo,
             "grupoLabel": GRUPO_LABEL[grupo], "legenda": legenda,
@@ -213,6 +291,7 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list
             "campeao": linhas[0], "ranking": linhas,
             "media": _r(media, casas) if casas else int(round(media)),
             "minPartidas": min_partidas,
+            "temEvidencia": bool(coluna),
         })
     saida.sort(key=lambda t: (GRUPO_ORDEM[t["grupo"]], t["key"]))
     return saida

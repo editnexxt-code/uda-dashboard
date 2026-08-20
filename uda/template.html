@@ -2810,6 +2810,27 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .mfeed-mais:hover{color:var(--teal);border-color:var(--teal)}
 .mfeed .mc[data-dobrada]{display:none}
 
+
+/* ------------------------------------------- evidência: a prova por partida
+   O troféu dizia "9,06 mortes por partida" e não dava para ver ONDE. Clicar no
+   degrau abre as três partidas que mais empurraram aquele número. */
+.p3 .p3s[data-ev]{cursor:pointer}
+.p3 .p3s[data-ev]:hover .nm{color:var(--teal)}
+.p3 .p3s[data-ev][aberto] .deg{outline:2px solid var(--teal);outline-offset:1px}
+.zev{border-top:1px solid var(--line);background:var(--card2)}
+.zev[hidden]{display:none}
+.zev .cab{font:600 9px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);padding:9px 13px 6px}
+.zev .lin{display:flex;align-items:center;gap:9px;padding:6px 13px;font-size:11.5px;
+  border-top:1px solid var(--line2)}
+.zev .lin:hover{background:var(--card3)}
+.zev .lin img{width:24px;height:24px;border-radius:6px;flex:0 0 auto}
+.zev .lin .v{font-weight:700;color:var(--teal);flex:0 0 auto;font-variant-numeric:tabular-nums}
+.ztrof.vergonha .zev .lin .v{color:var(--red)}
+.ztrof.curiosidade .zev .lin .v{color:var(--gold)}
+.zev .lin .kda{margin-left:auto;color:var(--dim);font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+
 </style>
 </head>
 <body>
@@ -5372,12 +5393,23 @@ function pZoeira(){
         return `<div class="ztrof ${g}">
           <div class="zh"><div class="tt">${h(t2.titulo)}</div><div class="lg">${h(t2.legenda)}</div></div>
           <div class="zpod">${podio3(
-            t2.ranking.slice(0,3).map(r=>({nome:r.gameName,icon:r.icon,valor:r.valor,
+            t2.ranking.slice(0,3).map((r,ri)=>({nome:r.gameName,icon:r.icon,valor:r.valor,
+              ev:(r.evidencia&&r.evidencia.length)?` data-ev="${h(t2.key)}:${ri}"`:"",
               tip:tip(h(r.gameName),[[t2.unidade,nf(r.valor,t2.casas)],
                 ["Posição",r.pos+"º de "+t2.ranking.length],
-                ["Média do grupo",nf(t2.media,t2.casas)]])})),
+                ["Média do grupo",nf(t2.media,t2.casas)]],
+                (r.evidencia&&r.evidencia.length)?"clique para ver as partidas que causaram isso":"")})),
             g==="gloria"?"teal":g==="vergonha"?"verg":"ouro",
             (v)=>nf(v,t2.casas))}</div>
+          ${t2.ranking.slice(0,3).map((r,ri)=>(r.evidencia&&r.evidencia.length)
+            ? `<div class="zev" data-evbox="${h(t2.key)}:${ri}" hidden>
+                 <div class="cab">as partidas de ${h(short(r.gameName))} que mais pesaram</div>
+                 ${r.evidencia.map(e=>`<div class="lin"${linkPartida(e.matchId)}>
+                   <img src="${champImg(e.championId,e.champion)}"${FB}>
+                   <span class="v">${h(e.valor)}</span>
+                   <span>${h(e.champion)}</span>
+                   <span class="kda">${e.k}/${e.d}/${e.a} · ${e.minutes}min</span></div>`).join("")}
+               </div>` : "").join("")}
           <div class="zlist" data-trof="${h(t2.key)}">
             ${t2.ranking.slice(3).map(r=>`<div class="zrow" hidden data-extra>
               <span class="p">${r.pos}</span><img src="${iconImg(r.icon)}"${FB}>
@@ -5498,7 +5530,7 @@ function podio3(itens,tone,fmt){
   const ordem=[1,0,2];   // 2º, 1º, 3º — o `order` do CSS recoloca
   return `<div class="p3 ${tone||"ouro"}">${ordem.map(i=>{
     const it=l[i]; if(!it) return "";
-    return `<div class="p3s s${i+1}"${it.tip||""}>
+    return `<div class="p3s s${i+1}"${it.tip||""}${it.ev||""}>
       <img class="av" src="${iconImg(it.icon)}"${FB}>
       <div class="nm">${h(short(it.nome))}</div>
       <div class="vl">${f(it.valor)}</div>
@@ -6143,18 +6175,35 @@ const DOBRA=[
   [".estante",10,"campeões"],  /* a estante da pagina Campeoes   */
   [".fita-b",  6,"jogadores"], /* 13 fitas    -> 6 no celular    */
   [".hl-rows", 6,"jogadores"], /* 9 halteres  -> 6 no celular    */
+  [".zgrid",   4,"troféus"],   /* 31 trofeus por hall            */
+  [".mugrid",  2,"meses"],     /* 11 meses do mural              */
+  [".nems",    4,"jogadores"], /* algoz e fregues                */
+  [".dvs",     4,"duplas"],    /* a dupla e o divorcio           */
 ];
 /* o MESMO limiar do bloco de alvos de toque no CSS: se os dois discordarem,
    aparece um aparelho em que o botao existe mas nao cabe o dedo */
 const MQ_DOBRA=matchMedia("(max-width:620px)");
+
+/* O DESKTOP TAMBEM DOBRA. A dobra nasceu para o celular, mas a queixa de
+   "scroll gigante" e do desktop: a Visao geral abria 12 quadros de hall, 12
+   recordes e 24 partidas de uma vez. Os limites aqui sao mais generosos que os
+   do celular -- a tela e larga e cada fila cabe mais item -- e quem nao aparece
+   nesta lista continua abrindo inteiro no desktop, como antes. */
+const DOBRA_DESKTOP={
+  ".mfeed":12, ".awards":6, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
+  ".zgrid":6, ".mugrid":4, ".nems":9, ".dvs":8,
+};
 
 function dobrar(){
   /* idempotente de proposito: desenhar() chama a cada troca de pagina e o
      matchMedia chama a cada giro do aparelho */
   document.querySelectorAll(".maisbtn").forEach(b=>b.remove());
   document.querySelectorAll(".fold-off").forEach(e=>e.classList.remove("fold-off"));
-  if(!MQ_DOBRA.matches) return;
-  DOBRA.forEach(([sel,n,rot])=>document.querySelectorAll("#app "+sel).forEach(cx=>{
+  const celular=MQ_DOBRA.matches;
+  DOBRA.forEach(([sel,nCel,rot])=>{
+    const n=celular?nCel:DOBRA_DESKTOP[sel];
+    if(!n) return;                       // sem limite de desktop: abre inteiro
+    document.querySelectorAll("#app "+sel).forEach(cx=>{
     const itens=[...cx.children];
     /* esconder UM item so nao paga o botao que o esconde */
     if(itens.length<=n+1) return;
@@ -6172,11 +6221,24 @@ function dobrar(){
       b.textContent="Ver menos";};
     b.onclick=()=>b.getAttribute("aria-expanded")==="true"?fechar():abrir();
     cx.appendChild(b); fechar();
-  }));
+    });
+  });
 }
 MQ_DOBRA.addEventListener("change",dobrar);
 
 function ligarZoeira(){
+  /* clicar no degrau abre as partidas daquela pessoa naquele trofeu */
+  document.querySelectorAll("[data-ev]").forEach(s=>s.onclick=()=>{
+    const chave=s.dataset.ev;
+    const caixa=document.querySelector(`[data-evbox="${CSS.escape(chave)}"]`);
+    if(!caixa) return;
+    const cartao=s.closest(".ztrof");
+    // so uma evidencia aberta por trofeu, senao o cartao cresce sem controle
+    cartao.querySelectorAll("[data-evbox]").forEach(b=>{if(b!==caixa) b.hidden=true;});
+    cartao.querySelectorAll("[data-ev]").forEach(o=>{if(o!==s) o.removeAttribute("aberto");});
+    caixa.hidden=!caixa.hidden;
+    s.toggleAttribute("aberto",!caixa.hidden);
+  });
   document.querySelectorAll("[data-zmais]").forEach(b=>b.onclick=()=>{
     const lista=document.querySelector(`[data-trof="${CSS.escape(b.dataset.zmais)}"]`);
     if(!lista) return;
