@@ -232,3 +232,104 @@ def detalhes(payload: dict, ddragon_ver: str,
                               separators=(",", ":")).encode("utf-8"))
         print(f"  dossie: {len(fichas)} campeoes (~{peso / 1024:.0f} KB no payload)")
     return fichas
+
+
+# ---------------------------------------------------------------- arsenal
+
+ITEM_PX = 40
+SPELL_PX = 40
+RUNE_PX = 40
+
+
+def extras(payload: dict, ddragon_ver: str, verbose: bool = True) -> dict:
+    """Icones de item, feitico e runa -- o que o placar e o Arsenal desenham.
+
+    Mesma razao dos icones de campeao: sem embutir, o placar abre com 70 quadrados
+    vazios em qualquer lugar que bloqueie host externo. A 40px em WebP cada um
+    fica em ~1 KB, entao os ~360 itens do banco cabem em menos de meio mega.
+    """
+    itens: set[int] = set()
+    feiticos: set[int] = set()
+    runas: set[int] = set()
+
+    for placar in (payload.get("placares") or {}).values():
+        for time_ in placar.get("times", []):
+            for j in time_.get("jogadores", []):
+                itens.update(i for i in (j.get("itens") or []) if i)
+                feiticos.update(s for s in (j.get("feiticos") or []) if s)
+                if j.get("keystone"):
+                    runas.add(j["keystone"])
+    arsenal = payload.get("arsenal") or {}
+    for grupo in ("itens", "baratos", "trinkets"):
+        itens.update(x["id"] for x in arsenal.get(grupo, []) if x.get("id"))
+    for r in arsenal.get("runas", []):
+        runas.add(r["id"])
+
+    pacote: dict[str, dict[str, str]] = {"item": {}, "spell": {}, "rune": {}}
+
+    def item(iid: int):
+        raw = _baixar(
+            f"https://ddragon.leagueoflegends.com/cdn/{ddragon_ver}/img/item/{iid}.png",
+            f"item-{ddragon_ver}-{iid}.png")
+        uri = _webp(raw, ITEM_PX) if raw else None
+        if uri:
+            pacote["item"][str(iid)] = uri
+
+    # O ddragon indexa feitico e runa por NOME de arquivo, nao por id numerico,
+    # entao e preciso do catalogo para traduzir 4 -> SummonerFlash.png.
+    cat_spell = {}
+    bruto = _baixar(
+        f"https://ddragon.leagueoflegends.com/cdn/{ddragon_ver}/data/pt_BR/summoner.json",
+        f"summoner-{ddragon_ver}.json")
+    if bruto:
+        try:
+            for f in json.loads(bruto.decode("utf-8"))["data"].values():
+                cat_spell[int(f["key"])] = f["image"]["full"]
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            pass
+
+    cat_rune = {}
+    bruto = _baixar(
+        f"https://ddragon.leagueoflegends.com/cdn/{ddragon_ver}/data/pt_BR/runesReforged.json",
+        f"runes-{ddragon_ver}.json")
+    if bruto:
+        try:
+            for arvore in json.loads(bruto.decode("utf-8")):
+                for slot in arvore.get("slots", []):
+                    for perk in slot.get("runes", []):
+                        cat_rune[perk["id"]] = perk["icon"]
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            pass
+
+    def feitico(sid: int):
+        nome = cat_spell.get(sid)
+        if not nome:
+            return
+        raw = _baixar(
+            f"https://ddragon.leagueoflegends.com/cdn/{ddragon_ver}/img/spell/{nome}",
+            f"spell-{ddragon_ver}-{nome}")
+        uri = _webp(raw, SPELL_PX) if raw else None
+        if uri:
+            pacote["spell"][str(sid)] = uri
+
+    def runa(rid: int):
+        caminho = cat_rune.get(rid)
+        if not caminho:
+            return
+        raw = _baixar(f"https://ddragon.leagueoflegends.com/cdn/img/{caminho}",
+                      f"rune-{caminho.replace('/', '-')}")
+        uri = _webp(raw, RUNE_PX) if raw else None
+        if uri:
+            pacote["rune"][str(rid)] = uri
+
+    tarefas = ([(item, i) for i in itens] + [(feitico, s) for s in feiticos]
+               + [(runa, r) for r in runas])
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda t: t[0](t[1]), tarefas))
+
+    if verbose:
+        tam = sum(len(v) for g in pacote.values() for v in g.values())
+        print(f"  arsenal embutido: {len(pacote['item'])} itens, "
+              f"{len(pacote['spell'])} feiticos, {len(pacote['rune'])} runas "
+              f"(~{tam / 1024 / 1024:.1f} MB)")
+    return pacote

@@ -8,6 +8,8 @@ from collections import defaultdict
 from statistics import mean, pstdev
 from typing import Any
 
+from . import inhouse as _inhouse
+
 # ---------------------------------------------------------------- definicoes
 
 # Classificar por queueId nao funciona: a Riot cria IDs novos sem avisar e
@@ -27,6 +29,13 @@ TUTORIAL_QUEUES = {2000, 2010, 2020}
 CLASSIC_MODES = {"CLASSIC", "SWIFTPLAY"}
 RANKED_QUEUES = {420, 440}
 
+# PERSONALIZADAS. 3200/3220 sao ARAM personalizada e 3270 e o modo Kiwi. Elas
+# TEM de ser recortadas por queueId e nao por gameMode: o cliente devolve
+# gameMode="ARAM" nas 11 primeiras e "KIWI" nas 6 outras, entao sem esta lista
+# elas vazariam para a fila "ARAM" e para "Outros modos" sem ninguem perceber.
+# 3140 (PRACTICETOOL) ja cai em BROKEN_MODES pelo game_mode; nao mexer.
+INHOUSE_QUEUES = _inhouse.INHOUSE_QUEUES
+
 
 def _excluded(queue_id: int, mode: str) -> bool:
     return (mode or "").upper() in BROKEN_MODES or queue_id in (
@@ -40,19 +49,29 @@ def _grupo_normal(queue_id: int, mode: str) -> bool:
 
 def _grupo_outros(queue_id: int, mode: str) -> bool:
     m = (mode or "").upper()
-    return m not in CLASSIC_MODES and m != "ARAM"
+    return (m not in CLASSIC_MODES and m != "ARAM"
+            and queue_id not in INHOUSE_QUEUES)
 
 
 # key, rotulo, teste(queue_id, game_mode), so-partidas-em-equipe
+# "Todas" EXCLUI as personalizadas de proposito: numa inhouse alguem da UDA
+# sempre ganha e alguem sempre perde, entao juntar as duas coisas puxaria o
+# aproveitamento do grupo para 50% por construcao (medido: 48,6% nas 17) e
+# uniqueMatches contaria como "UDA contra o servidor" partidas que sao UDA
+# contra UDA. A fila propria e o lugar delas.
 GROUPS: list[dict] = [
-    {"key": "all", "label": "Todas", "test": None, "squad": False},
+    {"key": "all", "label": "Todas",
+     "test": lambda q, m: q not in INHOUSE_QUEUES, "squad": False},
     {"key": "solo", "label": "Ranked Solo",
      "test": lambda q, m: q == 420, "squad": False},
     {"key": "flex", "label": "Ranked Flex",
      "test": lambda q, m: q == 440, "squad": False},
     {"key": "normal", "label": "Normais", "test": _grupo_normal, "squad": False},
     {"key": "aram", "label": "ARAM",
-     "test": lambda q, m: (m or "").upper() == "ARAM", "squad": False},
+     "test": lambda q, m: (m or "").upper() == "ARAM"
+     and q not in INHOUSE_QUEUES, "squad": False},
+    {"key": "inhouse", "label": "Personalizadas",
+     "test": lambda q, m: q in INHOUSE_QUEUES, "squad": False},
     {"key": "outros", "label": "Outros modos",
      "test": _grupo_outros, "squad": False},
     {"key": "squad", "label": "Em equipe", "test": None, "squad": True},
@@ -64,6 +83,8 @@ QUEUE_NAMES = {
     700: "Clash", 710: "Clash", 720: "ARAM Clash",
     900: "ARURF", 1020: "Um pra Todos", 1400: "Livro de Feiticos",
     1700: "Arena", 1710: "Arena", 1740: "Arena", 1750: "Arena", 1900: "URF",
+    3140: "Ferramenta de treino",
+    3200: "ARAM personalizada", 3220: "ARAM personalizada", 3270: "Modo Kiwi",
 }
 
 TIER_ORDER = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD",
@@ -78,6 +99,13 @@ WEIGHT_PROFILES = {
     },
     "aram": {
         "winrate": 0.30, "kda": 0.20, "kp": 0.10, "dmg_min": 0.25, "survival": 0.15,
+    },
+    # Personalizadas nao reusam o perfil "aram" cru. La vitoria pesa 0,30, e aqui
+    # ela depende em parte de COM QUEM o sorteio te colocou: os dois times sao da
+    # UDA, entao metade do grupo perde toda partida por construcao. Vitoria desce,
+    # dano sobe -- dano e o que continua sendo so seu.
+    "inhouse": {
+        "winrate": 0.22, "kda": 0.22, "kp": 0.16, "dmg_min": 0.28, "survival": 0.12,
     },
 }
 
@@ -178,31 +206,39 @@ def _blank() -> dict[str, Any]:
     }
 
 
+# Coluna que pode ser NULL de verdade. As personalizadas vem do cliente do LoL,
+# que nao tem visao nenhuma no Abismo (visionScore medio 0,0, wardsPlaced zerado
+# em 100% das linhas): gravar 0 seria afirmar "mediu zero", NULL e "nao existe
+# medida". A soma nao pode quebrar por causa disso.
+def _n(valor) -> int:
+    return valor or 0
+
+
 def _accumulate(acc: dict[str, Any], row: sqlite3.Row) -> None:
     acc["games"] += 1
-    acc["wins"] += row["win"]
-    acc["kills"] += row["kills"]
-    acc["deaths"] += row["deaths"]
-    acc["assists"] += row["assists"]
-    acc["cs"] += row["cs"]
-    acc["gold"] += row["gold"]
-    acc["dmg"] += row["damage_champions"]
-    acc["dmg_taken"] += row["damage_taken"]
-    acc["dmg_obj"] += row["damage_objectives"]
-    acc["heal_shield"] += row["heal_shield"]
-    acc["vision"] += row["vision_score"]
-    acc["wards"] += row["wards_placed"]
-    acc["control_wards"] += row["control_wards"]
-    acc["seconds"] += row["game_duration"]
-    acc["team_kills"] += row["team_kills"]
-    acc["team_damage"] += row["team_damage"] or 0
-    acc["first_bloods"] += row["first_blood"] + row["first_blood_assist"]
-    acc["doubles"] += row["double_kills"]
-    acc["triples"] += row["triple_kills"]
-    acc["quadras"] += row["quadra_kills"]
-    acc["pentas"] += row["penta_kills"]
-    acc["turrets"] += row["turret_takedowns"]
-    acc["surrenders"] += row["surrender"]
+    acc["wins"] += _n(row["win"])
+    acc["kills"] += _n(row["kills"])
+    acc["deaths"] += _n(row["deaths"])
+    acc["assists"] += _n(row["assists"])
+    acc["cs"] += _n(row["cs"])
+    acc["gold"] += _n(row["gold"])
+    acc["dmg"] += _n(row["damage_champions"])
+    acc["dmg_taken"] += _n(row["damage_taken"])
+    acc["dmg_obj"] += _n(row["damage_objectives"])
+    acc["heal_shield"] += _n(row["heal_shield"])
+    acc["vision"] += _n(row["vision_score"])
+    acc["wards"] += _n(row["wards_placed"])
+    acc["control_wards"] += _n(row["control_wards"])
+    acc["seconds"] += _n(row["game_duration"])
+    acc["team_kills"] += _n(row["team_kills"])
+    acc["team_damage"] += _n(row["team_damage"])
+    acc["first_bloods"] += _n(row["first_blood"]) + _n(row["first_blood_assist"])
+    acc["doubles"] += _n(row["double_kills"])
+    acc["triples"] += _n(row["triple_kills"])
+    acc["quadras"] += _n(row["quadra_kills"])
+    acc["pentas"] += _n(row["penta_kills"])
+    acc["turrets"] += _n(row["turret_takedowns"])
+    acc["surrenders"] += _n(row["surrender"])
 
 
 def _finalize(acc: dict[str, Any]) -> dict[str, Any]:
@@ -821,16 +857,30 @@ def _maratona(rows: list[sqlite3.Row]):
     return max(lista, key=lambda r: r["game_creation"]), len(lista), dia
 
 
-def _build_records(rows: list[sqlite3.Row],
-                   players: dict[str, dict]) -> list[dict]:
+# Os 13 recordes que o cliente do LoL consegue provar. Os outros 15 dependem do
+# bloco challenges{} do Match-V5, que o cliente simplesmente nao tem: em vez de
+# 15 vitrines eternamente vazias na fila das personalizadas, a lista encolhe.
+REC_LCU_OK = {"penta", "semMorte", "sequencia", "critico", "maquinaDano",
+              "onipresente", "vidaLonga", "muralha", "maisMortes",
+              "ouroNoBolso", "carona", "sacoPancada", "partidaEterna"}
+
+
+def _build_records(rows: list[sqlite3.Row], players: dict[str, dict],
+                   permitidos: set[str] | None = None) -> list[dict]:
     """A Sala dos Recordes de uma fila. Lista fixa: todo recorde sempre sai,
-    com valor nulo quando ninguem cumpriu o feito naquela fila."""
+    com valor nulo quando ninguem cumpriu o feito naquela fila.
+
+    `permitidos` corta a lista quando a FONTE do dado nao suporta o recorde --
+    e diferente de "ninguem conseguiu ainda", que continua saindo com valor nulo.
+    """
     validos = [r for r in rows if r["puuid"] in players]
+    specs = REC_PARTIDA if permitidos is None else [
+        r for r in REC_PARTIDA if r[0] in permitidos]
     saida = [
         _rec(key, titulo, grupo, unidade, legenda,
              *_melhor(validos, calc, filtro, maior), casas, players)
         for key, titulo, grupo, unidade, legenda, calc, filtro, casas, maior
-        in REC_PARTIDA
+        in specs
     ]
 
     row, n = _streak(validos, True)
@@ -871,6 +921,12 @@ AWARDS_BAD = [
     ("azarado", "O Azarado", "Pior aproveitamento", "winrate", False, "{v:.0f}%", "de vitórias"),
     ("figurante", "O Figurante", "Menor dano por minuto", "dmg_min", False, "{v:.0f}", "dmg/min"),
 ]
+
+
+# Metricas que o cliente do LoL nao mede. No Abismo visionScore fica em 0,0 e
+# CS e minion passivo, nao farm: premiar "A Sentinela" ou "O Farmador" ali seria
+# entregar um trofeu por um numero que ninguem produziu.
+LCU_SEM = {"cs_min", "vision_min"}
 
 
 def _pick_awards(entries: list[dict], specs: list[tuple]) -> list[dict]:
@@ -948,7 +1004,8 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     for group in GROUPS:
         gkey, glabel = group["key"], group["label"]
         teste, squad_only = group["test"], group["squad"]
-        profile = "aram" if gkey in ("aram", "outros") else "default"
+        profile = ("inhouse" if gkey == "inhouse"
+                   else "aram" if gkey in ("aram", "outros") else "default")
         group_rows = [r for r in all_rows if _keep(r, teste, squad_only)]
         entries: list[dict] = []
 
@@ -1027,23 +1084,43 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
         team = _finalize(total_acc)
         team["uniqueMatches"] = total_games
 
+        # Fila alimentada pelo CLIENTE do LoL, e nao pela API: sem challenges{},
+        # sem visao, sem rota e sem farm de rota. A tela usa esta marca para nao
+        # desenhar coluna de zero nem prometer recorde que a fonte nao tem.
+        lcu = gkey == "inhouse"
+
         groups_payload[gkey] = {
             "label": glabel,
+            "lcu": lcu,
             "players": entries,
             "podium": [e["puuid"] for e in ranked[:3]],
             "shame": [e["puuid"] for e in ranked[-3:]][::-1],
             "team": team,
-            "awardsGood": _pick_awards(ranked, AWARDS_GOOD),
-            "awardsBad": _pick_awards(ranked, AWARDS_BAD),
+            "awardsGood": _pick_awards(
+                ranked, [a for a in AWARDS_GOOD if not (lcu and a[3] in LCU_SEM)]),
+            "awardsBad": _pick_awards(
+                ranked, [a for a in AWARDS_BAD if not (lcu and a[3] in LCU_SEM)]),
             "trend": _weekly_trend(group_rows),
             "champions": _champion_table(group_rows),
-            "records": _build_records(group_rows, players),
+            "records": _build_records(group_rows, players,
+                                      REC_LCU_OK if lcu else None),
             "recent": _recent_matches(group_rows, players),
             "roles": _role_split(group_rows),
             "queues": _queue_split(group_rows),
         }
 
+        # As metricas que SO existem quando os dois times sao da UDA: a tabela de
+        # confrontos, algoz e fregues, a dupla-e-divorcio, a balanca, o espelho e
+        # a chamada. Nenhuma delas cabe nas paginas atuais, que sao todas listas
+        # de jogador -- estas sao matriciais, jogador contra jogador.
+        if gkey == "inhouse":
+            extra = _inhouse.construir(conn, players, window_days)
+            if extra:
+                groups_payload[gkey]["inhouseExtra"] = extra
+
         # Series temporais: so para as abas que a tela realmente desenha.
+        # "inhouse" fica de fora de proposito: sao 17 partidas em 4 noites, e uma
+        # media movel de 10 partidas ou uma corrida MENSAL nao tem o que dizer.
         if gkey in ("all", "solo", "flex", "squad"):
             from . import evolucao as _ev
             rows_grupo = defaultdict(list)
@@ -1097,4 +1174,19 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     # em quem so quer os KPIs.
     from . import assets as _assets
     payload["champDetails"] = _assets.detalhes(payload, ddragon_ver)
+
+    # Blocos que nao dependem de fila: sao a carreira inteira do elenco.
+    # Importados aqui, como evolucao, para nao arrastar requests em quem so
+    # quer os KPIs.
+    from . import arsenal as _arsenal, mural as _mural, zoeira as _zoeira
+    payload["zoeira"] = _zoeira.construir(rows_by_player, players)
+    payload["arsenal"] = _arsenal.construir(all_rows, players, ddragon_ver)
+    payload["mural"] = _mural.construir(rows_by_player, players, min_games,
+                                        champ_index)
+    payload["titulos"] = _mural.resumo_titulos(payload["mural"])
+
+    # Placares por ultimo: so entram as partidas que o payload ja referencia.
+    from . import partidas as _partidas
+    payload["placares"] = _partidas.construir(
+        conn, _partidas.coletar_ids(payload), players, QUEUE_NAMES)
     return payload

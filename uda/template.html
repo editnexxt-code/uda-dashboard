@@ -1201,6 +1201,7 @@ table.mx{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fix
 .champ:hover{background:var(--card2)}
 .form i{transition:transform .12s}
 .form i:hover{transform:scale(1.22)}
+.form i[data-match]:hover{outline:1px solid var(--teal);outline-offset:1px}
 .mx-c{transition:transform .12s,outline .12s}
 .mx-c:hover{outline:2px solid var(--teal);outline-offset:1px;transform:scale(1.06)}
 .aw-f .ru{transition:color .13s}
@@ -2349,11 +2350,351 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
      do jogador sem o dedo cair na linha de cima */
   #tbl tbody tr td{padding-top:10px;padding-bottom:10px}
 }
+
+/* ================================================ PERSONALIZADAS (INHOUSE)
+   Tudo aqui é matricial -- jogador contra jogador -- e por isso nada disso
+   reaproveita os componentes de lista das outras páginas. O que DÁ para
+   reaproveitar já está reaproveitado: a tabela de confrontos usa .mx/.mx-c da
+   matriz de sinergia (inclusive o modo lista no celular) e o Espelho usa .hl
+   dos halteres. O que segue é só o que não existia. */
+
+/* marca de convidado: quem está em campo mas não está no players.json */
+.gst{font-style:normal;color:var(--gold-2);font-weight:700;margin-left:4px}
+
+/* célula de duelo com amostra fina fica APAGADA, não escondida: sumir faria a
+   grade mentir por omissão; apagar diz "existe, mas não pesa". */
+.mx.rr .mx-c.thin{opacity:.4}
+.mx.rr .mx-c b{font-size:12.5px}
+
+/* --------------------------------------------------------- algoz e freguês */
+.nems{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,272px),1fr))}
+.nem{position:relative;display:grid;gap:8px;
+  /* minmax(0,..) e nao 1fr cru: o padrao de 1fr e minmax(AUTO,1fr), e o auto
+     vira min-content -- os tres nomes empurrariam o cartao para 390px dentro de
+     303px de card no celular. */
+  grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);
+  align-items:center;background:var(--card2);border:1px solid var(--line);
+  border-radius:var(--rs);padding:12px 10px}
+.nem.thin{border-style:dashed;opacity:.72}
+.nem-s{min-width:0;text-align:center}
+.nem-s img{width:30px;height:30px;border-radius:50%;border:1px solid var(--line)}
+.nem-s .nm{font:500 10.5px/1.2 var(--body);color:var(--dim);margin-top:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nem-s .sc{font:700 13px/1 var(--cond);font-variant-numeric:tabular-nums;margin-top:3px}
+.nem-s .sc i{font-style:normal;color:var(--dim);margin:0 2px}
+.nem-s.mau .sc{color:var(--red)}
+.nem-s.bom .sc{color:var(--teal)}
+.nem-s.vazio{color:var(--line2);font-size:18px;align-self:center}
+.nem-c{min-width:0;text-align:center;padding:0 4px;
+  border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.nem-c img{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold-3)}
+.nem-c .nm{font:600 12px/1.2 var(--body);margin-top:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nem-c .wl{font:500 10.5px/1 var(--body);color:var(--dim);margin-top:3px}
+.nem-c .wl b.t{color:var(--teal)} .nem-c .wl b.r{color:var(--red)}
+.nem-f{grid-column:1/-1;text-align:center;font-size:10.5px;color:var(--dim);
+  border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+
+/* ------------------------------------------------- a dupla e o divórcio */
+.dvs{display:grid;gap:2px}
+.dvr{display:grid;grid-template-columns:104px minmax(0,1fr) 152px;gap:14px;
+  align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)}
+.dvr:last-child{border-bottom:0}
+.dv-j{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.dv-j .s{font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.dv-n{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:"im nm" "im em";column-gap:11px;row-gap:3px}
+.dv-n .ims{grid-area:im;align-self:center;display:flex}
+.dv-n .ims img{width:28px;height:28px;border-radius:50%;border:2px solid var(--card)}
+.dv-n .ims img+img{margin-left:-10px}
+.dv-n .nm{grid-area:nm;font:500 12.5px/1.25 var(--body);overflow-wrap:anywhere}
+.dv-n em{grid-area:em;font-style:normal;font-size:10.5px;color:var(--dim);line-height:1.3}
+.dv-s{display:flex;align-items:center;gap:7px}
+.dv-s .lb,.dv-s .rb{font:700 12px/1 var(--cond);font-variant-numeric:tabular-nums;
+  width:16px;text-align:center;color:var(--mut)}
+.dv-s .tr{position:relative;flex:1;height:10px;border-radius:3px;background:var(--card3)}
+.dv-s .tr::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;
+  width:1px;background:var(--line2);z-index:2}
+.dv-s .tr i{position:absolute;top:0;bottom:0;border-radius:2px}
+.dv-s .tr i.a{right:50%;background:var(--teal)}
+.dv-s .tr i.b{left:50%;background:var(--gold-2)}
+
+/* ----------------------------------------------------------- a balança */
+.bal-lg{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:11.5px;
+  color:var(--dim);margin-bottom:14px}
+.bal-lg i{width:11px;height:11px;border-radius:3px;display:inline-block;
+  margin-right:6px;vertical-align:-1px}
+.bal-lg i.fx{background:var(--card3);border:1px dashed var(--gold-3)}
+.bal-lg i.dr{background:var(--teal)}
+.bal-lg i.es{background:var(--red)}
+.bal-rows{display:grid;gap:2px}
+.bal-r{display:grid;grid-template-columns:58px minmax(0,1fr) 52px 48px;gap:8px;
+  align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);
+  animation:balIn .4s var(--e) both;animation-delay:calc(var(--i,0) * 26ms)}
+.bal-r:last-child{border-bottom:0}
+@keyframes balIn{from{opacity:0;transform:translateY(4px)}}
+.bal-d{font:500 10.5px/1.25 var(--body);color:var(--mut)}
+.bal-d em{display:block;font-style:normal;font-size:9.5px;color:var(--dim)}
+/* a régua: zero SEMPRE no centro, senão duas linhas não se comparam */
+.bal-t{position:relative;height:16px;border-radius:4px;background:var(--card3);overflow:hidden}
+.bal-t i{position:absolute;top:0;bottom:0}
+.bal-t i.faixa{left:50%;transform:translateX(-50%);background:rgba(200,170,110,.13);
+  border-left:1px dashed var(--gold-3);border-right:1px dashed var(--gold-3)}
+.bal-t i.zero{left:50%;width:1px;background:var(--m2b);z-index:3}
+.bal-t i.fill{top:3px;bottom:3px;border-radius:3px;z-index:2}
+.bal-t i.fill.dr{background:linear-gradient(90deg,color-mix(in srgb,var(--teal) 45%,transparent),var(--teal))}
+.bal-t i.fill.es{background:linear-gradient(270deg,color-mix(in srgb,var(--red) 45%,transparent),var(--red))}
+.bal-v{font:700 12px/1 var(--cond);text-align:right;font-variant-numeric:tabular-nums}
+.bal-v.t{color:var(--teal)} .bal-v.r{color:var(--red)} .bal-v.g{color:var(--gold-1)}
+.bal-s{font:800 9px/1 var(--cond);letter-spacing:.08em;text-transform:uppercase;
+  text-align:center;padding:4px 0;border-radius:var(--rp);
+  background:var(--gold-s);color:var(--gold-1)}
+.bal-s.off{background:transparent;color:transparent}
+.bal-note{margin:16px 0 0;font-size:12px;line-height:1.6;color:var(--dim);
+  border-top:1px solid var(--line2);padding-top:13px}
+.bal-note b{color:var(--gold-1);font-weight:600}
+
+/* ----------------------------------------------------------- a chamada */
+.cham{display:grid;gap:2px}
+.ch-hd,.ch-r{display:grid;grid-template-columns:minmax(0,1fr) repeat(var(--n),26px) 30px;
+  gap:6px;align-items:center}
+.ch-hd{padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.ch-hd .ch-w,.ch-hd .ch-n,.ch-hd .ch-t{font:600 9.5px/1 var(--body);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim);text-align:center}
+.ch-hd .ch-w{text-align:left}
+.ch-r{padding:5px 0;border-bottom:1px solid var(--line2)}
+.ch-r:last-of-type{border-bottom:0}
+.ch-w{display:flex;align-items:center;gap:8px;min-width:0}
+.ch-w img{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);flex:0 0 auto}
+.ch-w b{font:500 12px/1 var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ponto cheio = jogou, vazado = a noite existiu sem essa pessoa. É o "quem
+   sobra" que o dado realmente tem -- ordem de escolha não existe em ARAM. */
+.ch-c{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font:700 11px/1 var(--cond);font-variant-numeric:tabular-nums;justify-self:center}
+.ch-c.on{background:var(--teal-s);color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
+.ch-c.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line2)}
+.ch-t{font:700 12px/1 var(--cond);text-align:center;color:var(--mut);
+  font-variant-numeric:tabular-nums}
+.ch-never{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px;
+  padding-top:13px;border-top:1px solid var(--line)}
+.ch-never .lbl{font:600 9.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--red)}
+.ch-never .ru{display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;
+  border-radius:var(--rp);background:var(--card2);border:1px solid var(--line);
+  font-size:11.5px;color:var(--mut)}
+.ch-never .ru img{width:20px;height:20px;border-radius:50%;opacity:.6}
+.legend i.chon{border-radius:50%;background:var(--teal-s);box-shadow:inset 0 0 0 1px var(--teal)}
+.legend i.choff{border-radius:50%;background:transparent;box-shadow:inset 0 0 0 1px var(--line2)}
+
+/* --------------------------------------------------- a placa de duelo
+   A .mc normal empilha os da UDA numa coluna só -- numa fila pública eles estão
+   todos do mesmo lado. Aqui os dois times são da casa, então a placa PARTE no
+   eixo: um time de cada lado, cada um com o próprio placar. */
+.mfeed>.mc.duo2{grid-column:span 12}
+.duo2-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@container mcard (max-width:560px){.duo2-g{grid-template-columns:minmax(0,1fr)}}
+.duo2-t{min-width:0;border-radius:var(--rs);padding:8px;background:rgba(10,13,18,.42);
+  border:1px solid var(--line);border-top-width:2px}
+.duo2-t.w{border-top-color:var(--teal)}
+.duo2-t.l{border-top-color:var(--red)}
+.duo2-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;
+  font:500 10.5px/1 var(--body);color:var(--dim);flex-wrap:wrap}
+.duo2-h b{font:700 13px/1 var(--cond);color:var(--txt);font-variant-numeric:tabular-nums}
+.duo2-h em{font-style:normal;margin-left:auto;font-size:10px;color:var(--dim)}
+.duo2-h .wl{font:800 9px/1 var(--cond);letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 7px;border-radius:var(--rp)}
+.duo2-h .wl.w{background:var(--teal-s);color:var(--teal)}
+.duo2-h .wl.l{background:var(--red-s);color:var(--red)}
+/* uma coluna por lado SEMPRE: o .mc-ps normal abre em 2..5 colunas conforme o
+   data-n, e aqui cada metade tem metade da largura da placa. */
+.mc.duo2 .duo2-t .mc-ps{grid-template-columns:minmax(0,1fr)}
+
+/* no celular tudo isso vira uma coluna só: três colunas de 86px seriam nomes
+   cortados em todas elas. */
+@container content (max-width:640px){
+  .dvr{grid-template-columns:minmax(0,1fr);gap:9px}
+  .dv-j{flex-direction:row;align-items:center;gap:9px}
+  .bal-r{grid-template-columns:52px minmax(0,1fr) 46px;row-gap:4px}
+  .bal-s{grid-column:2/-1;justify-self:start;padding:3px 8px}
+  .bal-s.off{display:none}
+  .nem{grid-template-columns:1fr 1.2fr 1fr}
+}
+
+/* ============================================ PLACAR DA PARTIDA (MODAL)
+   Reproduz a tela de fim de jogo do cliente: dois times empilhados, faixa de
+   objetivos no meio, e as colunas na ordem que a pessoa ja conhece de cor. */
+#modal{position:fixed;inset:0;z-index:400;display:none}
+#modal[open]{display:block}
+#modal .mbg{position:absolute;inset:0;background:rgba(4,6,9,.82);backdrop-filter:blur(3px)}
+#modal .mbox{position:relative;max-width:1150px;margin:34px auto;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);max-height:calc(100vh - 68px);
+  overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+@media(max-width:1220px){#modal .mbox{margin:14px;max-height:calc(100vh - 28px)}}
+.mhead{display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--card);z-index:3}
+.mhead h3{margin:0;font:600 16px/1.2 var(--disp)}
+.mhead .sub{font-size:12.5px;color:var(--mut);margin-top:4px}
+.mclose{margin-left:auto;appearance:none;border:1px solid var(--line);background:var(--card2);
+  color:var(--mut);width:34px;height:34px;border-radius:var(--rs);cursor:pointer;font-size:17px;line-height:1;flex:0 0 auto}
+.mclose:hover{color:var(--txt);border-color:var(--teal)}
+
+.tbl-head,.prow{display:grid;
+  grid-template-columns:216px 60px minmax(108px,1fr) 84px 66px 74px 172px;
+  gap:10px;align-items:center;padding:7px 18px}
+@media(max-width:1020px){.tbl-head{display:none}
+  .prow{grid-template-columns:1fr;gap:7px;padding:12px 14px}}
+.tbl-head{font:600 10px/1.2 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+  border-top:1px solid var(--line2)}
+.tbl-head span:nth-child(n+4){text-align:center}
+.tbl-head span:last-child{text-align:right}
+.tside{padding:14px 18px 6px;display:flex;align-items:center;gap:11px;font:600 13.5px/1 var(--disp);flex-wrap:wrap}
+.tside .res{padding:4px 11px;border-radius:var(--rp);font-size:11.5px}
+.tside.win .res{background:var(--teal-s);color:var(--teal)}
+.tside.lose .res{background:var(--red-s);color:var(--red)}
+.tside .obj{margin-left:auto;display:flex;gap:13px;font:500 11.5px/1 var(--body);color:var(--mut)}
+.tside .obj b{color:var(--txt);font-variant-numeric:tabular-nums}
+.prow{border-top:1px solid var(--line2)}
+.prow.win{background:rgba(10,200,185,.035)} .prow.lose{background:rgba(229,72,77,.035)}
+.prow.eu{box-shadow:inset 3px 0 0 var(--gold)}
+.pwho{display:flex;align-items:center;gap:9px;min-width:0}
+.pchamp{position:relative;flex:0 0 auto}
+.pchamp img{width:38px;height:38px;border-radius:9px;border:1px solid var(--line)}
+.plvl{position:absolute;bottom:-4px;left:-4px;background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--rp);font:600 9.5px/1 var(--body);padding:2px 5px;font-variant-numeric:tabular-nums}
+.pmini{display:flex;flex-direction:column;gap:2px;flex:0 0 auto}
+.pmini img,.pmini span{width:17px;height:17px;border-radius:4px;display:block;background:var(--card3)}
+.pname{min-width:0}
+.pname .n{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pname .n.uda{color:var(--gold)}
+.pname .t{font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pselo{display:inline-block;padding:3px 7px;border-radius:5px;font:700 9.5px/1 var(--body);letter-spacing:.06em}
+.pselo.MVP{background:var(--gold-s);color:var(--gold)}
+.pselo.ACE{background:var(--blue-s);color:var(--blue)}
+.pkda{text-align:center}
+.pkda .a1{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.pkda .a2{font-size:10.5px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
+.pdmg{display:flex;flex-direction:column;gap:4px}
+.pdmg .lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pdmg .tr2{height:5px;border-radius:var(--rp);background:var(--barneutral);overflow:hidden}
+.pdmg .tr2 i{display:block;height:100%;border-radius:var(--rp)}
+.pdmg .tr2 i.dado{background:var(--red)} .pdmg .tr2 i.levado{background:var(--mut)}
+.pnum{text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
+.pnum small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px}
+.pitems{display:flex;gap:3px;justify-content:flex-end}
+.pitems span,.pitems img{width:23px;height:23px;border-radius:5px;display:block;flex:0 0 auto}
+.pitems span{background:var(--card3)}
+.pitems .tr3,.pitems img.tr3{border-radius:50%}
+.mband{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;
+  padding:14px 18px;background:var(--card2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+@media(max-width:820px){.mband{grid-template-columns:1fr;gap:10px}}
+.mband .lado{display:flex;gap:14px;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.mband .lado.dir{justify-content:flex-end}
+.mband .lado b{color:var(--txt)}
+.mband .meio{text-align:center;min-width:210px}
+.mband .meio .l{font-size:10.5px;color:var(--dim)}
+.mband .meio .barra{display:flex;height:7px;border-radius:var(--rp);overflow:hidden;margin-top:6px}
+.mband .meio .barra i{display:block;height:100%}
+.mband .meio .v{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+[data-match]{cursor:pointer}
+[data-match]:hover{border-color:var(--teal)!important}
+.lupa{opacity:0;transition:opacity .13s;font-size:10.5px;color:var(--teal);margin-left:6px}
+[data-match]:hover .lupa{opacity:1}
+
+/* =========================================================== ZOEIRA */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(332px,1fr));gap:16px}
+.ztrof{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+  display:flex;flex-direction:column}
+.ztrof.gloria{border-top:2px solid var(--teal)}
+.ztrof.vergonha{border-top:2px solid var(--red)}
+.ztrof.curiosidade{border-top:2px solid var(--gold)}
+.zh{padding:15px 17px 0}
+.zh .tt{font:600 14.5px/1.2 var(--disp)}
+.zh .lg{font-size:11.5px;color:var(--dim);margin-top:5px;min-height:32px}
+.zc{display:flex;align-items:center;gap:13px;padding:13px 17px}
+.zc img{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto}
+.ztrof.gloria .zc img{border-color:var(--teal)}
+.ztrof.vergonha .zc img{border-color:var(--red)}
+.ztrof.curiosidade .zc img{border-color:var(--gold)}
+.zc .who{flex:1;min-width:0}
+.zc .who .n{font:600 14px/1.2 var(--disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zc .who .u{font-size:11px;color:var(--dim);margin-top:3px}
+.zc .val{text-align:right;flex:0 0 auto}
+.zc .val .v{font:700 21px/1 var(--disp);font-variant-numeric:tabular-nums}
+.ztrof.gloria .zc .val .v{color:var(--teal)}
+.ztrof.vergonha .zc .val .v{color:var(--red)}
+.ztrof.curiosidade .zc .val .v{color:var(--gold)}
+.zc .val .m{font-size:10.5px;color:var(--dim);margin-top:3px}
+.zlist{border-top:1px solid var(--line);margin-top:auto}
+.zrow{display:flex;align-items:center;gap:10px;padding:7px 17px;font-size:12px;border-bottom:1px solid var(--line2)}
+.zrow:last-child{border-bottom:0}
+.zrow .p{width:20px;color:var(--dim);font-weight:600;font-variant-numeric:tabular-nums}
+.zrow img{width:24px;height:24px;border-radius:50%;flex:0 0 auto}
+.zrow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zrow .v{font-weight:600;font-variant-numeric:tabular-nums}
+.zmais{appearance:none;width:100%;border:0;border-top:1px solid var(--line);background:var(--card2);
+  color:var(--mut);padding:9px;font:500 11.5px/1 var(--body);cursor:pointer}
+.zmais:hover{color:var(--teal)}
+
+/* =========================================================== ARSENAL */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
+.aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--rs);padding:12px 14px}
+.aitem .ic,.aitem .ic img{width:44px;height:44px;border-radius:9px;flex:0 0 auto;background:var(--card3)}
+.aitem .nm{flex:1;min-width:0}
+.aitem .nm .n{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aitem .nm .s{font-size:11px;color:var(--dim);margin-top:3px}
+.aitem .qt{text-align:right;flex:0 0 auto}
+.aitem .qt .q{font:700 15px/1 var(--disp);font-variant-numeric:tabular-nums}
+.aitem .qt .w{font-size:10.5px;margin-top:4px;font-variant-numeric:tabular-nums}
+.aseg{display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);
+  padding:3px;margin-bottom:14px;width:fit-content;flex-wrap:wrap}
+.aseg button{appearance:none;border:0;background:none;color:var(--mut);cursor:pointer;
+  font:500 12.5px/1 var(--body);padding:7px 13px;border-radius:7px}
+.aseg button[aria-pressed="true"]{background:var(--card3);color:var(--txt);font-weight:600}
+
+/* ============================================================= MURAL */
+.mugrid{display:grid;gap:16px}
+.mumes{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.mumes.aberto{border-color:var(--gold)}
+.muh{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);
+  background:var(--card2);flex-wrap:wrap}
+.muh .mes{font:700 16px/1 var(--disp)}
+.muh .meta{font-size:12px;color:var(--mut);margin-top:5px}
+.muh .tag{margin-left:auto;padding:5px 12px;border-radius:var(--rp);font:600 11px/1 var(--body);
+  background:var(--gold-s);color:var(--gold);flex:0 0 auto}
+.mudois{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+@media(max-width:820px){.mudois{grid-template-columns:1fr}}
+.mucard{background:var(--card);padding:20px}
+.mucard .titulo{font:700 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase}
+.mucard.rei .titulo{color:var(--gold)} .mucard.pior .titulo{color:var(--red)}
+.mucard .corpo{display:flex;align-items:center;gap:15px;margin-top:15px}
+.mucard img{width:64px;height:64px;border-radius:50%;flex:0 0 auto;border:3px solid var(--line)}
+.mucard.rei img{border-color:var(--gold)} .mucard.pior img{border-color:var(--red)}
+.mucard .nm{font:700 19px/1.15 var(--disp)}
+.mucard .mot{font-size:12px;color:var(--mut);margin-top:6px}
+.mucard .sc{margin-left:auto;text-align:right;flex:0 0 auto}
+.mucard .sc .v{font:700 30px/1 var(--disp);font-variant-numeric:tabular-nums}
+.mucard.rei .sc .v{color:var(--gold)} .mucard.pior .sc .v{color:var(--red)}
+.mucard .sc .l{font-size:10px;color:var(--dim);margin-top:4px}
+.mudest{display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--line)}
+.mudest .d{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);
+  border-radius:var(--rp);padding:5px 12px 5px 5px;font-size:11.5px;color:var(--mut)}
+.mudest .d img{width:22px;height:22px;border-radius:50%}
+.mudest .d b{color:var(--txt)}
+.mutit{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.mut{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--rs);padding:13px 15px}
+.mut img{width:40px;height:40px;border-radius:50%;flex:0 0 auto}
+.mut .n{flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mut .c{display:flex;gap:6px;flex:0 0 auto}
+
 </style>
 </head>
 <body>
 <div id="demo-banner" hidden><b>DADOS FICTÍCIOS</b> — nada aqui veio da Riot.
   Números sorteados por <code>demo.py</code>. Para o painel real, rode <code>python run.py</code>.</div>
+
+<div id="modal" role="dialog" aria-modal="true" aria-label="Placar da partida"><div class="mbg" data-fechar></div><div class="mbox" id="mbox"></div></div>
 
 <div class="app">
   <aside id="drawer" tabindex="-1" data-open="false" aria-label="Navegação">
@@ -3466,8 +3807,20 @@ const FACE=new Set(["rank","gameName","elo","games","winrate","kda","score"]);
    <thead> deixou de dar no celular. Custo total: dois atributos por celula. */
 const cel=(k,l,extra)=>` data-k="${k}" data-l="${h(l)}"`+(extra||"");
 
+/* AS COLUNAS DESTA FILA. Na fila das personalizadas duas saem: visão por minuto
+   tem média 0,0 e sentinela zerada em 100% das linhas (o cliente do LoL não
+   mede visão no Abismo), e CS/min existe mas é minion passivo de ARAM, não farm.
+   As duas já estão fora do Score pelo perfil de peso; deixá-las na tabela seria
+   desenhar uma régua inteira para uma coluna de zeros. */
+const SEM_LCU=new Set(["cs_min","vision_min"]);
+const colsDe=(g)=>(g&&g.lcu)?COLS.filter(c=>!SEM_LCU.has(c.k)):COLS;
+
 function tabela(g){
-  const col=COLS.find(c=>c.k===sortKey);
+  const CS=colsDe(g);
+  /* a ordenação pode apontar para uma coluna que esta fila não tem (você ordenou
+     por visão e trocou de fila): volta para o ranking em vez de quebrar. */
+  const col=CS.find(c=>c.k===sortKey)||CS[0];
+  if(col.k!==sortKey&&sortKey!=="rank") sortKey=col.k;
   const rows=[...g.players].sort((a,b)=>{
     if(sortKey==="rank") return ((a.rank??1e9)-(b.rank??1e9))*(sortDir>0?1:-1);
     const av=col.s?col.s(a):0,bv=col.s?col.s(b):0;
@@ -3481,7 +3834,7 @@ function tabela(g){
      13 jogadores, empate no maximo costuma ser 0 torres ou 0 pentas, que e
      ruido e nao lideranca. */
   const R={};
-  COLS.filter(c=>c.m).forEach(c=>{
+  CS.filter(c=>c.m).forEach(c=>{
     const v=g.players.map(p=>c.s(p)).filter(x=>typeof x==="number"&&isFinite(x));
     const mn=Math.min(...v),mx=Math.max(...v);
     R[c.k]={min:mn,max:mx,amp:(mx-mn)||0,
@@ -3490,7 +3843,7 @@ function tabela(g){
   /* quantas das colunas COM podio cada jogador lidera: e a manchete que a
      tabela nunca deu, e ela vem de graca da mesma conta das barras */
   const OZ={};
-  COLS.filter(c=>c.m&&!c.m.neu).forEach(c=>{const r=R[c.k]; if(!r||!r.um) return;
+  CS.filter(c=>c.m&&!c.m.neu).forEach(c=>{const r=R[c.k]; if(!r||!r.um) return;
     g.players.forEach(p=>{if(c.s(p)===r.max) OZ[p.puuid]=(OZ[p.puuid]||0)+1;});});
 
   const gg=(c,p)=>{
@@ -3507,13 +3860,13 @@ function tabela(g){
      familia, e no celular nao existe familia nenhuma. */
   const regua=`<div class="tsort" role="group" aria-label="Ordenar o ranking">
     <span class="tsl">ordenar</span>
-    <div class="tsf">${COLS.map(c=>`<button type="button" class="tsc" data-sk="${c.k}"
+    <div class="tsf">${CS.map(c=>`<button type="button" class="tsc" data-sk="${c.k}"
       aria-pressed="${c.k===sortKey}">${h(c.n||c.t)}${seta(c.k)}</button>`).join("")}</div></div>`;
 
   /* o <th> de familia nasce SEM data-k de proposito: ligarTabela amarra clique
      em `#tbl thead th[data-k]`, entao cabecalho de grupo nao vira botao de
      ordenacao sozinho. */
-  const chefes=FAM.map(f=>{const n=COLS.filter(c=>c.fam===f.k).length;
+  const chefes=FAM.map(f=>{const n=CS.filter(c=>c.fam===f.k).length;
     return n?`<th scope="colgroup" role="columnheader" colspan="${n}" data-fam="${f.k}"
       style="--fam:${f.c}"${f.k===FAM[0].k?"":' data-fs=""'}>${h(f.t)}</th>`:"";}).join("");
 
@@ -3521,7 +3874,7 @@ function tabela(g){
      tabela no Chrome e no Firefox. Cartao nao pode custar acessibilidade. */
   return `${regua}<div class="tbox cards spine"><table role="table"><thead role="rowgroup">
     <tr class="ghr" role="row">${chefes}<th${cel("_go","")}></th></tr>
-    <tr class="chr" role="row">${COLS.map(c=>
+    <tr class="chr" role="row">${CS.map(c=>
     `<th scope="col" role="columnheader" title="${h(c.n||c.t)}"
       class="${c.l?"l":""} ${c.k===sortKey?"on":""}"${
       cel(c.k,c.n||c.t,c.fs?' data-fs=""':"")}>${c.t}${seta(c.k)}</th>`).join("")}<th${cel("_go","")}></th></tr></thead>
@@ -3532,7 +3885,7 @@ function tabela(g){
           p.score==null?null:(p.score>=60?"var(--teal)":p.score>=45?"var(--gold)":"var(--red)")],
         ["Partidas",`${s.games} · ${s.wins}V ${s.losses}D`],
         ["KDA",`${nf(s.kills,1)} / ${nf(s.deaths,1)} / ${nf(s.assists,1)} = ${nf(s.kda,2)}`],
-        ["Colunas que lidera",OZ[p.puuid]?`${OZ[p.puuid]} de 13`:"nenhuma",
+        ["Colunas que lidera",OZ[p.puuid]?`${OZ[p.puuid]} de ${CS.filter(c=>c.m&&!c.m.neu).length}`:"nenhuma",
           OZ[p.puuid]?"var(--gold)":null],
         ["Rota mais jogada",p.roles&&p.roles[0]?`${ROTAS[p.roles[0].role]||p.roles[0].role} (${p.roles[0].games})`:"—"],
         ["Campeão mais jogado",p.champions&&p.champions[0]?`${p.champions[0].champion} (${p.champions[0].games})`:"—"],
@@ -3541,7 +3894,7 @@ function tabela(g){
       /* data-on e decidido AQUI e nao no CSS: no CSS exigiria um :not() com as
          sete chaves do rosto. So promove quem nao esta no rosto. */
       return `<tr role="row" tabindex="0" data-p="${h(p.puuid)}"${
-        p.rank&&p.rank<=3?` data-md="${p.rank}"`:""}${t}>${COLS.map(c=>{
+        p.rank&&p.rank<=3?` data-md="${p.rank}"`:""}${t}>${CS.map(c=>{
         const naGaveta=!FACE.has(c.k);
         return `<td role="cell" class="${c.l?"l":""}"${cel(c.k,c.n||c.t,
           (c.fs?' data-fs=""':"")+(naGaveta?' data-drawer=""':"")+(naGaveta&&c.k===sortKey?' data-on=""':""))}>${
@@ -3630,16 +3983,18 @@ function playerCard(p,labels){
     </div></div>
     ${p.roles&&p.roles.length?`<div class="roles">${p.roles.map(r=>
       `<span class="pill n">${h(ROTAS[r.role]||r.role)} · ${r.games}</span>`).join("")}</div>`:""}
-    <div class="form">${p.form.map(f=>`<i class="${f.win?"w":"l"}"${tip(h(f.champion),[
+    <div class="form">${p.form.map(f=>`<i class="${f.win?"w":"l"}"${linkPartida(f.matchId)}${tip(h(f.champion),[
       ["Resultado",f.win?"Vitória":"Derrota",f.win?"var(--teal)":"var(--red)"],
       ["KDA",`${f.k} / ${f.d} / ${f.a} = ${nf(f.kda,2)}`],
       ["Dano",ni(f.dmg)],["Farm",`${ni(f.cs)} CS`],
     ],`${h(f.queue)} · ${f.minutes} min`)}>${f.win?"V":"D"}</i>`).join("")}</div>
     ${(p.bestGame||p.worstGame)?`<div class="bw">
-      ${p.bestGame?`<div class="bwc"><img src="${champImg(p.bestGame.championId,p.bestGame.champion)}"${FB}>
-        <div><div class="l">Melhor partida</div><div class="v good">${p.bestGame.k}/${p.bestGame.d}/${p.bestGame.a} · ${h(p.bestGame.champion)}</div></div></div>`:""}
-      ${p.worstGame?`<div class="bwc"><img src="${champImg(p.worstGame.championId,p.worstGame.champion)}"${FB}>
-        <div><div class="l">Pior partida</div><div class="v bad">${p.worstGame.k}/${p.worstGame.d}/${p.worstGame.a} · ${h(p.worstGame.champion)}</div></div></div>`:""}
+      ${p.bestGame?`<div class="bwc"${linkPartida(p.bestGame.matchId)}><img src="${champImg(p.bestGame.championId,p.bestGame.champion)}"${FB}>
+        <div><div class="l">Melhor partida${temPlacar(p.bestGame.matchId)?`<span class="lupa">ver placar</span>`:""}</div>
+        <div class="v good">${p.bestGame.k}/${p.bestGame.d}/${p.bestGame.a} · ${h(p.bestGame.champion)}</div></div></div>`:""}
+      ${p.worstGame?`<div class="bwc"${linkPartida(p.worstGame.matchId)}><img src="${champImg(p.worstGame.championId,p.worstGame.champion)}"${FB}>
+        <div><div class="l">Pior partida${temPlacar(p.worstGame.matchId)?`<span class="lupa">ver placar</span>`:""}</div>
+        <div class="v bad">${p.worstGame.k}/${p.worstGame.d}/${p.worstGame.a} · ${h(p.worstGame.champion)}</div></div></div>`:""}
     </div>`:""}
     <div class="champs">${p.champions.map(c=>`<div class="champ" data-champ="${c.championId}"
       tabindex="0" role="button" title="Dossiê de ${h(c.champion)}"><img src="${champImg(c.championId,c.champion)}"${FB}>
@@ -3776,6 +4131,12 @@ function ligarEstante(){
    exata em que aconteceu. Tres sao RELIQUIAS e ficam fora das abas: nao existe
    "quase pentakill". */
 const RELIQUIAS=["penta","rouboSemSmite","semMorte"];
+/* Nas personalizadas o "Roubo Sem Smite" ficaria eternamente vago: ele vem de
+   challenges{}, que o cliente do LoL não tem, e no Abismo não existe objetivo
+   épico para roubar. Uma relíquia que NUNCA pode ter dono não é uma relíquia
+   vazia, é uma promessa falsa — sai, e a Sequência Imparável toma o lugar. */
+const RELIQUIAS_LCU=["penta","semMorte","sequencia"];
+const reliquiasDe=(g)=>(g&&g.lcu)?RELIQUIAS_LCU:RELIQUIAS;
 const RGRUPO=[["gloria","Glória","var(--gold-2)"],
               ["vergonha","Vergonha","var(--red)"],
               ["curiosidade","Curiosidade","var(--blue)"]];
@@ -3825,8 +4186,9 @@ function cartaoRec(r,cor){
 function recordes(g){
   const l=g.records||[];
   if(!l.length) return "";
-  const rel=RELIQUIAS.map(k=>l.find(r=>r.key===k)).filter(Boolean);
-  const resto=l.filter(r=>RELIQUIAS.indexOf(r.key)<0);
+  const REL=reliquiasDe(g);
+  const rel=REL.map(k=>l.find(r=>r.key===k)).filter(Boolean);
+  const resto=l.filter(r=>REL.indexOf(r.key)<0);
   const abas=RGRUPO.map(([k,rot,cor])=>[k,rot,cor,resto.filter(r=>r.grupo===k)])
     .filter(a=>a[3].length);
   if(!rel.length&&!abas.length) return "";
@@ -4275,18 +4637,716 @@ function arsenal(g){
       </article>`;}).join("")}</div></section>`;
 }
 
+/* ==================================== PERSONALIZADAS (AS PARTIDAS DA CASA)
+   Tudo desta seção só existe porque os DOIS times são da UDA. É por isso que ela
+   não cabe em nenhum componente das outras páginas: lá tudo é lista de jogador,
+   aqui tudo é matricial — jogador contra jogador.
+   E é por isso também que várias métricas do resto do painel morrem aqui: o
+   "aproveitamento do grupo" é ~50% por construção (alguém da UDA sempre ganha e
+   alguém sempre perde), e visão e farm vêm do cliente do LoL, que no Abismo não
+   mede nem uma coisa nem outra. Ver o cartão "o que esta fila não mede". */
+
+/* ------------------------------------------------------------ A TABELA
+   Placar histórico de todos contra todos. A linha ganha da coluna.
+   A opacidade sai da FOLGA (|V−D|) e não do total de duelos: senão 9–5 e 90–50
+   pintariam igual, e é a folga que diz quem manda. Empate é ouro, nunca meio
+   verde e meio vermelho. */
+function ihTabela(t){
+  const js=t.jogadores||[];
+  if(js.length<2) return noData("SEM CONFRONTOS","Ninguém se enfrentou ainda.");
+  const ord=js.map(p=>p.chave), nome={}, icone={}, conv={};
+  js.forEach(p=>{nome[p.chave]=p.nome;icone[p.chave]=p.icon;conv[p.chave]=p.convidado;});
+  const cur=n=>short(n).slice(0,10);
+  const cel=(a,b)=>t.celulas[a+"|"+b];
+  const fundo=(c)=>{const f=c.v-c.d;
+    if(!f) return "background:rgba(200,170,110,.26)";
+    const k=(.12+Math.min(1,Math.abs(f)/5)*.62).toFixed(3);
+    return f>0?`background:rgba(10,200,185,${k})`:`background:rgba(229,72,77,${k})`;};
+  const balao=(a,b,c)=>tip(`${h(short(nome[a]))} × ${h(short(nome[b]))}`,[
+      ["Placar",`${c.v} – ${c.d}`,c.v>c.d?"var(--teal)":c.v<c.d?"var(--red)":"var(--gold)"],
+      ["Duelos",ni(c.jogos)],
+      ["Aproveitamento",nf(c.v/c.jogos*100,0)+"%"],
+    ],c.jogos<t.minDuel?`só ${c.jogos} duelo${c.jogos>1?"s":""} — amostra fina`
+      :(c.v>c.d?`${short(nome[a])} leva a melhor`:c.v<c.d?`${short(nome[b])} leva a melhor`:"empate"));
+
+  /* no celular a grade de 16x16 implode: a pergunta vira uma LISTA de rivalidades */
+  const riv=[];
+  for(let i=0;i<ord.length;i++)for(let j=i+1;j<ord.length;j++){
+    const c=cel(ord[i],ord[j]); if(!c) continue;
+    riv.push({a:ord[i],b:ord[j],v:c.v,d:c.d,jogos:c.jogos,folga:Math.abs(c.v-c.d)});}
+  riv.sort((x,y)=>(y.folga-x.folga)||(y.jogos-x.jogos));
+  const fortes=riv.filter(r=>r.jogos>=t.minDuel).slice(0,8);
+  const linha=r=>{const dono=r.v>=r.d?r.a:r.b, alvo=r.v>=r.d?r.b:r.a;
+    const larg=(Math.min(1,r.folga/Math.max(1,r.jogos))*100).toFixed(1);
+    return `<div class="lrow duo"${balao(r.a,r.b,{v:r.v,d:r.d,jogos:r.jogos})}>
+      <span class="ims"><img src="${iconImg(icone[dono])}"${FB}><img src="${iconImg(icone[alvo])}"${FB}></span>
+      <span class="nm">${h(short(nome[dono]))} <span style="color:var(--dim)">sobre</span> ${h(short(nome[alvo]))}</span>
+      <span class="bar"><i class="up" style="width:${larg}%"></i></span>
+      <span class="st">${r.jogos} duelos</span>
+      <span class="pill ${r.v===r.d?"g":"t"}">${Math.max(r.v,r.d)}–${Math.min(r.v,r.d)}</span></div>`;};
+
+  const lista=!fortes.length?"":`<div class="mxlist">
+    <div class="mxhd">as rivalidades mais desequilibradas</div>${fortes.map(linha).join("")}</div>`;
+
+  return `${lista}<details class="mxfull" open><summary>ver a tabela completa</summary>
+    <div class="tbox" style="padding:16px"><table class="mx rr"><thead><tr><th class="mx-corner"></th>
+    ${ord.map(p=>`<th class="mx-h"><img src="${iconImg(icone[p])}"${FB}>
+      <span>${h(cur(nome[p]))}${conv[p]?" ·":""}</span></th>`).join("")}</tr></thead><tbody>
+    ${ord.map(a=>`<tr><th class="mx-r"><img src="${iconImg(icone[a])}"${FB}>
+      <span>${h(cur(nome[a]))}${conv[a]?`<i class="gst" title="convidado">·</i>`:""}</span></th>
+      ${ord.map(b=>{if(a===b) return `<td class="mx-c mx-self">—</td>`;
+        const c=cel(a,b);
+        if(!c) return `<td class="mx-c"${tip(`${h(short(nome[a]))} × ${h(short(nome[b]))}`,
+          ["Nunca se enfrentaram"])}></td>`;
+        return `<td class="mx-c${c.jogos<t.minDuel?" thin":""}" style="${fundo(c)}"${balao(a,b,c)}>
+          <b>${c.v}–${c.d}</b><i>${c.jogos}j</i></td>`;}).join("")}</tr>`).join("")}
+    </tbody></table></div>
+    <div class="legend"><span><i style="background:rgba(10,200,185,.65)"></i>a linha ganha da coluna</span>
+    <span><i style="background:rgba(229,72,77,.65)"></i>a linha perde para a coluna</span>
+    <span><i style="background:rgba(200,170,110,.35)"></i>empate</span>
+    <span>célula apagada = menos de ${t.minDuel} duelos</span>
+    <span>· = convidado, fora do players.json</span></div></details>`;
+}
+
+/* --------------------------------------------------------- ALGOZ E FREGUÊS
+   Um cartão por pessoa: quem mais te derrota à esquerda, quem você mais derrota
+   à direita. Piso de duelos contra a MESMA pessoa — quem não chega lá mantém o
+   cartão tracejado dizendo que faltou amostra, em vez de sumir da página. */
+function ihNemesis(l,piso){
+  if(!l||!l.length) return noData("SEM DUELOS","Ninguém se enfrentou ainda.");
+  const lado=(p,mau)=>!p?`<div class="nem-s vazio"><span>—</span></div>`
+    :`<div class="nem-s ${mau?"mau":"bom"}"${tip(h(short(p.nome)),[
+        ["Placar no duelo",`${mau?p.d:p.v} – ${mau?p.v:p.d}`,mau?"var(--red)":"var(--teal)"],
+        ["Duelos",ni(p.jogos)]],mau?"quem mais te derrota":"quem você mais derrota")}>
+      <img src="${iconImg(p.icon)}"${FB}>
+      <div class="nm">${h(short(p.nome))}</div>
+      <div class="sc">${mau?p.d:p.v}<i>–</i>${mau?p.v:p.d}</div></div>`;
+  return `<div class="nems">${l.map(p=>{
+    const seco=!p.algoz&&!p.fregues;
+    return `<article class="nem${seco?" thin":""}">
+      ${lado(p.algoz,true)}
+      <div class="nem-c"${tip(h(p.nome),[
+        ["Nas personalizadas",`${p.vitorias}V ${p.derrotas}D`],
+        ["Aproveitamento",nf(p.winrate,1)+"%",p.winrate>=50?"var(--teal)":"var(--red)"],
+        ["Partidas",ni(p.jogos)],
+      ],p.convidado?"convidado — não está no players.json":"")}>
+        <img src="${iconImg(p.icon)}"${FB}>
+        <div class="nm">${h(short(p.nome))}${p.convidado?`<i class="gst">·</i>`:""}</div>
+        <div class="wl"><b class="${p.winrate>=50?"t":"r"}">${p.vitorias}V</b> ${p.derrotas}D</div></div>
+      ${lado(p.fregues,false)}
+      ${seco?`<div class="nem-f">nenhum adversário com ${piso}+ duelos ainda</div>`:""}
+    </article>`;}).join("")}</div>`;
+}
+
+/* ----------------------------------------------------- A DUPLA E O DIVÓRCIO
+   A métrica que só a inhouse permite. À esquerda, o que a dupla faz no MESMO
+   time. À direita, o placar de quando o sorteio SEPARA os dois. É o que separa
+   sinergia de verdade de "o forte carregava o fraco": se a dupla vence junta e
+   um domina o outro quando se enfrentam, nunca houve sinergia. */
+function ihDivorcio(l,piso){
+  if(!l||!l.length) return noData("SEM DUPLAS",
+    `Ninguém caiu no mesmo time ${piso}+ vezes ainda.`);
+  return `<div class="dvs">${l.map((d,i)=>{
+    const j=d.juntos,s=d.separados,tot=Math.max(1,s.jogos);
+    const ea=(s.aV/tot*50).toFixed(1), eb=(s.bV/tot*50).toFixed(1);
+    const veredito=!s.jogos?"o sorteio nunca separou os dois"
+      :(Math.abs(s.aV-s.bV)>=2
+        ?`quando se enfrentam, ${short(s.aV>s.bV?d.a.nome:d.b.nome)} manda — a "sinergia" era carregamento`
+        :"juntos ou separados, ficam no empate");
+    return `<div class="dvr" style="--i:${i}">
+      <div class="dv-j"${tip("No mesmo time",[
+        ["Resultado",`${j.v}V ${j.d}D`],["Partidas juntos",ni(j.jogos)],
+        ["Aproveitamento",nf(j.winrate,1)+"%",j.winrate>=50?"var(--teal)":"var(--red)"]],
+        "os dois do mesmo lado do sorteio")}>
+        <span class="pill ${j.winrate>=50?"t":"r"}">${nf(j.winrate,0)}%</span>
+        <span class="s">${j.v}V ${j.d}D em ${j.jogos}</span></div>
+      <div class="dv-n">
+        <span class="ims"><img src="${iconImg(d.a.icon)}"${FB}><img src="${iconImg(d.b.icon)}"${FB}></span>
+        <span class="nm">${h(short(d.a.nome))} <span style="color:var(--dim)">+</span> ${h(short(d.b.nome))}</span>
+        <em>${h(veredito)}</em></div>
+      <div class="dv-s"${tip("Quando o sorteio separa",[
+        [h(short(d.a.nome)),String(s.aV),"var(--teal)"],
+        [h(short(d.b.nome)),String(s.bV),"var(--gold)"],
+        ["Duelos diretos",ni(s.jogos)]],
+        "a barra cresce do meio para quem venceu mais")}>
+        <span class="lb">${s.aV}</span>
+        <span class="tr"><i class="a" style="width:${ea}%"></i><i class="b" style="width:${eb}%"></i></span>
+        <span class="rb">${s.bV}</span></div>
+    </div>`;}).join("")}</div>`;
+}
+
+/* -------------------------------------------------------------- A BALANÇA
+   Uma régua por partida, zero no centro. O comprimento é a diferença de ouro
+   entre os times; a barra cresce para a DIREITA quando quem venceu também tinha
+   mais ouro, e para a ESQUERDA quando não tinha — que é o caso interessante.
+   Substitui o medidor de "aproveitamento do grupo", que aqui é 50% por
+   construção e não mede nada. */
+function ihBalanca(b){
+  const l=b.partidas||[];
+  if(!l.length) return noData("SEM PARTIDAS","Nada para pesar nesta fila.");
+  const ESC=20;   /* fundo de escala em % de diferença de ouro */
+  const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const quando=(ms)=>{const d=new Date(ms);
+    return `${d.getDate()} ${MES[d.getMonth()]}`;};
+  return `<div class="bal">
+    <div class="bal-lg"><span><i class="fx"></i>faixa dos ${b.faixa}% — jogo decidido no fio</span>
+      <span><i class="dr"></i>quem venceu tinha mais ouro</span>
+      <span><i class="es"></i>quem venceu tinha MENOS ouro</span></div>
+    <div class="bal-rows">${l.map((p,i)=>{
+      const larg=(Math.min(Math.abs(p.diff),ESC)/ESC*50).toFixed(2);
+      const pos=p.diff>=0;
+      return `<div class="bal-r" style="--i:${Math.min(i,12)}"${tip(h(p.modo),[
+          ["Quando",quando(p.quando)],["Duração",`${p.minutos} min`],
+          ["Diferença de ouro",nf(Math.abs(p.diff),1)+"%",
+            p.apertada?"var(--gold)":pos?"var(--teal)":"var(--red)"],
+          ["Abates",`${p.abates[0]} do vencedor · ${p.abates[1]} do perdedor`],
+          ["Venceram",p.vencedores.map(short).join(", ")],
+          ["Perderam",p.perdedores.map(short).join(", ")],
+        ],p.virada?"virada: quem venceu terminou atrás no placar de abates"
+          :p.apertada?"decidida no fio":"vitória confortável")}>
+        <span class="bal-d">${quando(p.quando)}<em>${p.minutos}′</em></span>
+        <span class="bal-t">
+          <i class="faixa" style="width:${(b.faixa/ESC*100).toFixed(1)}%"></i>
+          <i class="zero"></i>
+          <i class="fill ${pos?"dr":"es"}" style="${pos?"left:50%":"right:50%"};width:${larg}%"></i>
+        </span>
+        <span class="bal-v ${p.apertada?"g":pos?"t":"r"}">${sg(p.diff,1)}%</span>
+        ${p.virada?`<span class="bal-s">virada</span>`:`<span class="bal-s off"></span>`}
+      </div>`;}).join("")}</div>
+    <p class="bal-note">Mediana da diferença: <b>${nf(b.mediana,1)}%</b>.
+      <b>${b.apertadas}</b> de ${l.length} partidas ficaram dentro dos ${b.faixa}%, e em
+      <b>${b.placarMente}</b> delas quem venceu terminou atrás em abates, em dano ou em ouro.
+      O sorteio faz times parelhos, e quem mata mais perde com frequência —
+      é o fato mais contraintuitivo do conjunto.</p></div>`;
+}
+
+/* -------------------------------------------------------------- O ESPELHO
+   Inhouse contra ARAM PÚBLICA (fila 450), o único controle justo que existe:
+   mesmo mapa, mesmo modo, mesma duração. Comparar com a Fenda seria comparar
+   CS/min de duas coisas diferentes. O desenho é o dos halteres da página
+   Em equipe: ponto prata = ARAM pública, ponto ouro = personalizada, o osso
+   entre eles É a diferença. */
+let ESP_M="kda", ESP_D=null;
+const espv=(m,v)=>(m.d>0?nf(v,m.d):ni(v))+m.u;
+
+function ihEspelhoCorpo(e){
+  const mets=e.metricas||[], ok=e.jogadores||[];
+  const m=mets.find(x=>x.k===ESP_M)||mets[0];
+  const fichas=`<div class="hl-ord esp-ord" role="group" aria-label="Escolher a métrica">
+    <span class="tsl">métrica</span>
+    ${mets.map(x=>`<button type="button" class="tsc" data-em="${x.k}"
+      aria-pressed="${x.k===ESP_M}">${h(x.t)}</button>`).join("")}</div>`;
+  if(!ok.length||!m) return `<div class="hl esp">${fichas}${noData("AMOSTRA PEQUENA",
+    `É preciso ter ${e.minBase}+ ARAM pública e ${e.minIh}+ personalizada para a comparação valer.`)}</div>`;
+  const vs=[];ok.forEach(p=>{vs.push(p.inhouse[m.k],p.base[m.k]);});
+  const mn=Math.min(...vs),mx=Math.max(...vs);
+  const folga=(mx-mn)*.08||Math.max(.5,Math.abs(mx)*.05)||1;
+  const lo=mn-folga,hi=mx+folga,amp=(hi-lo)||1;
+  const px=v=>((v-lo)/amp*100).toFixed(2)+"%";
+  const linhas=[...ok].sort((a,b)=>
+    ((b.inhouse[m.k]-b.base[m.k])*m.dir)-((a.inhouse[m.k]-a.base[m.k])*m.dir));
+  const marcas=[0,1,2,3,4].map(i=>lo+amp*i/4);
+  const sobe=linhas.filter(p=>(p.inhouse[m.k]-p.base[m.k])*m.dir>0).length;
+  return `<div class="hl esp">${fichas}
+    <div class="hl-lg"><span><i class="s"></i>ARAM pública</span>
+      <span><i class="j"></i>personalizada</span>
+      <span>ordenado de quem mais melhora para quem mais piora</span></div>
+    <div class="hl-r hl-hd"><span class="k">jogador</span>
+      <span class="k c">${h(m.t)}</span><span class="k r">Δ</span></div>
+    <div class="hl-rows">${linhas.map((p,i)=>{
+      const j=p.inhouse[m.k],s=p.base[m.k],dl=(j-s),bom=dl*m.dir;
+      const a=Math.min(j,s),z=Math.max(j,s);
+      const t=tip(h(p.nome),[
+        [m.t+" na personalizada",espv(m,j),"var(--gold)"],
+        [m.t+" na ARAM pública",espv(m,s)],
+        ["Diferença",sg(dl,m.d)+m.u,bom>0?"var(--teal)":bom<0?"var(--red)":null],
+        ["Partidas",`${p.inhouse.games} em casa · ${p.base.games} públicas`],
+      ],"o eixo é o mesmo para todo mundo — dá para comparar as linhas entre si");
+      return `<div class="hl-r" style="--i:${i}"${t}>
+        <div class="hl-w"><img src="${iconImg(p.icon)}"${FB}>
+          <div><div class="a">${h(short(p.nome))}</div>
+          <div class="b">${p.inhouse.games} em casa · ${p.base.games} públicas</div></div></div>
+        <div class="hl-t"><div class="hl-in">
+          <div class="rail"></div>
+          ${marcas.map(v=>`<div class="ref" style="left:${px(v)}"></div>`).join("")}
+          <div class="bone ${bom>0?"up":bom<0?"dn":""}"
+            style="left:${px(a)};width:calc(${px(z)} - ${px(a)})"></div>
+          <div class="dot s" style="left:${px(s)}"></div>
+          <div class="dot j" style="left:${px(j)}"></div>
+          <span class="vl s" style="left:${px(s)}">${espv(m,s)}</span>
+          <span class="vl j" style="left:${px(j)}">${espv(m,j)}</span>
+        </div></div>
+        <span class="pill ${bom>0?"t":bom<0?"r":"n"}">${sg(dl,m.d)}${m.u}</span>
+      </div>`;}).join("")}</div>
+    <div class="hl-r hl-ft"><span></span>
+      <div class="hl-ax"><div class="hl-in">${marcas.map(v=>
+        `<span class="tk" style="left:${px(v)}">${espv(m,v)}</span>`).join("")}</div></div>
+      <span></span></div>
+    <p class="hl-note">${sobe} de ${linhas.length} melhoram nesta métrica quando jogam entre si.
+      O eixo não começa no zero: com todo mundo entre ${espv(m,mn)} e ${espv(m,mx)}, um eixo
+      cheio esmagaria os halteres num canto do trilho. A base é <b>toda a ARAM pública do
+      banco</b>, e não só a janela analisada — dentro de 90 dias só uma pessoa do grupo chega
+      a ${e.minBase} ARAM, e o Espelho inteiro sumiria para manter uma coerência que aqui não
+      significa nada.</p></div>`;
+}
+
+function ihEspelho(e){
+  ESP_D=e;
+  return `<div class="card flush"><div style="padding:22px 24px 0">${chead(I.eye,"O espelho",
+    "como cada um joga contra o servidor, e como joga contra os amigos — mesmo mapa, mesmo modo")}</div>
+    ${ihEspelhoCorpo(e)}</div>`;
+}
+
+function ligarInhouse(){
+  document.querySelectorAll("[data-ih-go]").forEach(b=>b.onclick=()=>irPara("inhouse",fila));
+  document.querySelectorAll(".esp-ord .tsc").forEach(b=>b.onclick=()=>{
+    ESP_M=b.dataset.em;
+    const alvo=document.querySelector(".hl.esp"); if(!alvo||!ESP_D) return;
+    alvo.outerHTML=ihEspelhoCorpo(ESP_D);
+    ligarInhouse(); dobrar();
+  });
+}
+
+/* -------------------------------------------------------------- A CHAMADA
+   Não dá para saber ORDEM DE ESCOLHA: é ARAM, o campeão é sorteado, e o
+   participantId do cliente é slot de lobby, não pick order (duas partidas
+   seguidas trazem o mesmo elenco na mesma ordem exata). A substituição honesta
+   é a presença: quem apareceu em cada noite, e quem nunca foi chamado. */
+function ihChamada(c){
+  const n=(c.noites||[]).length;
+  if(!n) return noData("SEM NOITES","Nenhuma personalizada registrada.");
+  return `<div class="cham" style="--n:${n}">
+    <div class="ch-hd"><span class="ch-w">quem</span>
+      ${c.noites.map(x=>`<span class="ch-n"${tip("Noite de "+h(x.rotulo),
+        [["Partidas",ni(x.partidas)]])}>${h(x.rotulo)}</span>`).join("")}
+      <span class="ch-t">tot</span></div>
+    ${c.pessoas.map(p=>`<div class="ch-r">
+      <span class="ch-w"><img src="${iconImg(p.icon)}"${FB}>
+        <b>${h(short(p.nome))}</b>${p.convidado?`<i class="gst">·</i>`:""}</span>
+      ${p.porNoite.map((q,i)=>`<span class="ch-c ${q?"on":"off"}"${tip(
+        h(short(p.nome)),[["Noite de "+h(c.noites[i].rotulo),
+          q?`${q} partida${q>1?"s":""}`:"não jogou"]])}>${q||""}</span>`).join("")}
+      <span class="ch-t">${p.total}</span></div>`).join("")}
+    ${c.nunca.length?`<div class="ch-never">
+      <span class="lbl">nunca chamados</span>
+      ${c.nunca.map(p=>`<span class="ru"><img src="${iconImg(p.icon)}"${FB}>${h(short(p.nome))}</span>`).join("")}
+    </div>`:""}
+    <div class="legend"><span><i class="chon"></i>jogou (o número são as partidas)</span>
+      <span><i class="choff"></i>a noite existiu sem essa pessoa</span>
+      <span>· = convidado</span></div></div>`;
+}
+
+/* -------------------------------------------------- AS PLACAS DE DUELO
+   A .mc do feed empilha os da UDA numa coluna só porque numa fila normal eles
+   estão todos do MESMO lado. Aqui isso viraria uma lista de dez nomes com V e D
+   alternados. A placa parte no eixo: um time de cada lado, com o placar de
+   abates de cada um. */
+function ihDuelos(l){
+  if(!l||!l.length) return noData("SEM PARTIDAS","Nada recente nesta fila.");
+  const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const quando=(ms)=>{const d=new Date(ms), dd=Math.floor((Date.now()-ms)/86400000);
+    const hh=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return dd<=0?`hoje ${hh}`:dd===1?`ontem ${hh}`:dd<7?`há ${dd} dias`
+      :`${d.getDate()} ${MES[d.getMonth()]}`;};
+  const estrela=(ps)=>ps.reduce((a,b)=>((b.k-b.d)>(a.k-a.d)?b:a),ps[0]);
+  return `<div class="mfeed">${l.map((m,i)=>{
+    const todos=m.times.reduce((s,t)=>s.concat(t.jogadores),[]);
+    const est=estrela(todos);
+    const dmax=Math.max(1,...todos.map(p=>Number(p.dmg)||0));
+    const t=tip(h(m.modo),[
+      ["Quando",quando(m.quando)],["Duração",`${m.minutos} min`],
+      ["Placar",m.times.map(x=>x.abates).join(" – ")],
+      ["Em campo",`${todos.length} jogadores`],
+    ],`arte de ${h(est.champion)} — quem mais rendeu na partida`);
+    const ficha=(p,venceu)=>`<div class="mc-p ${venceu?"w":"l"}${p===est?" mvp":""}"
+      style="--dw:${((p.dmg||0)/dmax*100).toFixed(1)}%"${p.championId
+        ?` data-champ="${p.championId}" tabindex="0" role="button"`:""}${tip(
+      `${h(p.nome)} · ${h(p.champion)}`,[
+        ["Resultado",venceu?"Vitória":"Derrota",venceu?"var(--teal)":"var(--red)"],
+        ["KDA",`${p.k} / ${p.d} / ${p.a}`],
+        ["Dano em campeões",ni(p.dmg)],
+        p.convidado?["Conta","convidado, fora do players.json"]:null,
+      ].filter(Boolean),`${h(m.modo)} · ${m.minutos} min`)}>
+      <img src="${champImg(p.championId,p.champion)}"${FB}>
+      <div class="mc-n"><b>${h(short(p.nome))}${p.convidado?`<i class="gst">·</i>`:""}</b>
+        <em>${h(p.champion)}</em></div>
+      <div class="mc-k">${p.k}<i>/</i><b class="d">${p.d}</b><i>/</i>${p.a}</div></div>`;
+    return `<article class="mc x duo2" data-n="5" style="--i:${Math.min(i,12)}">
+      <div class="mc-rail"${t}><span>Duelo</span></div>
+      <div class="mc-body artbox">
+        <img class="art" src="${artLoad(est.championId,est.champion)}"${FBART}>
+        <div class="scrim"></div>
+        <div class="mc-top"${t}>
+          <span class="mc-q">${h(m.modo)}</span>
+          <span class="mc-when">${quando(m.quando)}</span>
+          <span class="mc-dur">${m.minutos}′</span></div>
+        <div class="duo2-g">${m.times.map(x=>`<div class="duo2-t ${x.venceu?"w":"l"}">
+          <div class="duo2-h"><span class="wl ${x.venceu?"w":"l"}">${x.venceu?"Vitória":"Derrota"}</span>
+            <b>${x.abates}</b> abates<em>${ni(x.ouro)} de ouro</em></div>
+          <div class="mc-ps">${x.jogadores.map(p=>ficha(p,x.venceu)).join("")}</div>
+        </div>`).join("")}</div>
+      </div></article>`;}).join("")}</div>`;
+}
+
+/* --------------------------------------------------------- MODOS DA CASA */
+const ihModos=(l)=>!l||!l.length?noData("SEM MODOS","Nada registrado."):
+  `<div>${l.map(m=>`<div class="hbar"${tip(h(m.modo),[["Partidas",ni(m.partidas)],
+      ["Fatia do total",nf(m.share,1)+"%"]],"aproveitamento não entra: numa partida da casa alguém da UDA sempre vence")}>
+    <div class="hn">${h(m.modo)}</div>
+    <div class="ht" style="--bc:var(--gold-2)"><i style="width:${m.share.toFixed(1)}%"></i></div>
+    <div class="hq">${ni(m.partidas)}</div>
+    <div class="hs">${nf(m.share,0)}%</div></div>`).join("")}</div>`;
+
+/* ------------------------------------------------------ O QUE NÃO SE MEDE */
+const ihAviso=(x)=>`<div class="card evnote">${crestImgTag("wmcard")}
+  <div class="eyebrow">Origem do dado</div>
+  <h3>O que esta fila não mede — e por quê</h3>
+  <p>A Riot não expõe personalizada em lugar nenhum da API pública: <code>queue=0</code> devolve
+  lista vazia e <code>type=custom</code> devolve erro dizendo que só aceita ranked, normal, tourney
+  e tutorial. Estas ${ni(x.partidas)} partidas foram lidas do <b>cliente do LoL</b>, por um script
+  local, e vieram no formato antigo da Riot — que não tem o bloco de <i>challenges</i> do
+  Match&#8209;V5.</p>
+  <p>Some daqui, portanto: <b>visão por minuto</b> (pontuação média 0,0 e sentinela zerada em 100%
+  das linhas — no Abismo não se coloca sentinela), <b>CS por minuto</b> (existe, mas é minion
+  passivo e não farm de rota), <b>as rotas</b> (mapa de uma rota só) e <b>15 dos 28 recordes</b>,
+  que dependem de challenges. O aproveitamento do grupo também sai: numa partida da casa alguém da
+  UDA sempre ganha e alguém sempre perde, então ele é ~50% por construção. No lugar dele está
+  <b>a balança</b>.</p>
+  <p>O que sobra é o que só existe aqui: o placar de todos contra todos, quem é algoz de quem, e o
+  que a dupla faz quando o sorteio a separa.</p></div>`;
+
+/* ------------------------------------------------------------- A PÁGINA */
+function pInhouse(){
+  const g=DATA.data.inhouse, x=g&&g.inhouseExtra;
+  if(!g||!x) return noData("SEM PERSONALIZADAS",
+    "Ninguém rodou o coletor ainda. Veja o README: <code>python personalizadas.py</code>.");
+  const conv=x.convidados, pares=Object.keys(x.tabela.celulas).length/2;
+  return `<section><div class="stats">
+      ${heroKpi({acc:"var(--gold-2)",icon:I.target,k:"Partidas da casa",
+        raw:x.partidas,dec:0,v:ni(x.partidas),unit:"",
+        sub:`${x.noites} noite${x.noites>1?"s":""} · ${ni(x.minutos)} minutos somados`,
+        serie:(x.chamada.noites||[]).map(n=>n.partidas),
+        tip:tip("Partidas da casa",[["Partidas",ni(x.partidas)],["Noites",ni(x.noites)],
+          ["Minutos",ni(x.minutos)],
+          ["Fora da conta",`${x.descartadas.remake} remake`]],
+          "UDA contra UDA — de propósito, não entram na fila Todas")})}
+      ${heroKpi({acc:"var(--teal)",icon:I.users,k:"Gente em campo",
+        raw:x.jogadores,dec:0,v:ni(x.jogadores),unit:"",
+        sub:`${x.jogadores-conv} do grupo · ${conv} convidado${conv===1?"":"s"}`,
+        serie:(x.chamada.pessoas||[]).map(p=>p.total).slice().reverse(),
+        tip:tip("Gente em campo",[["Total",ni(x.jogadores)],
+          ["Do players.json",ni(x.jogadores-conv)],["Convidados",ni(conv)],
+          ["Nunca chamados",ni(x.chamada.nunca.length)]],
+          "convidado aparece na tabela, mas não entra no ranking")})}
+      ${heroKpi({acc:"var(--blue)",icon:I.sword,k:"Duelos diretos",
+        raw:pares,dec:0,v:ni(pares),unit:"",
+        sub:`pares que já se enfrentaram · piso de ${x.pisos.duelo} para pesar`,
+        serie:(x.nemesis||[]).map(p=>p.jogos),
+        tip:tip("Duelos diretos",[["Pares que se enfrentaram",ni(pares)],
+          ["Piso para a célula pesar",ni(x.pisos.duelo)]],
+          "cada par conta uma vez, mesmo aparecendo dos dois lados da tabela")})}
+      ${heroKpi({acc:x.balanca.mediana<6?"var(--red)":"var(--teal)",icon:I.bolt,
+        k:"Diferença mediana de ouro",
+        raw:x.balanca.mediana,dec:1,v:nf(x.balanca.mediana,1),unit:"%",
+        sub:`${x.balanca.apertadas} de ${x.partidas} decididas dentro de ${x.balanca.faixa}%`,
+        serie:(x.balanca.partidas||[]).map(p=>Math.abs(p.diff)).sort((a,b)=>a-b),
+        tip:tip("Equilíbrio das partidas",[
+          ["Mediana",nf(x.balanca.mediana,1)+"%"],
+          ["No fio",`${x.balanca.apertadas} de ${x.partidas}`],
+          ["Viradas",ni(x.balanca.viradas),"var(--gold)"]],
+          "o sorteio faz times parelhos com mais frequência do que parece")})}
+    </div></section>
+    <section><div class="card">${chead(I.rank,"A tabela",
+      `placar de todos contra todos · a linha ganha da coluna · mínimo de ${x.pisos.duelo} duelos para a célula pesar`,"gold")}
+      ${ihTabela(x.tabela)}</div></section>
+    <section><div class="card">${chead(I.skull,"Algoz e freguês",
+      `quem mais te derrota, e quem você mais derrota · mínimo de ${x.pisos.duelo} duelos contra a mesma pessoa`,"red")}
+      ${ihNemesis(x.nemesis,x.pisos.duelo)}</div></section>
+    <section><div class="card">${chead(I.users,"A dupla e o divórcio",
+      `o que a dupla faz junta, e o que acontece quando o sorteio separa os dois · mínimo de ${x.pisos.dupla} partidas juntos`)}
+      ${ihDivorcio(x.divorcio,x.pisos.dupla)}</div></section>
+    <section><div class="card">${chead(I.target,"A balança",
+      "uma régua por partida: o quanto os times terminaram distantes em ouro","gold")}
+      ${ihBalanca(x.balanca)}</div></section>
+    <section>${ihEspelho(x.espelho)}</section>
+    <section><div class="grid g32">
+      <div class="card">${chead(I.grid,"Modos da casa","o que vocês jogam quando jogam entre si")}
+        ${ihModos(x.modos)}</div>
+      <div class="card">${chead(I.cal,"A chamada",
+        "quem apareceu em cada noite — e quem nunca foi chamado")}
+        ${ihChamada(x.chamada)}</div>
+    </div></section>
+    <section>${ihAviso(x)}</section>
+    <section><div class="card">${chead(I.clock,"As partidas, uma a uma",
+      "a placa parte no eixo: um time de cada lado — clique num campeão para abrir o dossiê")}
+      ${ihDuelos(x.duelos)}</div></section>`;
+}
+
 /* ============================================================= PÁGINAS */
+
+/* ================================================= PLACAR DA PARTIDA
+   O cartao do jogador diz "pior partida: 2/20/11". A pergunta seguinte e sempre
+   "contra quem?" -- entao qualquer lugar que cite uma partida vira clicavel e
+   abre o placar dos dez, nos moldes da tela de fim de jogo do cliente. */
+const PLACARES=(DATA&&DATA.placares)||{};
+const itemImg=(id)=>(PACK.item||{})[String(id)]||null;
+const feiticoImg=(id)=>(PACK.spell||{})[String(id)]||null;
+const runeImg=(id)=>(PACK.rune||{})[String(id)]||null;
+const temPlacar=(id)=>!!(id&&PLACARES[id]);
+
+const ROTA_LB={TOP:"Topo",JUNGLE:"Selva",MIDDLE:"Meio",BOTTOM:"Atirador",UTILITY:"Suporte"};
+
+function linhaJogador(j,maxDano,maxLevado,win){
+  const itens=(j.itens||[]).slice(0,7);
+  const slots=itens.map((id,i)=>{
+    const src=itemImg(id);
+    const cls=i===6?"tr3":"";
+    return src?`<img class="${cls}" src="${src}" alt=""${tip(h(j.champion),[["Item "+(i===6?"(trinket)":(i+1)),String(id)]])}>`
+              :`<span class="${cls}"></span>`;
+  }).join("");
+  const sp=(j.feiticos||[]).map(s=>{const u=feiticoImg(s);return u?`<img src="${u}" alt="">`:`<span></span>`;}).join("");
+  const ru=runeImg(j.keystone);
+  return `<div class="prow ${win?"win":"lose"} ${j.uda?"eu":""}">
+    <div class="pwho">
+      <span class="pchamp"><img src="${champImg(j.championId,j.champion)}"${FB}><span class="plvl">${j.nivel||"-"}</span></span>
+      <span class="pmini">${sp}</span>
+      <span class="pmini">${ru?`<img src="${ru}" alt="">`:`<span></span>`}</span>
+      <span class="pname"><span class="n ${j.uda?"uda":""}">${h(j.nome)}${j.selo?` <span class="pselo ${j.selo}">${j.selo}</span>`:""}</span>
+        <span class="t">${j.tag?"#"+h(j.tag):""}${j.rota?" · "+h(ROTA_LB[j.rota]||j.rota):""}</span></span>
+    </div>
+    <div class="pkda"><div class="a1">${j.k} / ${j.d} / ${j.a}</div>
+      <div class="a2">${nf(j.kda,2)} KDA</div></div>
+    <div class="pdmg">
+      <div class="lbl"><span>${ni(j.dano)}</span><span>${ni(j.danoSofrido)}</span></div>
+      <div class="tr2"><i class="dado" style="width:${Math.round(j.dano/maxDano*100)}%"></i></div>
+      <div class="tr2"><i class="levado" style="width:${Math.round(j.danoSofrido/maxLevado*100)}%"></i></div>
+    </div>
+    <div class="pnum">${j.kp}%<small>particip.</small></div>
+    <div class="pnum">${ni(j.wards)}/${ni(j.wardsMortas)}<small>${ni(j.sentinelasControle)} ctrl</small></div>
+    <div class="pnum">${ni(j.cs)}<small>${nf(j.csMin,1)}/min</small></div>
+    <div class="pitems">${slots}</div>
+  </div>`;
+}
+
+function blocoTime(time_,maxDano,maxLevado){
+  const lado=time_.id===100?"Equipe Azul":"Equipe Vermelha";
+  const obj=[["torres","torres"],["dragoes","dragões"],["baroes","barões"],
+    ["arautos","arautos"],["inibidores","inibidores"]]
+    .filter(([k])=>time_[k]!=null).map(([k,l])=>`<span><b>${ni(time_[k])}</b> ${l}</span>`).join("");
+  return `<div class="tside ${time_.win?"win":"lose"}">
+      <span class="res">${time_.win?"Vitória":"Derrota"}</span><span>${lado}</span>
+      <span class="obj">${obj}</span></div>
+    <div class="tbl-head"><span>Jogador</span><span>KDA</span><span>Dano dado / sofrido</span>
+      <span>Particip.</span><span>Sentinelas</span><span>CS</span><span>Itens</span></div>
+    ${time_.jogadores.map(j=>linhaJogador(j,maxDano,maxLevado,time_.win)).join("")}`;
+}
+
+function montarPlacar(id){
+  const m=PLACARES[id];
+  if(!m) return `<div class="mhead"><h3>Partida não encontrada</h3>
+    <button class="mclose" data-fechar>&times;</button></div>
+    <div style="padding:34px">${noData("SEM PLACAR","Esta partida não está no banco local.")}</div>`;
+  const todos=m.times.flatMap(t2=>t2.jogadores);
+  const maxDano=Math.max(1,...todos.map(j=>j.dano));
+  const maxLevado=Math.max(1,...todos.map(j=>j.danoSofrido));
+  const A=m.times[0]||{},B=m.times[1]||{};
+  const ouroT=Math.max(1,(A.ouroTime||0)+(B.ouroTime||0));
+  const abT=Math.max(1,(A.abatesTime||0)+(B.abatesTime||0));
+  const quando=m.criacao?new Date(m.criacao).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"";
+  const udas=todos.filter(j=>j.uda).map(j=>short(j.nome));
+  return `<div class="mhead">
+      <div><h3>${h(m.queue)} · ${Math.round((m.duracao||0)/60)} min</h3>
+        <div class="sub">${h(quando)}${udas.length?` · UDA em campo: ${h(udas.join(", "))}`:""}</div></div>
+      <button class="mclose" data-fechar aria-label="Fechar">&times;</button></div>
+    ${blocoTime(A,maxDano,maxLevado)}
+    <div class="mband">
+      <div class="lado"><span><b>${ni(A.torres||0)}</b> torres</span><span><b>${ni(A.dragoes||0)}</b> dragões</span><span><b>${ni(A.baroes||0)}</b> barões</span></div>
+      <div class="meio">
+        <div class="l">Abates</div>
+        <div class="barra"><i style="width:${(A.abatesTime||0)/abT*100}%;background:var(--teal)"></i><i style="width:${(B.abatesTime||0)/abT*100}%;background:var(--red)"></i></div>
+        <div class="v"><span>${ni(A.abatesTime||0)}</span><span>${ni(B.abatesTime||0)}</span></div>
+        <div class="l" style="margin-top:9px">Ouro</div>
+        <div class="barra"><i style="width:${(A.ouroTime||0)/ouroT*100}%;background:var(--teal)"></i><i style="width:${(B.ouroTime||0)/ouroT*100}%;background:var(--red)"></i></div>
+        <div class="v"><span>${ni(A.ouroTime||0)}</span><span>${ni(B.ouroTime||0)}</span></div>
+      </div>
+      <div class="lado dir"><span><b>${ni(B.torres||0)}</b> torres</span><span><b>${ni(B.dragoes||0)}</b> dragões</span><span><b>${ni(B.baroes||0)}</b> barões</span></div>
+    </div>
+    ${blocoTime(B,maxDano,maxLevado)}`;
+}
+
+function abrirPlacar(id){
+  const box=$("#mbox"); if(!box) return;
+  box.innerHTML=montarPlacar(id);
+  $("#modal").setAttribute("open","");
+  document.body.style.overflow="hidden";
+  box.scrollTop=0;
+}
+function fecharPlacar(){
+  $("#modal").removeAttribute("open");
+  document.body.style.overflow="";
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("[data-fechar]")) return fecharPlacar();
+  const alvo=e.target.closest("[data-match]");
+  if(alvo&&temPlacar(alvo.dataset.match)) abrirPlacar(alvo.dataset.match);
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharPlacar();});
+/* Atalho de marcacao: so vira clicavel a partida que existe no banco. */
+const linkPartida=(id)=>temPlacar(id)?` data-match="${h(id)}" `:" ";
+
+/* ============================================================= ZOEIRA */
+function pZoeira(){
+  const trofeus=(DATA.zoeira||[]);
+  if(!trofeus.length) return noData("SEM TROFÉUS AINDA",
+    `É preciso pelo menos ${(DATA.zoeira&&DATA.zoeira[0]||{}).minPartidas||10} partidas por pessoa para a zoeira começar.`);
+  const grupos=[["vergonha","Hall da vergonha","o que ninguém quer levar pra casa",I.skull,"red"],
+                ["gloria","Hall da glória","aqui dá pra se gabar",I.award,""],
+                ["curiosidade","Departamento de curiosidades","nada disso ganha partida",I.bolt,"gold"]];
+  return grupos.map(([g,titulo,sub,icone,tone])=>{
+    const lista=trofeus.filter(t2=>t2.grupo===g);
+    if(!lista.length) return "";
+    return `<section><div class="sh-plain">${chead(icone,titulo,sub,tone)}</div>
+      <div class="zgrid">${lista.map(t2=>{
+        const c=t2.campeao, resto=t2.ranking.slice(1,4);
+        return `<div class="ztrof ${g}">
+          <div class="zh"><div class="tt">${h(t2.titulo)}</div><div class="lg">${h(t2.legenda)}</div></div>
+          <div class="zc"><img src="${iconImg(c.icon)}"${FB}>
+            <div class="who"><div class="n">${h(c.gameName)}</div>
+              <div class="u">${h(t2.unidade)}</div></div>
+            <div class="val"><div class="v">${nf(c.valor,t2.casas)}</div>
+              <div class="m">média ${nf(t2.media,t2.casas)}</div></div></div>
+          <div class="zlist" data-trof="${h(t2.key)}">
+            ${t2.ranking.map((r,i)=>`<div class="zrow" ${i>3?'hidden data-extra':""}>
+              <span class="p">${r.pos}</span><img src="${iconImg(r.icon)}"${FB}>
+              <span class="n">${h(r.gameName)}</span>
+              <span class="v">${nf(r.valor,t2.casas)}</span></div>`).join("")}
+          </div>
+          ${t2.ranking.length>4?`<button class="zmais" data-zmais="${h(t2.key)}">ver os ${t2.ranking.length} do elenco</button>`:""}
+        </div>`;}).join("")}</div></section>`;
+  }).join("");
+}
+
+/* ============================================================ ARSENAL */
+let arsenalAba="itens";
+function pArsenal(){
+  const a=DATA.arsenal;
+  if(!a||!a.itens||!a.itens.length) return noData("SEM ARSENAL",
+    "O catálogo do Data Dragon não estava disponível quando o painel foi gerado.");
+  const abas=[["itens","Lendários"],["baratos","Botas e componentes"],["trinkets","Trinkets e consumíveis"]];
+  const lista=a[arsenalAba]||[];
+  return `<section><div class="card">${chead(I.sword,"O que vocês compram",
+      `inventário final de ${ni(a.partidas)} partidas · quantas vezes cada item terminou no inventário`)}
+      <div class="aseg">${abas.map(([k,n])=>
+        `<button data-arsenal="${k}" aria-pressed="${k===arsenalAba}">${n}</button>`).join("")}</div>
+      <div class="agrid">${lista.map(i=>`<div class="aitem"${tip(h(i.nome),[
+          ["Partidas com o item",ni(i.partidas)],
+          ["Fatia das partidas",nf(i.share,1)+"%"],
+          ["Aproveitamento",nf(i.winrate,1)+"%",i.winrate>=50?"var(--teal)":"var(--red)"],
+          ["Custo",ni(i.ouro)+" de ouro"],
+          ["Quem mais usa",i.dono?`${i.dono} (${i.donoN}x)`:"—"],
+        ])}>
+        <span class="ic">${itemImg(i.id)?`<img src="${itemImg(i.id)}" alt="">`:""}</span>
+        <span class="nm"><span class="n">${h(i.nome)}</span>
+          <span class="s">${i.dono?h(short(i.dono))+" lidera":ni(i.ouro)+"g"}</span></span>
+        <span class="qt"><span class="q">${ni(i.partidas)}</span>
+          <span class="w ${i.winrate>=50?"good":"bad"}">${nf(i.winrate,0)}%</span></span>
+      </div>`).join("")}</div></div></section>
+    <section><div class="grid g2">
+      <div class="card">${chead(I.bolt,"Runas principais","a keystone que vocês mais equipam","gold")}
+        <div>${a.runas.map(r=>`<div class="hbar"${tip(h(r.nome),[
+            ["Árvore",h(r.arvore)],["Partidas",ni(r.partidas)],
+            ["Fatia",nf(r.share,1)+"%"],
+            ["Aproveitamento",nf(r.winrate,1)+"%",r.winrate>=50?"var(--teal)":"var(--red)"]])}>
+          <span style="width:26px;flex:0 0 auto">${runeImg(r.id)?`<img src="${runeImg(r.id)}" style="width:24px;height:24px" alt="">`:""}</span>
+          <div class="hn" style="width:132px">${h(r.nome)}</div>
+          <div class="ht"><i style="width:${r.share/(a.runas[0].share||1)*100}%"></i></div>
+          <div class="hq">${ni(r.partidas)}</div>
+          <span class="pill ${r.winrate>=50?"t":"r"}">${nf(r.winrate,0)}%</span></div>`).join("")}</div></div>
+      <div class="card">${chead(I.target,"Duplas de feitiço","o par que vocês levam pra rota")}
+        <div>${a.feiticos.map(f=>`<div class="hbar"${tip(h(f.nome),[
+            ["Partidas",ni(f.partidas)],["Fatia",nf(f.share,1)+"%"],
+            ["Aproveitamento",nf(f.winrate,1)+"%",f.winrate>=50?"var(--teal)":"var(--red)"]])}>
+          <div class="hn" style="width:150px">${h(f.nome)}</div>
+          <div class="ht"><i style="width:${f.share/(a.feiticos[0].share||1)*100}%"></i></div>
+          <div class="hq">${ni(f.partidas)}</div>
+          <span class="pill ${f.winrate>=50?"t":"r"}">${nf(f.winrate,0)}%</span></div>`).join("")}</div></div>
+    </div></section>`;
+}
+
+/* ============================================================== MURAL */
+function pMural(){
+  const meses=DATA.mural||[], titulos=DATA.titulos||[];
+  if(!meses.length) return noData("MURAL VAZIO",
+    "É preciso pelo menos um mês fechado com partidas suficientes para eleger alguém.");
+  return `${titulos.length?`<section><div class="sh-plain">${chead(I.award,"Quadro de títulos",
+      "coroas de UDA do mês e vexames de Afundado, no período inteiro","gold")}</div>
+    <div class="mutit">${titulos.map(t2=>`<div class="mut"${tip(h(t2.gameName),
+        t2.meses.map(m=>[m.rotulo,m.tipo==="rei"?"UDA do mês":"Afundado do mês",
+          m.tipo==="rei"?"var(--gold)":"var(--red)"]))}>
+      <img src="${iconImg(t2.icon)}"${FB}>
+      <span class="n">${h(short(t2.gameName))}</span>
+      <span class="c">${t2.reis?`<span class="pill g">${t2.reis} 👑</span>`:""}
+        ${t2.afundadas?`<span class="pill r">${t2.afundadas} 💀</span>`:""}</span>
+    </div>`).join("")}</div></section>`:""}
+    <section><div class="mugrid">${meses.map(m=>`
+      <div class="mumes ${m.emDisputa?"aberto":""}">
+        <div class="muh"><div><div class="mes">${h(m.rotulo)}</div>
+          <div class="meta">${ni(m.partidas)} partidas · ${nf(m.winrate,1)}% de vitórias ·
+            KDA ${nf(m.kda,2)} · ${m.concorrentes} concorrentes</div></div>
+          ${m.emDisputa?`<span class="tag">em disputa</span>`:""}</div>
+        <div class="mudois">
+          <div class="mucard rei"><div class="titulo">👑 UDA do mês</div>
+            <div class="corpo"><img src="${iconImg(m.rei.icon)}"${FB}>
+              <div style="min-width:0"><div class="nm">${h(m.rei.gameName)}</div>
+                <div class="mot">${h(m.rei.motivo)}</div></div>
+              <div class="sc"><div class="v">${nf(m.rei.score,1)}</div><div class="l">UDA Score</div></div>
+            </div></div>
+          <div class="mucard pior"><div class="titulo">💀 Afundado do mês</div>
+            <div class="corpo"><img src="${iconImg(m.afundado.icon)}"${FB}>
+              <div style="min-width:0"><div class="nm">${h(m.afundado.gameName)}</div>
+                <div class="mot">${h(m.afundado.motivo)}</div></div>
+              <div class="sc"><div class="v">${nf(m.afundado.score,1)}</div><div class="l">UDA Score</div></div>
+            </div></div>
+        </div>
+        ${m.destaques.length?`<div class="mudest">${m.destaques.map(d=>`<span class="d">
+          <img src="${iconImg(d.icon)}"${FB}><span>${h(d.titulo)}: <b>${h(d.player)}</b>
+          ${nf(d.valor,String(d.valor).includes(".")?2:0)} ${h(d.unidade)}</span></span>`).join("")}
+          ${m.campeao?`<span class="d"><img src="${champImg(m.campeao.championId,m.campeao.champion)}"${FB}
+            style="border-radius:6px"><span>Campeão do mês: <b>${h(m.campeao.champion)}</b>
+            ${m.campeao.partidas}x</span></span>`:""}</div>`:""}
+      </div>`).join("")}</div></section>`;
+}
+
 const PAGES=[
   {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O panorama do grupo na fila selecionada"},
   {k:"ranking",n:"Classificação",i:I.rank,g:"Principal",q:1,sub:"Todos os jogadores, todas as métricas"},
   {k:"evolucao",n:"Evolução",i:I.trend,g:"Principal",q:1,sub:"Como o desempenho de vocês muda ao longo do tempo"},
   {k:"equipe",n:"Em equipe",i:I.users,g:"Grupo",q:0,sub:"Só as partidas com 2 ou mais da UDA no mesmo time"},
+  {k:"inhouse",n:"Personalizadas",i:I.target,g:"Grupo",q:0,sub:"As partidas que vocês jogam entre si — UDA contra UDA"},
   {k:"jogadores",n:"Jogadores",i:I.user,g:"Grupo",q:1,sub:"Um cartão por pessoa, com radar comparativo"},
   {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo joga, e com que resultado"},
+  {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:0,sub:"Itens, runas e feitiços que vocês mais levam"},
+  {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"O UDA e o Afundado de cada mês"},
+  {k:"zoeira",n:"Troféus",i:I.skull,g:"Zoeira",q:0,sub:"As métricas que existem só para zoar"},
   {k:"regras",n:"Regras",i:I.book,g:"Ajuda",q:0,sub:"Como o UDA Score é calculado"},
 ];
 let page="visao",fila="all";
-const grupo=()=>DATA.data[page==="equipe"?"squad":fila];
+/* PÁGINAS QUE EXISTEM AGORA. Duas somem sozinhas, e por motivos diferentes:
+   - "Personalizadas" só aparece se houver personalizada no banco. É a mesma
+     trava de "Em equipe", e é ela que impede o erro do "Outros modos": declarar
+     uma aba cujo conteúdo é estruturalmente vazio.
+   - "Evolução" some quando a fila é a das personalizadas: são 17 partidas em 4
+     noites, e média móvel de dez partidas ou corrida MENSAL não têm o que dizer.
+     Melhor não oferecer o link do que abrir uma página que se desculpa. */
+const temInhouse=()=>!!(DATA.data.inhouse&&DATA.data.inhouse.team.uniqueMatches>0);
+const temZoeira=()=>!!(DATA.zoeira&&DATA.zoeira.length);
+const temMural=()=>!!(DATA.mural&&DATA.mural.length);
+const temArsenal=()=>!!(DATA.arsenal&&DATA.arsenal.itens&&DATA.arsenal.itens.length);
+const paginas=()=>PAGES.filter(p=>
+  (p.k!=="inhouse"||temInhouse())&&(p.k!=="evolucao"||fila!=="inhouse")
+  &&(p.k!=="zoeira"||temZoeira())&&(p.k!=="mural"||temMural())
+  &&(p.k!=="arsenal"||temArsenal()));
+const grupo=()=>DATA.data[page==="equipe"?"squad":page==="inhouse"?"inhouse":fila];
 /* Fila sem nenhuma partida so servia para levar a 6 paginas vazias seguidas --
    "Outros modos" vive assim porque Arena esta em BROKEN_MODES no kpi.py.
    "Todas" e a fila ATUAL ficam sempre, senao o seletor sumiria debaixo de quem
@@ -4317,7 +5377,38 @@ function pVisao(){
       <div class="legend"><span><i style="background:var(--teal)"></i>dano acima da média, morrendo pouco</span>
       <span><i style="background:var(--gold)"></i>meio-termo</span>
       <span><i style="background:var(--red)"></i>pouco dano, morrendo muito</span></div></div></section>
-    <section data-sec="medidor"><div class="grid g3">
+    ${g.lcu?medidorCasa(g):medidorPadrao(g,t,acima)}
+    <section data-sec="feed"><div class="card">${chead(I.clock,"Últimas partidas",
+      "uma placa por partida — clique num campeão para abrir o dossiê")}
+      ${feedRecentes(g.recent)}</div></section>`;
+}
+
+/* O trio de baixo da Visão geral tem DUAS versões, e não é por capricho:
+   na fila das personalizadas o medidor de aproveitamento marcaria ~50% em
+   qualquer cenário (os dois times são da UDA) e o cartão de rotas leria um
+   campo que o cliente do LoL preenche com ruído num mapa de uma rota só.
+   O que sobra de verdade — o equilíbrio das partidas — mora na página
+   Personalizadas, e este par de cartões leva até lá. */
+function medidorCasa(g){
+  const x=g.inhouseExtra;
+  if(!x) return "";
+  return `<section data-sec="medidor"><div class="grid g2">
+      <div class="card">${chead(I.target,"Equilíbrio das partidas",
+        "o medidor de aproveitamento não vale aqui: numa partida da casa alguém da UDA sempre ganha","gold")}
+        <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+          ${stat("gold",I.bolt,"Diferença mediana de ouro",nf(x.balanca.mediana,1)+"%","entre os dois times")}
+          ${stat("teal",I.target,"Decididas no fio",`${x.balanca.apertadas}/${x.partidas}`,`dentro de ${x.balanca.faixa}%`)}
+          ${stat("red",I.trend,"O placar mente",`${x.balanca.placarMente}/${x.partidas}`,"quem venceu terminou atrás")}
+          ${stat("blue",I.users,"Noites",ni(x.noites),`${x.jogadores} pessoas em campo`)}
+        </div>
+        <div class="qgo" style="margin-top:16px"><button class="pbtn" data-ih-go="1">Abrir a página Personalizadas</button></div></div>
+      <div class="card">${chead(I.grid,"Modos da casa","o que vocês jogam quando jogam entre si")}
+        ${ihModos(x.modos)}</div>
+    </div></section>`;
+}
+
+function medidorPadrao(g,t,acima){
+  return `<section data-sec="medidor"><div class="grid g3">
       <div class="card">${chead(I.target,"Aproveitamento do grupo","na fila selecionada")}
         ${gauge({valor:t.winrate,rotulo:`${ni(t.wins)}V · ${ni(t.losses)}D`,
           pill:acima?"Acima de 50%":"Abaixo de 50%",
@@ -4339,10 +5430,7 @@ function pVisao(){
         ${barrasHoriz(g.roles,"role","games","winrate","share")}</div>
       <div class="card">${chead(I.grid,"Filas","distribuição das partidas")}
         ${barrasHoriz(g.queues,"queue","matches","winrate","share")}</div>
-    </div></section>
-    <section data-sec="feed"><div class="card">${chead(I.clock,"Últimas partidas",
-      "uma placa por partida — clique num campeão para abrir o dossiê")}
-      ${feedRecentes(g.recent)}</div></section>`;
+    </div></section>`;
 }
 
 function pRanking(){
@@ -4601,19 +5689,22 @@ function pRegras(){
 const vazio=()=>noData("SEM PARTIDAS NESTA FILA",
   `Ninguém do grupo jogou <b>${h((DATA.groups.find(x=>x.key===fila)||{}).label||fila)}</b> na janela analisada.`);
 const RENDER={visao:pVisao,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
-  jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
+  arsenal:pArsenal,mural:pMural,zoeira:pZoeira,
+  inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 
 /* ========================================================== NAVEGAÇÃO */
 function pintarNav(){
-  const grupos=[...new Set(PAGES.map(p=>p.g))];
+  const vis=paginas();
+  const grupos=[...new Set(vis.map(p=>p.g))];
   $("#nav").innerHTML=grupos.map(gr=>`<div class="navgroup"><div class="lbl">${gr}</div>
-    ${PAGES.filter(p=>p.g===gr).map(p=>{
-      const badge=p.k==="equipe"&&DATA.data.squad?`<span class="badge">${DATA.data.squad.team.uniqueMatches}</span>`:"";
+    ${vis.filter(p=>p.g===gr).map(p=>{
+      const badge=p.k==="equipe"&&DATA.data.squad?`<span class="badge">${DATA.data.squad.team.uniqueMatches}</span>`
+        :p.k==="inhouse"&&DATA.data.inhouse?`<span class="badge">${DATA.data.inhouse.team.uniqueMatches}</span>`:"";
       return `<button class="nav" data-p="${p.k}" ${p.k===page?'aria-current="page"':""}>${svg(p.i)}${h(p.n)}${badge}</button>`;
     }).join("")}</div>`).join("");
   document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>irPara(b.dataset.p,fila));
 
-  const meta=PAGES.find(p=>p.k===page)||PAGES[0];
+  const meta=vis.find(p=>p.k===page)||PAGES[0];
   $("#ptitle").textContent=meta.n;
   $("#psub").textContent=meta.sub;
 
@@ -4655,6 +5746,10 @@ function irPara(p,q){
   /* trocar de pagina fecha a gaveta: ela e um desvio, nao um lugar onde se fica */
   fecharGaveta(!!(document.activeElement&&$("#drawer").contains(document.activeElement)));
   page=RENDER[p]?p:"visao"; fila=DATA.data[q]?q:"all";
+  /* a Evolução não existe na fila das personalizadas, e a página das
+     personalizadas não existe sem personalizada no banco. Quem chega por link
+     direto (#/evolucao/inhouse) cai na Visão geral em vez de numa tela morta. */
+  if(!paginas().some(x=>x.k===page)) page="visao";
   location.hash=`#/${page}/${fila}`;
   sortKey="rank";sortDir=1;
   pintarNav(); desenhar(); window.scrollTo({top:0,behavior:"instant"});
@@ -4667,8 +5762,9 @@ function desenhar(){
   if($("#tbl")) ligarTabela();
   ligarCartoes();
   ligarSeletor();
+  ligarZoeira();
   ligarRecordes();
-  ligarFita(); ligarHalteres(); ligarEstante();
+  ligarFita(); ligarHalteres(); ligarEstante(); ligarInhouse();
   /* os graficos da Evolucao nascem MEDIDOS: a caixa existe, o SVG vem depois */
   ligarGraficos();
   /* dobrar ANTES de vida(): quem nasce dobrado nao entra na cascata de entrada
@@ -4784,6 +5880,20 @@ function dobrar(){
   }));
 }
 MQ_DOBRA.addEventListener("change",dobrar);
+
+function ligarZoeira(){
+  document.querySelectorAll("[data-zmais]").forEach(b=>b.onclick=()=>{
+    const lista=document.querySelector(`[data-trof="${CSS.escape(b.dataset.zmais)}"]`);
+    if(!lista) return;
+    const extras=lista.querySelectorAll("[data-extra]");
+    const abrindo=extras[0]&&extras[0].hidden;
+    extras.forEach(e=>e.hidden=!abrindo);
+    b.textContent=abrindo?"mostrar só o pódio":`ver os ${lista.children.length} do elenco`;
+  });
+  document.querySelectorAll("[data-arsenal]").forEach(b=>b.onclick=()=>{
+    arsenalAba=b.dataset.arsenal; desenhar();
+  });
+}
 
 function ligarSeletor(){
   document.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{selJog.clear();desenhar();});

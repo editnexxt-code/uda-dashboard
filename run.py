@@ -13,7 +13,7 @@ import argparse
 import sys
 import webbrowser
 
-from uda import assets, config, fetch, kpi, render, riot, store
+from uda import assets, config, fetch, inhouse, kpi, render, riot, store
 
 
 def main() -> int:
@@ -52,9 +52,16 @@ def main() -> int:
             if corrigidos:
                 print(f"  {corrigidos} participacoes reassociadas ao roster atual")
 
-        print("\nCalculando KPIs...")
         champ_index = riot.champion_index()
         ddragon_ver = riot.ddragon_version()
+
+        # As personalizadas entram AQUI, nao no fetch: elas nao existem na API da
+        # Riot. O coletor local (personalizadas.py) so escreve arquivo; e este
+        # import que leva o arquivo para o banco -- no PC de quem coletou e,
+        # igualzinho, no GitHub Actions, que le a pasta versionada.
+        inhouse.importar(conn, config.ROOT / "personalizadas", champ_index)
+
+        print("\nCalculando KPIs...")
         payload = kpi.build_payload(
             conn,
             window_days=window,
@@ -66,6 +73,7 @@ def main() -> int:
         # Icones embutidos: sem isso o painel depende de CDN e fica sem imagem
         # nenhuma offline ou em visualizador com CSP restritiva.
         payload["icons"] = assets.construir(payload, ddragon_ver, champ_index)
+        payload["icons"].update(assets.extras(payload, ddragon_ver))
 
         total = payload["data"]["all"]["team"]["uniqueMatches"]
         if not total:

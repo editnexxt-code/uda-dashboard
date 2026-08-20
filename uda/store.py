@@ -221,6 +221,21 @@ CREATE TABLE IF NOT EXISTS match_queue (
     done          INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_queue_todo ON match_queue (done);
+
+-- Quem apareceu nas PERSONALIZADAS. Existe porque nelas ha gente de fora do
+-- players.json (convidados), e participants so guarda puuid: sem esta tabela a
+-- tabela de confrontos teria buraco no lugar de cinco pessoas. A chave e o Riot
+-- ID em minusculas, que e a unica identidade REAL que o cliente do LoL entrega
+-- (o puuid que ele devolve tem 36 caracteres e nao e o PUUID da Riot).
+CREATE TABLE IF NOT EXISTS inhouse_accounts (
+    chave     TEXT PRIMARY KEY,
+    game_name TEXT,
+    tag_line  TEXT,
+    puuid     TEXT,
+    icon      INTEGER,
+    tracked   INTEGER DEFAULT 0,
+    visto     INTEGER
+);
 """
 
 
