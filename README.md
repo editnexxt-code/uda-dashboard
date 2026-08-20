@@ -96,6 +96,11 @@ apanha (físico / mágico / verdadeiro), onde se sente seguro para matar (na sai
 da própria torre ou na cara da inimiga), qual dos três botões o dedo castiga, e
 o pódio das mortes sem nenhum culpado por perto.
 
+**O Mapa** — mapa de calor das mortes, com a coordenada exata que a Riot
+registra em cada abate. Um mapa do grupo inteiro e um por pessoa. Só Summoner's
+Rift: o Abismo Uivante usa outra escala de coordenada, e sob o filtro ARAM a aba
+fica vazia de propósito em vez de mostrar o mapa errado.
+
 **Regras** — como o UDA Score é calculado.
 
 Tudo é recalculado **por fila**: Todas, Solo, Flex, Normais, ARAM,
@@ -130,6 +135,22 @@ A classificação é por `gameMode`, que vem dentro da partida — não por ID d
 A Riot cria IDs novos sem avisar e a lista pública dela fica desatualizada.
 
 Remakes e partidas de menos de 5 minutos também saem.
+
+### A timeline, e por que ela é a exceção
+
+`/matches/{id}/timeline` traz um quadro por minuto com ouro, XP, CS e posição
+dos dez, mais cada abate com a coordenada no mapa, cada item na ordem de compra
+e cada ponto de habilidade. É o dado mais caro do projeto: **963 KB crus por
+partida, 82 KB comprimidos**. As 1681 partidas dariam 139 MB atravessando o
+cache do Actions a cada duas horas.
+
+Por isso, e só aqui, o bruto **não** é guardado: `uda/timeline.py` extrai o que
+vira tela (~700 bytes por participante, ~2 MB no total) e descarta o resto. A
+contrapartida é real e assumida: campo novo daqui exige rebuscar na API.
+
+A coleta tem teto por execução (`TIMELINE_LIMIT`, padrão 250) e vai da partida
+mais recente para a mais antiga, com a marca em `matches.tl_done`. Cair no meio
+não perde o que já veio, e o histórico converge em algumas rodadas.
 
 ### Campos destravados sem gastar API
 
@@ -176,6 +197,7 @@ Tudo no `.env`:
 | `MATCH_COUNT` | 100 | partidas por jogador na primeira carga (máx. 100) |
 | `WINDOW_DAYS` | 90 | janela de análise; `0` usa o histórico inteiro |
 | `MIN_GAMES` | 5 | mínimo de partidas para entrar no ranking |
+| `TIMELINE_LIMIT` | 250 | timelines buscadas por execução; `0` desliga |
 
 Para mudar quem aparece, edite `players.json` com o Riot ID completo (`Nome#TAG`)
 e rode `python run.py`.
@@ -206,6 +228,8 @@ uda/mural.py          UDA e Afundado do mês
 uda/arsenal.py        itens, runas e feitiços
 uda/rota.py           o algoz de rota
 uda/autopsia.py       como cada um morre, e de que
+uda/timeline.py       coleta e extrato da timeline (minuto a minuto)
+uda/mapa.py           mapa de calor das mortes
 uda/partidas.py       placar completo das partidas citadas
 uda/inhouse.py        importa e analisa as personalizadas
 uda/assets.py         embute ícones e a ficha dos campeões
