@@ -2786,6 +2786,30 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .perbar .seg button{padding:6px 11px;font-size:12px}
 .perbar .cnt{font-size:11.5px;color:var(--dim)}
 
+
+/* ---------------------------------------- algoz e freguês: legível de relance
+   O cartão dizia "4 – 1" sem dizer de quem era cada número, e sem rótulo nos
+   lados. Agora cada lado se anuncia e o placar vira frase: "perdeu 4x". */
+.nem-s .rot{display:block;font:700 8.5px/1 var(--body);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:6px}
+.nem-s.mau .rot{color:var(--red)} .nem-s.bom .rot{color:var(--teal)}
+.nem-s .frase{font:600 10.5px/1.2 var(--body);margin-top:4px}
+.nem-s.mau .frase{color:var(--red)} .nem-s.bom .frase{color:var(--teal)}
+.nem-s .sc{font-size:11.5px!important;color:var(--dim)!important}
+.nem-c .eu{display:block;font:700 8.5px/1 var(--body);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.nem-vazios{margin-top:12px}
+.nem-toggle{appearance:none;width:100%;border:1px dashed var(--line);background:none;
+  color:var(--dim);border-radius:var(--rs);padding:9px;font:500 11.5px/1 var(--body);cursor:pointer}
+.nem-toggle:hover{color:var(--teal);border-color:var(--teal)}
+
+/* --------------------------- partidas uma a uma: 4 abertas, o resto dobrado */
+.mfeed-mais{appearance:none;width:100%;margin-top:12px;border:1px solid var(--line);
+  background:var(--card2);color:var(--mut);border-radius:var(--rs);padding:11px;
+  font:600 12px/1 var(--body);cursor:pointer}
+.mfeed-mais:hover{color:var(--teal);border-color:var(--teal)}
+.mfeed .mc[data-dobrada]{display:none}
+
 </style>
 </head>
 <body>
@@ -4812,14 +4836,21 @@ function ihTabela(t){
    cartão tracejado dizendo que faltou amostra, em vez de sumir da página. */
 function ihNemesis(l,piso){
   if(!l||!l.length) return noData("SEM DUELOS","Ninguém se enfrentou ainda.");
+  /* "4 – 1" nao dizia de quem era cada numero. Vira frase: perdeu/ganhou Nx,
+     e o placar cru fica embaixo, pequeno, so como conferencia. */
   const lado=(p,mau)=>!p?`<div class="nem-s vazio"><span>—</span></div>`
     :`<div class="nem-s ${mau?"mau":"bom"}"${tip(h(short(p.nome)),[
-        ["Placar no duelo",`${mau?p.d:p.v} – ${mau?p.v:p.d}`,mau?"var(--red)":"var(--teal)"],
-        ["Duelos",ni(p.jogos)]],mau?"quem mais te derrota":"quem você mais derrota")}>
+        ["Derrotas para ele",String(p.d),"var(--red)"],
+        ["Vitórias sobre ele",String(p.v),"var(--teal)"],
+        ["Duelos",ni(p.jogos)]],mau?"o algoz: quem mais te derrota":"o freguês: quem você mais derrota")}>
+      <span class="rot">${mau?"apanha de":"bate em"}</span>
       <img src="${iconImg(p.icon)}"${FB}>
       <div class="nm">${h(short(p.nome))}</div>
-      <div class="sc">${mau?p.d:p.v}<i>–</i>${mau?p.v:p.d}</div></div>`;
-  return `<div class="nems">${l.map(p=>{
+      <div class="frase">${mau?`perdeu ${p.d}x`:`ganhou ${p.v}x`}</div>
+      <div class="sc">${p.v}V ${p.d}D em ${p.jogos}</div></div>`;
+  const cheios=l.filter(p=>p.algoz||p.fregues);
+  const vazios=l.filter(p=>!p.algoz&&!p.fregues);
+  const cartao=(p)=>{
     const seco=!p.algoz&&!p.fregues;
     return `<article class="nem${seco?" thin":""}">
       ${lado(p.algoz,true)}
@@ -4828,12 +4859,20 @@ function ihNemesis(l,piso){
         ["Aproveitamento",nf(p.winrate,1)+"%",p.winrate>=50?"var(--teal)":"var(--red)"],
         ["Partidas",ni(p.jogos)],
       ],p.convidado?"convidado — não está no players.json":"")}>
+        <span class="eu">o jogador</span>
         <img src="${iconImg(p.icon)}"${FB}>
         <div class="nm">${h(short(p.nome))}${p.convidado?`<i class="gst">·</i>`:""}</div>
         <div class="wl"><b class="${p.winrate>=50?"t":"r"}">${p.vitorias}V</b> ${p.derrotas}D</div></div>
       ${lado(p.fregues,false)}
       ${seco?`<div class="nem-f">nenhum adversário com ${piso}+ duelos ainda</div>`:""}
-    </article>`;}).join("")}</div>`;
+    </article>`;};
+  /* 7 dos 16 cartoes vinham sem algoz nem fregues e ocupavam metade da secao
+     dizendo "faltou amostra". Ficam atras de um botao. */
+  return `<div class="nems">${cheios.map(cartao).join("")}</div>
+    ${vazios.length?`<div class="nem-vazios">
+      <button class="nem-toggle" data-nemv>ver ${vazios.length} sem duelo suficiente</button>
+      <div class="nems" data-nemlista hidden style="margin-top:12px">${vazios.map(cartao).join("")}</div>
+    </div>`:""}`;
 }
 
 /* ----------------------------------------------------- A DUPLA E O DIVÓRCIO
@@ -4995,6 +5034,28 @@ function ihEspelho(e){
     ${ihEspelhoCorpo(e)}</div>`;
 }
 
+function ligarInhouseExtra(){
+  const bv=document.querySelector("[data-nemv]");
+  if(bv) bv.onclick=()=>{
+    const lista=document.querySelector("[data-nemlista]");
+    if(!lista) return;
+    lista.hidden=!lista.hidden;
+    bv.textContent=lista.hidden
+      ? `ver ${lista.children.length} sem duelo suficiente`
+      : "esconder quem não tem duelo suficiente";
+  };
+  const bf=document.querySelector("[data-mfeed]");
+  if(bf) bf.onclick=()=>{
+    const dobradas=document.querySelectorAll(".mfeed .mc[data-dobrada]");
+    const abrindo=dobradas.length>0;
+    if(abrindo){dobradas.forEach(e=>e.removeAttribute("data-dobrada"));
+      bf.textContent="mostrar só as 4 mais recentes";}
+    else{document.querySelectorAll(".mfeed .mc").forEach((e,i)=>{
+        if(i>=4) e.setAttribute("data-dobrada","");});
+      bf.textContent=`ver as outras ${document.querySelectorAll(".mfeed .mc").length-4} partidas`;}
+  };
+}
+
 function ligarInhouse(){
   document.querySelectorAll("[data-ih-go]").forEach(b=>b.onclick=()=>irPara("inhouse",fila));
   document.querySelectorAll(".esp-ord .tsc").forEach(b=>b.onclick=()=>{
@@ -5069,7 +5130,7 @@ function ihDuelos(l){
       <div class="mc-n"><b>${h(short(p.nome))}${p.convidado?`<i class="gst">·</i>`:""}</b>
         <em>${h(p.champion)}</em></div>
       <div class="mc-k">${p.k}<i>/</i><b class="d">${p.d}</b><i>/</i>${p.a}</div></div>`;
-    return `<article class="mc x duo2" data-n="5" style="--i:${Math.min(i,12)}">
+    return `<article class="mc x duo2" data-n="5" ${i>=4?'data-dobrada':""} style="--i:${Math.min(i,12)}">
       <div class="mc-rail"${t}><span>Duelo</span></div>
       <div class="mc-body artbox">
         <img class="art" src="${artLoad(est.championId,est.champion)}"${FBART}>
@@ -5177,7 +5238,9 @@ function pInhouse(){
     <section>${ihAviso(x)}</section>
     <section><div class="card">${chead(I.clock,"As partidas, uma a uma",
       "a placa parte no eixo: um time de cada lado — clique num campeão para abrir o dossiê")}
-      ${ihDuelos(x.duelos)}</div></section>`;
+      ${ihDuelos(x.duelos)}
+      ${(x.duelos||[]).length>4?`<button class="mfeed-mais" data-mfeed>
+        ver as outras ${x.duelos.length-4} partidas</button>`:""}</div></section>`;
 }
 
 /* ============================================================= PÁGINAS */
@@ -5996,7 +6059,7 @@ function desenhar(){
   ligarVexames();
   ligarPeriodo();
   ligarRecordes();
-  ligarFita(); ligarHalteres(); ligarEstante(); ligarInhouse();
+  ligarFita(); ligarHalteres(); ligarEstante(); ligarInhouse(); ligarInhouseExtra();
   /* os graficos da Evolucao nascem MEDIDOS: a caixa existe, o SVG vem depois */
   ligarGraficos();
   /* dobrar ANTES de vida(): quem nasce dobrado nao entra na cascata de entrada
