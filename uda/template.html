@@ -2868,6 +2868,26 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .rota-r .d{color:var(--dim);font-variant-numeric:tabular-nums;font-size:11px}
 .rota-r .v{font-weight:700;font-variant-numeric:tabular-nums;width:64px;text-align:right}
 
+
+/* ================================================== SEÇÕES QUE RECOLHEM
+   Nas abas longas o problema deixou de ser um bloco gigante e passou a ser
+   NOVE blocos de mil pixels empilhados. Testei emparelhar em duas colunas
+   antes de escrever isto: a 951px de conteúdo cada bloco interno perde colunas
+   e a página fica 4% MAIOR. Recolher venceu, com -40%.
+   Só recolhe onde há muitas seções — página curta continua toda aberta. */
+.card[data-fechada] > *:not(.ch){display:none}
+.card[data-fechada] .ch{margin-bottom:0}
+.ch.clic{cursor:pointer;user-select:none;border-radius:var(--rs);
+  margin:-4px -6px 14px;padding:4px 6px;transition:background .13s}
+.ch.clic:hover{background:var(--card2)}
+.card[data-fechada] .ch.clic{margin-bottom:-4px}
+.ch .chev{margin-left:auto;flex:0 0 auto;color:var(--dim);font-size:11px;
+  transition:transform .16s;padding-left:10px}
+.card:not([data-fechada]) .ch .chev{transform:rotate(90deg)}
+.ch .resumo{font-size:11px;color:var(--dim);margin-left:auto;padding-left:10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44%}
+.card:not([data-fechada]) .ch .resumo{display:none}
+
 </style>
 </head>
 <body>
@@ -6172,6 +6192,9 @@ function desenhar(){
   ligarFita(); ligarHalteres(); ligarEstante(); ligarInhouse(); ligarInhouseExtra();
   /* os graficos da Evolucao nascem MEDIDOS: a caixa existe, o SVG vem depois */
   ligarGraficos();
+  /* recolher ANTES de dobrar: a dobra mede filhos visiveis, e uma secao
+     fechada nao deve ganhar botao de 'ver mais' que ninguem enxerga */
+  secoesDobraveis();
   /* dobrar ANTES de vida(): quem nasce dobrado nao entra na cascata de entrada
      com um --i que ninguem vai ver */
   dobrar();
@@ -6271,6 +6294,54 @@ const DOBRA_DESKTOP={
   ".mfeed":12, ".awards":4, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
   ".zgrid":6, ".mugrid":4, ".nems":9, ".dvs":8,
 };
+
+
+/* Seções recolhíveis nas abas longas.
+   ABERTAS = quantas nascem abertas; MIN_PARA_DOBRAR = a partir de quantas
+   seções a página passa a valer o mecanismo. Numa aba de três blocos, recolher
+   só esconderia conteúdo sem devolver rolagem nenhuma. */
+const SEC_ABERTAS=4, SEC_MIN=6;
+/* a preferência sobrevive à troca de aba: quem abriu "A balança" uma vez não
+   quer reabrir toda vez que voltar */
+const secAbertas=new Set();
+
+function secoesDobraveis(){
+  const app=$("#app");
+  if(!app) return;
+  /* `section > .card` era estrito demais: nas abas onde os cartoes vivem dentro
+     de uma grade (.grid.g2, .g3) nenhum casava, e a Visao geral ficava sem
+     nenhum recolhivel. O criterio certo e "tem cabecalho proprio", esteja onde
+     estiver dentro da secao. */
+  const cards=[...app.querySelectorAll("section .card")]
+    .filter(c=>c.querySelector(":scope > .ch"));
+  if(cards.length<SEC_MIN){
+    cards.forEach(c=>c.removeAttribute("data-fechada"));
+    return;
+  }
+  cards.forEach((card,i)=>{
+    const ch=card.querySelector(":scope > .ch");
+    const titulo=(ch.querySelector("h2")?.textContent||"").trim();
+    if(!ch.classList.contains("clic")){
+      ch.classList.add("clic");
+      ch.setAttribute("role","button");
+      ch.setAttribute("tabindex","0");
+      const chev=document.createElement("span");
+      chev.className="chev"; chev.textContent="▶";
+      ch.appendChild(chev);
+      const alterna=()=>{
+        const fechando=!card.hasAttribute("data-fechada");
+        card.toggleAttribute("data-fechada",fechando);
+        ch.setAttribute("aria-expanded",String(!fechando));
+        if(fechando) secAbertas.delete(titulo); else secAbertas.add(titulo);
+      };
+      ch.onclick=(e)=>{ if(!e.target.closest("[data-match],[data-ev],a,button")) alterna(); };
+      ch.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();alterna();} };
+    }
+    const abrir=i<SEC_ABERTAS||secAbertas.has(titulo);
+    card.toggleAttribute("data-fechada",!abrir);
+    ch.setAttribute("aria-expanded",String(abrir));
+  });
+}
 
 function dobrar(){
   /* idempotente de proposito: desenhar() chama a cada troca de pagina e o
