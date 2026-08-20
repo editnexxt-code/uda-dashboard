@@ -10,6 +10,8 @@ O mes corrente aparece marcado como "em disputa", porque ainda pode virar.
 
 from __future__ import annotations
 
+import zlib
+
 import time
 from collections import defaultdict
 
@@ -31,6 +33,69 @@ def _rotulo(mes: str) -> str:
         return f"{MESES_PT[int(num) - 1]} de {ano}"
     except (ValueError, IndexError):
         return mes
+
+
+# Cada entrada: (campo, maior_e_melhor, formatador, frases).
+# A escolha e pela distancia RELATIVA a media do mes, para que metricas de
+# escalas diferentes (KDA ~2, dano ~700) possam competir entre si.
+DESTAQUE_REI = [
+    ("winrate", True, lambda v: f"{v:.0f}%",
+     ["ganhou {v} das partidas enquanto o resto do grupo afundava",
+      "{v} de vitórias enquanto a média da casa era {m}",
+      "carregou o mês com {v} de aproveitamento"]),
+    ("kda", True, lambda v: f"{v:.2f}".replace(".", ","),
+     ["KDA de {v} contra os {m} da média — jogou outro jogo",
+      "fechou o mês com KDA {v}, quase o dobro do resto",
+      "KDA {v}. O grupo inteiro ficou em {m}"]),
+    ("kills", True, lambda v: f"{v:.1f}".replace(".", ","),
+     ["{v} abates por partida, contra {m} do resto do elenco",
+      "passou o mês colecionando abate: {v} por jogo"]),
+    ("kp", True, lambda v: f"{v:.0f}%",
+     ["participou de {v} dos abates do time — não teve briga sem ele",
+      "{v} de participação: onde teve confusão, ele estava"]),
+    ("dmg_min", True, lambda v: f"{v:.0f}",
+     ["{v} de dano por minuto, contra {m} da média do grupo",
+      "despejou {v} de dano por minuto e não pediu desculpa"]),
+]
+
+DESTAQUE_AFUNDADO = [
+    ("deaths", False, lambda v: f"{v:.1f}".replace(".", ","),
+     ["morreu {v} vezes por partida, contra {m} do resto do elenco",
+      "{v} mortes por jogo. O inimigo agradeceu o mês inteiro",
+      "entregou {v} vezes por partida e chamou de azar"]),
+    ("winrate", False, lambda v: f"{v:.0f}%",
+     ["ganhou só {v} das partidas enquanto a casa fazia {m}",
+      "{v} de aproveitamento. Deu para levantar a bandeira branca"]),
+    ("kda", False, lambda v: f"{v:.2f}".replace(".", ","),
+     ["KDA de {v} contra os {m} da média — ficou para trás sozinho",
+      "fechou o mês em KDA {v}. Dá para fazer melhor de olho fechado"]),
+    ("kp", False, lambda v: f"{v:.0f}%",
+     ["participou de só {v} dos abates: o time brigou sem ele",
+      "{v} de participação. Estava logado, ao menos"]),
+    ("dmg_min", False, lambda v: f"{v:.0f}",
+     ["{v} de dano por minuto, contra {m} da média. Presença simbólica",
+      "deu {v} de dano por minuto e ainda reclamou do time"]),
+]
+
+
+def _motivo(stats, media, tabela, semente) -> str:
+    """A frase do maior desvio contra a media do mes, variante estavel."""
+    melhor = None
+    for campo, maior, fmt, frases in tabela:
+        v, m = float(stats.get(campo) or 0), float(media.get(campo) or 0)
+        if not m:
+            continue
+        rel = (v - m) / m
+        if not maior:
+            rel = -rel
+        if rel > 0 and (melhor is None or rel > melhor[0]):
+            melhor = (rel, campo, fmt, frases, v, m)
+    if melhor is None:                      # ninguem se destacou em nada
+        return (f"{stats.get('winrate', 0):.0f}% de vitórias em "
+                f"{stats.get('games', 0)} partidas")
+    _, campo, fmt, frases, v, m = melhor
+    i = zlib.crc32(semente.encode("utf-8")) % len(frases)
+    return frases[i].format(v=fmt(v), m=fmt(m))
 
 
 def _stats_do_mes(linhas) -> dict:
@@ -130,14 +195,13 @@ def construir(rows_by_player, players, min_games: int,
             """Virgula decimal: o motivo e texto pronto, nao passa pelo nf() da tela."""
             return f"{valor:.{casas}f}".replace(".", ",")
 
-        rei = ficha(ordenado[0], lambda s: (
-            f"{s.get('winrate', 0):.0f}% de vitórias e KDA "
-            f"{_pt(s.get('kda', 0), 2)} em {ordenado[0]['games']} partidas"))
-        afundado = ficha(ordenado[-1], lambda s: (
-            f"{s.get('winrate', 0):.0f}% de vitórias e "
-            f"{_pt(s.get('deaths', 0))} mortes por partida"))
-
+        # A media do mes precisa existir ANTES das fichas: e contra ela que o
+        # motivo de cada um e escolhido.
         team = _stats_do_mes(linhas)
+        rei = ficha(ordenado[0], lambda s: _motivo(
+            s, team, DESTAQUE_REI, mes + ordenado[0]["puuid"]))
+        afundado = ficha(ordenado[-1], lambda s: _motivo(
+            s, team, DESTAQUE_AFUNDADO, mes + ordenado[-1]["puuid"]))
         saida.append({
             "mes": mes, "rotulo": _rotulo(mes), "emDisputa": mes == atual,
             "partidas": partidas, "participacoes": len(linhas),
