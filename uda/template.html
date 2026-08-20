@@ -2641,8 +2641,13 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   border-radius:var(--rs);padding:12px 14px}
 .aitem .ic,.aitem .ic img{width:44px;height:44px;border-radius:9px;flex:0 0 auto;background:var(--card3)}
 .aitem .nm{flex:1;min-width:0}
-.aitem .nm .n{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aitem .nm .s{font-size:11px;color:var(--dim);margin-top:3px}
+/* display:block e obrigatorio aqui: overflow e text-overflow nao valem em
+   elemento inline, entao o <span> ficava com as regras de reticencias escritas
+   e mesmo assim vazava -- "Lembrancas do Lorde Dominik" saia 34px para fora. */
+.aitem .nm .n{display:block;font-size:13px;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aitem .nm .s{display:block;font-size:11px;color:var(--dim);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aitem .qt{text-align:right;flex:0 0 auto}
 .aitem .qt .q{font:700 15px/1 var(--disp);font-variant-numeric:tabular-nums}
 .aitem .qt .w{font-size:10.5px;margin-top:4px;font-variant-numeric:tabular-nums}
@@ -2726,7 +2731,8 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   .vx-linha .vx-mot{grid-column:1/-1}.vx-linha .vx-nota{grid-column:2;justify-self:end}}
 .vx-linha>img{width:34px;height:34px;border-radius:8px;border:1px solid var(--line)}
 .vx-kda{font:600 13px/1.2 var(--body);font-variant-numeric:tabular-nums;color:var(--red)}
-.vx-meta{font-size:10.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vx-meta{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vx-mot{min-width:0}
 .vx-ver{font-size:12px;font-style:italic;color:var(--txt);margin-bottom:5px}
 .vx-chips{display:flex;gap:5px;flex-wrap:wrap}
@@ -2738,35 +2744,39 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 
 
 /* ======================================================= PÓDIO COMPACTO
+   Classe `.pdm`, nao `.p3`: `.p3` colidia com o TERCEIRO LUGAR do pódio-pôster
+   (`<div class="pod p3">`). A regra `.p3{display:grid;align-items:end}` vazava
+   para ele, a caixa da arte colapsava de 304 para 51 px e nome e nota escapavam
+   do cartão. Levou um print do usuário para aparecer.
    Todo ranking e todo mural do painel usa esta forma. Pódio zoa melhor que
    lista: o primeiro lugar fica fisicamente maior e o terceiro fica pequeno,
    e essa diferença de tamanho é metade da piada.
    Ordem visual 2-1-3 via `order`, como num pódio de verdade. */
-.p3{display:grid;grid-template-columns:1fr 1.22fr 1fr;gap:6px;align-items:end}
-.p3 .p3s{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
-.p3 .p3s.s1{order:2} .p3 .p3s.s2{order:1} .p3 .p3s.s3{order:3}
-.p3 .av{border-radius:50%;border:2px solid var(--line);object-fit:cover}
-.p3 .p3s.s1 .av{width:52px;height:52px} .p3 .p3s.s2 .av,.p3 .p3s.s3 .av{width:38px;height:38px}
-.p3 .nm{font:600 11.5px/1.2 var(--body);margin-top:6px;max-width:100%;
+.pdm{display:grid;grid-template-columns:1fr 1.22fr 1fr;gap:6px;align-items:end}
+.pdm .pdm-s{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
+.pdm .pdm-s.s1{order:2} .pdm .pdm-s.s2{order:1} .pdm .pdm-s.s3{order:3}
+.pdm .av{border-radius:50%;border:2px solid var(--line);object-fit:cover}
+.pdm .pdm-s.s1 .av{width:52px;height:52px} .pdm .pdm-s.s2 .av,.pdm .pdm-s.s3 .av{width:38px;height:38px}
+.pdm .nm{font:600 11.5px/1.2 var(--body);margin-top:6px;max-width:100%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.p3 .p3s.s1 .nm{font-size:12.5px;font-weight:700}
-.p3 .vl{font:700 15px/1 var(--disp);margin-top:4px;font-variant-numeric:tabular-nums}
-.p3 .p3s.s1 .vl{font-size:20px}
-.p3 .deg{width:100%;margin-top:7px;border-radius:6px 6px 0 0;display:grid;place-items:center;
+.pdm .pdm-s.s1 .nm{font-size:12.5px;font-weight:700}
+.pdm .vl{font:700 15px/1 var(--disp);margin-top:4px;font-variant-numeric:tabular-nums}
+.pdm .pdm-s.s1 .vl{font-size:20px}
+.pdm .deg{width:100%;margin-top:7px;border-radius:6px 6px 0 0;display:grid;place-items:center;
   font:700 12px/1 var(--disp);color:var(--bg);background:var(--barneutral)}
-.p3 .p3s.s1 .deg{height:34px;font-size:15px} .p3 .p3s.s2 .deg{height:24px}
-.p3 .p3s.s3 .deg{height:17px;font-size:11px}
+.pdm .pdm-s.s1 .deg{height:34px;font-size:15px} .pdm .pdm-s.s2 .deg{height:24px}
+.pdm .pdm-s.s3 .deg{height:17px;font-size:11px}
 /* ouro = glória; vermelho = vergonha. A cor diz de cara que tipo de pódio é. */
-.p3.ouro .p3s.s1 .av{border-color:var(--gold)} .p3.ouro .p3s.s1 .vl{color:var(--gold)}
-.p3.ouro .p3s.s1 .deg{background:var(--gold)}
-.p3.ouro .p3s.s2 .deg{background:#c9c2b0} .p3.ouro .p3s.s3 .deg{background:#b0783f}
-.p3.verg .p3s.s1 .av{border-color:var(--red)} .p3.verg .p3s.s1 .vl{color:var(--red)}
-.p3.verg .p3s.s1 .deg{background:var(--red)}
-.p3.verg .p3s.s2 .deg{background:#8d4038} .p3.verg .p3s.s3 .deg{background:#6b3630}
-.p3.teal .p3s.s1 .av{border-color:var(--teal)} .p3.teal .p3s.s1 .vl{color:var(--teal)}
-.p3.teal .p3s.s1 .deg{background:var(--teal)}
-.p3.teal .p3s.s2 .deg{background:#2a7d78} .p3.teal .p3s.s3 .deg{background:#245e5b}
-.p3 .p3s.s2 .deg,.p3 .p3s.s3 .deg{color:var(--bg)}
+.pdm.ouro .pdm-s.s1 .av{border-color:var(--gold)} .pdm.ouro .pdm-s.s1 .vl{color:var(--gold)}
+.pdm.ouro .pdm-s.s1 .deg{background:var(--gold)}
+.pdm.ouro .pdm-s.s2 .deg{background:#c9c2b0} .pdm.ouro .pdm-s.s3 .deg{background:#b0783f}
+.pdm.verg .pdm-s.s1 .av{border-color:var(--red)} .pdm.verg .pdm-s.s1 .vl{color:var(--red)}
+.pdm.verg .pdm-s.s1 .deg{background:var(--red)}
+.pdm.verg .pdm-s.s2 .deg{background:#8d4038} .pdm.verg .pdm-s.s3 .deg{background:#6b3630}
+.pdm.teal .pdm-s.s1 .av{border-color:var(--teal)} .pdm.teal .pdm-s.s1 .vl{color:var(--teal)}
+.pdm.teal .pdm-s.s1 .deg{background:var(--teal)}
+.pdm.teal .pdm-s.s2 .deg{background:#2a7d78} .pdm.teal .pdm-s.s3 .deg{background:#245e5b}
+.pdm .pdm-s.s2 .deg,.pdm .pdm-s.s3 .deg{color:var(--bg)}
 
 /* ------------------------------- densidade: troféus mais estreitos e curtos */
 .zgrid{grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
@@ -2814,9 +2824,9 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 /* ------------------------------------------- evidência: a prova por partida
    O troféu dizia "9,06 mortes por partida" e não dava para ver ONDE. Clicar no
    degrau abre as três partidas que mais empurraram aquele número. */
-.p3 .p3s[data-ev]{cursor:pointer}
-.p3 .p3s[data-ev]:hover .nm{color:var(--teal)}
-.p3 .p3s[data-ev][aberto] .deg{outline:2px solid var(--teal);outline-offset:1px}
+.pdm .pdm-s[data-ev]{cursor:pointer}
+.pdm .pdm-s[data-ev]:hover .nm{color:var(--teal)}
+.pdm .pdm-s[data-ev][aberto] .deg{outline:2px solid var(--teal);outline-offset:1px}
 .zev{border-top:1px solid var(--line);background:var(--card2)}
 .zev[hidden]{display:none}
 .zev .cab{font:600 9px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;
@@ -5590,9 +5600,9 @@ function podio3(itens,tone,fmt){
   if(!l.length) return "";
   const f=fmt||((v)=>nf(v,0));
   const ordem=[1,0,2];   // 2º, 1º, 3º — o `order` do CSS recoloca
-  return `<div class="p3 ${tone||"ouro"}">${ordem.map(i=>{
+  return `<div class="pdm ${tone||"ouro"}">${ordem.map(i=>{
     const it=l[i]; if(!it) return "";
-    return `<div class="p3s s${i+1}"${it.tip||""}${it.ev||""}>
+    return `<div class="pdm-s s${i+1}"${it.tip||""}${it.ev||""}>
       <img class="av" src="${it.img||iconImg(it.icon)}"${FB}>
       <div class="nm">${h(short(it.nome))}</div>
       <div class="vl">${f(it.valor)}</div>
