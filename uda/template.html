@@ -2688,6 +2688,54 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .mut .n{flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mut .c{display:flex;gap:6px;flex:0 0 auto}
 
+
+/* ============================================================ VEXAMES
+   Densidade proposital: cada partida e uma linha, nao um cartao. Sao 12 por
+   pessoa e 14 pessoas -- em cartao viraria um rolar sem fim. */
+.vx-topo{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:900px){.vx-topo{grid-template-columns:1fr}}
+.vx-big{background:var(--card);border:1px solid rgba(229,72,77,.3);border-top:2px solid var(--red);
+  border-radius:var(--r);padding:15px 16px;position:relative}
+.vx-big .pos{position:absolute;top:12px;right:14px;font:700 26px/1 var(--disp);color:rgba(229,72,77,.22)}
+.vx-big .quem{display:flex;align-items:center;gap:10px}
+.vx-big .quem img{width:38px;height:38px;border-radius:50%;border:2px solid var(--red);flex:0 0 auto}
+.vx-big .quem .n{font:600 14px/1.2 var(--disp)}
+.vx-big .quem .s{font-size:11px;color:var(--dim);margin-top:3px}
+.vx-big .linha{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+.vx-big .linha img{width:30px;height:30px;border-radius:7px;flex:0 0 auto}
+.vx-big .kda{font:700 15px/1 var(--disp);color:var(--red);font-variant-numeric:tabular-nums}
+.vx-big .ctx{font-size:11px;color:var(--dim);margin-top:3px}
+.vx-big .ver{font-size:12px;color:var(--txt);margin-top:11px;font-style:italic}
+
+.vx-jog{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.vx-h{display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer;user-select:none}
+.vx-h:hover{background:var(--card2)}
+.vx-h img{width:34px;height:34px;border-radius:50%;flex:0 0 auto}
+.vx-h .n{font:600 14px/1.2 var(--disp);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vx-h .st{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.vx-h .seta{color:var(--dim);font-size:11px;transition:transform .16s;flex:0 0 auto}
+.vx-jog[aberto] .vx-h .seta{transform:rotate(90deg)}
+.vx-jog:not([aberto]) .vx-corpo{display:none}
+.vx-corpo{border-top:1px solid var(--line)}
+
+.vx-linha{display:grid;grid-template-columns:34px 92px 1fr auto;gap:11px;align-items:center;
+  padding:9px 15px;border-bottom:1px solid var(--line2)}
+.vx-linha:last-child{border-bottom:0}
+.vx-linha:hover{background:var(--card2)}
+@media(max-width:760px){.vx-linha{grid-template-columns:34px 1fr;row-gap:7px}
+  .vx-linha .vx-mot{grid-column:1/-1}.vx-linha .vx-nota{grid-column:2;justify-self:end}}
+.vx-linha>img{width:34px;height:34px;border-radius:8px;border:1px solid var(--line)}
+.vx-kda{font:600 13px/1.2 var(--body);font-variant-numeric:tabular-nums;color:var(--red)}
+.vx-meta{font-size:10.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vx-mot{min-width:0}
+.vx-ver{font-size:12px;font-style:italic;color:var(--txt);margin-bottom:5px}
+.vx-chips{display:flex;gap:5px;flex-wrap:wrap}
+.vx-chip{font-size:10.5px;background:var(--card3);color:var(--mut);border-radius:var(--rp);
+  padding:3px 9px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.vx-chip.forte{background:var(--red-s);color:var(--red)}
+.vx-nota{font:700 16px/1 var(--disp);color:var(--red);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.vx-nota small{display:block;font:400 9.5px/1 var(--body);color:var(--dim);margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -5317,6 +5365,63 @@ function pMural(){
       </div>`).join("")}</div></section>`;
 }
 
+
+/* ============================================================= VEXAMES */
+function pVexames(){
+  const v=DATA.vexames;
+  if(!v||!v.jogadores||!v.jogadores.length) return noData("NINGUÉM VACILOU AINDA",
+    "É preciso pelo menos 5 partidas de mais de 10 minutos por pessoa para o paredão abrir.");
+
+  /* as tres piores partidas do grupo inteiro, independente de quem foi */
+  const todas=v.jogadores.flatMap(j=>j.piores.map(p=>({...p,dono:j})));
+  todas.sort((a,b)=>b.nota-a.nota);
+  const topo=todas.slice(0,3);
+
+  const chips=(p)=>p.motivos.slice(0,4).map((m,i)=>
+    `<span class="vx-chip ${m.peso>=3?"forte":""}"${tip("Por quê",[m.texto])}>${h(m.texto.split(".")[0])}</span>`).join("");
+
+  return `<section>
+      <div class="sh-plain">${chead(I.skull,"O paredão",
+        "as três piores partidas já registradas no grupo — sem defesa possível","red")}</div>
+      <div class="vx-topo">${topo.map((p,i)=>`<div class="vx-big"${linkPartida(p.matchId)}>
+        <div class="pos">${i+1}º</div>
+        <div class="quem"><img src="${iconImg(p.dono.icon)}"${FB}>
+          <div><div class="n">${h(p.dono.gameName)}</div>
+            <div class="s">${h(p.queue)} · ${p.minutes} min · ${p.win?"e ainda ganhou":"derrota"}</div></div></div>
+        <div class="linha"><img src="${champImg(p.championId,p.champion)}"${FB}>
+          <div><div class="kda">${p.k} / ${p.d} / ${p.a}</div>
+            <div class="ctx">${h(p.champion)} · nota de vergonha ${nf(p.nota,0)}</div></div></div>
+        <div class="ver">“${h(p.veredito)}”</div></div>`).join("")}</div>
+    </section>
+    <section><div class="sh-plain">${chead(I.user,"Por jogador",
+      `clique num nome para abrir os vexames · clique numa partida para ver o placar dos dez`,"red")}</div>
+      ${v.jogadores.map((j,idx)=>`<div class="vx-jog" data-vx="${h(j.puuid)}" ${idx===0?"aberto":""}>
+        <div class="vx-h" data-vxh="${h(j.puuid)}">
+          <span class="seta">▶</span>
+          <img src="${iconImg(j.icon)}"${FB}>
+          <span class="n">${h(j.gameName)}</span>
+          <span class="st">${j.piores.length} vexames · média de ${nf(j.mediaMortes,1)} mortes em ${j.analisadas} partidas</span>
+        </div>
+        <div class="vx-corpo">${j.piores.map(p=>`<div class="vx-linha"${linkPartida(p.matchId)}>
+          <img src="${champImg(p.championId,p.champion)}"${FB}>
+          <div><div class="vx-kda">${p.k}/${p.d}/${p.a}</div>
+            <div class="vx-meta">${h(p.queue)} · ${p.minutes}min${p.win?" · ganhou assim mesmo":""}</div></div>
+          <div class="vx-mot"><div class="vx-ver">“${h(p.veredito)}”</div>
+            <div class="vx-chips">${chips(p)}</div></div>
+          <div class="vx-nota">${nf(p.nota,0)}<small>vergonha</small></div>
+        </div>`).join("")}</div>
+      </div>`).join("")}
+    </section>`;
+}
+
+function ligarVexames(){
+  document.querySelectorAll("[data-vxh]").forEach(b=>b.onclick=(e)=>{
+    if(e.target.closest("[data-match]")) return;      // clique na partida abre o placar
+    const caixa=b.closest(".vx-jog");
+    if(caixa) caixa.toggleAttribute("aberto");
+  });
+}
+
 const PAGES=[
   {k:"visao",n:"Visão geral",i:I.grid,g:"Principal",q:1,sub:"O panorama do grupo na fila selecionada"},
   {k:"ranking",n:"Classificação",i:I.rank,g:"Principal",q:1,sub:"Todos os jogadores, todas as métricas"},
@@ -5327,6 +5432,7 @@ const PAGES=[
   {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo joga, e com que resultado"},
   {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:0,sub:"Itens, runas e feitiços que vocês mais levam"},
   {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"O UDA e o Afundado de cada mês"},
+  {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:0,sub:"As piores partidas de cada um, com o porquê"},
   {k:"zoeira",n:"Troféus",i:I.skull,g:"Zoeira",q:0,sub:"As métricas que existem só para zoar"},
   {k:"regras",n:"Regras",i:I.book,g:"Ajuda",q:0,sub:"Como o UDA Score é calculado"},
 ];
@@ -5340,11 +5446,13 @@ let page="visao",fila="all";
      Melhor não oferecer o link do que abrir uma página que se desculpa. */
 const temInhouse=()=>!!(DATA.data.inhouse&&DATA.data.inhouse.team.uniqueMatches>0);
 const temZoeira=()=>!!(DATA.zoeira&&DATA.zoeira.length);
+const temVexames=()=>!!(DATA.vexames&&DATA.vexames.jogadores&&DATA.vexames.jogadores.length);
 const temMural=()=>!!(DATA.mural&&DATA.mural.length);
 const temArsenal=()=>!!(DATA.arsenal&&DATA.arsenal.itens&&DATA.arsenal.itens.length);
 const paginas=()=>PAGES.filter(p=>
   (p.k!=="inhouse"||temInhouse())&&(p.k!=="evolucao"||fila!=="inhouse")
   &&(p.k!=="zoeira"||temZoeira())&&(p.k!=="mural"||temMural())
+  &&(p.k!=="vexames"||temVexames())
   &&(p.k!=="arsenal"||temArsenal()));
 const grupo=()=>DATA.data[page==="equipe"?"squad":page==="inhouse"?"inhouse":fila];
 /* Fila sem nenhuma partida so servia para levar a 6 paginas vazias seguidas --
@@ -5689,7 +5797,7 @@ function pRegras(){
 const vazio=()=>noData("SEM PARTIDAS NESTA FILA",
   `Ninguém do grupo jogou <b>${h((DATA.groups.find(x=>x.key===fila)||{}).label||fila)}</b> na janela analisada.`);
 const RENDER={visao:pVisao,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
-  arsenal:pArsenal,mural:pMural,zoeira:pZoeira,
+  arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
   inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 
 /* ========================================================== NAVEGAÇÃO */
@@ -5763,6 +5871,7 @@ function desenhar(){
   ligarCartoes();
   ligarSeletor();
   ligarZoeira();
+  ligarVexames();
   ligarRecordes();
   ligarFita(); ligarHalteres(); ligarEstante(); ligarInhouse();
   /* os graficos da Evolucao nascem MEDIDOS: a caixa existe, o SVG vem depois */

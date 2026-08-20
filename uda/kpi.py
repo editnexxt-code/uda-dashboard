@@ -1186,6 +1186,11 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     payload["titulos"] = _mural.resumo_titulos(payload["mural"])
 
     # Placares por ultimo: so entram as partidas que o payload ja referencia.
+    from . import vexames as _vexames
+    payload["vexames"] = _vexames.construir(conn, rows_by_player, players)
+
+    # Placares por ultimo: so entram as partidas que o payload ja referencia,
+    # e os vexames acabaram de acrescentar um monte delas.
     from . import partidas as _partidas
     payload["placares"] = _partidas.construir(
         conn, _partidas.coletar_ids(payload), players, QUEUE_NAMES)
