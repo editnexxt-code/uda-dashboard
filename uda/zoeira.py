@@ -332,7 +332,8 @@ def _evidencia(linhas, coluna: str, quantas: int = 3) -> list[dict]:
     return saida
 
 
-def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list[dict]:
+def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS,
+              ranking_completo: bool = True) -> list[dict]:
     """Um trofeu por metrica, cada um com o ranking completo do elenco."""
     agregados = _agregar(rows_by_player, players)
     elegiveis = {p: a for p, a in agregados.items() if a["partidas"] >= min_partidas}
@@ -385,11 +386,16 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list
                 item["evidencia"] = _evidencia(
                     rows_by_player.get(item["puuid"], []), coluna)
 
+        # Nas janelas curtas so o podio viaja: o recorte de periodo serve
+        # para responder "quem esta pior AGORA", e essa pergunta acaba no
+        # terceiro lugar. Guardar os 18 em cada janela triplicaria o payload.
+        ranking = linhas if ranking_completo else linhas[:3]
         saida.append({
             "key": key, "titulo": titulo, "grupo": grupo,
             "grupoLabel": GRUPO_LABEL[grupo], "legenda": legenda,
             "unidade": unidade, "casas": casas, "maiorMelhor": maior,
-            "campeao": linhas[0], "ranking": linhas,
+            "campeao": linhas[0], "ranking": ranking,
+            "rankingCompleto": ranking_completo,
             "media": _r(media, casas) if casas else int(round(media)),
             "minPartidas": min_partidas,
             "temEvidencia": bool(coluna),

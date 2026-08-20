@@ -1144,7 +1144,18 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
         # -- as outras sao pequenas e quase nao pesam. Vale o preco: zoar
         # "quem mais morre no ARAM" e outra piada, diferente de "quem mais morre".
         if not squad_only:
-            zoeira_payload[gkey] = _zoeira.construir(rows_grupo, players)
+            # Trofeus por JANELA. So o podio viaja nas janelas curtas, senao o
+            # payload triplicaria: medido em 1,7 MB a mais com ranking inteiro.
+            zoeira_payload[gkey] = {"tudo": _zoeira.construir(rows_grupo, players)}
+            for nome, dias in (("90", 90), ("30", 30)):
+                corte = int((time.time() - dias * 86400) * 1000)
+                curto = defaultdict(list)
+                for puuid, ls in rows_grupo.items():
+                    recentes = [r for r in ls if r["game_creation"] >= corte]
+                    if recentes:
+                        curto[puuid] = recentes
+                zoeira_payload[gkey][nome] = _zoeira.construir(
+                    curto, players, ranking_completo=False)
             vexames_payload[gkey] = _vexames.construir(
                 conn, rows_grupo, players, verbose=False)
             arsenal_payload[gkey] = _arsenal.construir(

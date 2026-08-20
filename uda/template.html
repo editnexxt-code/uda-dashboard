@@ -5436,12 +5436,16 @@ const linkPartida=(id)=>temPlacar(id)?` data-match="${h(id)}" `:" ";
 /* ============================================================= ZOEIRA */
 function pZoeira(){
   const trofeus=zoeiraDaFila();
-  if(!trofeus.length) return noData("SEM TROFÉUS NESTA FILA",
+  const b=(DATA.zoeira||{})[filaDados()];
+  const totalTudo=(b&&b.tudo)?b.tudo.length:trofeus.length;
+  const barra=`<section>${barraPeriodo(totalTudo,trofeus.length,"troféus")}</section>`;
+  if(!trofeus.length) return barra+noData("SEM TROFÉUS NESTA FILA",
     `É preciso pelo menos ${(DATA.zoeira&&DATA.zoeira[0]||{}).minPartidas||10} partidas por pessoa para a zoeira começar.`);
-  const grupos=[["vergonha","Hall da vergonha","o que ninguém quer levar pra casa",I.skull,"red"],
-                ["gloria","Hall da glória","aqui dá pra se gabar",I.award,""],
-                ["curiosidade","Departamento de curiosidades","nada disso ganha partida",I.bolt,"gold"]];
-  return grupos.map(([g,titulo,sub,icone,tone])=>{
+  return barra+[
+    ["vergonha","Hall da vergonha","o que ninguém quer levar pra casa",I.skull,"red"],
+    ["gloria","Hall da glória","aqui dá pra se gabar",I.award,""],
+    ["curiosidade","Departamento de curiosidades","nada disso ganha partida",I.bolt,"gold"],
+  ].map(([g,titulo,sub,icone,tone])=>{
     const lista=trofeus.filter(t2=>t2.grupo===g);
     if(!lista.length) return "";
     return `<section><div class="sh-plain">${chead(icone,titulo,sub,tone)}</div>
@@ -5454,7 +5458,8 @@ function pZoeira(){
               ev:(r.evidencia&&r.evidencia.length)?` data-ev="${h(t2.key)}:${ri}"`:"",
               tip:tip(h(r.gameName),[[t2.unidade,nf(r.valor,t2.casas)],
                 ["Posição",r.pos+"º de "+t2.ranking.length],
-                ["Média do grupo",nf(t2.media,t2.casas)]],
+                ["Média do grupo",nf(t2.media,t2.casas)],
+                periodo!=="tudo"?["Janela",PERIODOS.find(x=>x[0]===periodo)[1]]:null].filter(Boolean),
                 (r.evidencia&&r.evidencia.length)?"clique para ver as partidas que causaram isso":"")})),
             g==="gloria"?"teal":g==="vergonha"?"verg":"ouro",
             (v)=>nf(v,t2.casas))}</div>
@@ -5473,7 +5478,7 @@ function pZoeira(){
               <span class="n">${h(r.gameName)}</span>
               <span class="v">${nf(r.valor,t2.casas)}</span></div>`).join("")}
           </div>
-          ${t2.ranking.length>3?`<button class="zmais" data-zmais="${h(t2.key)}">ver o resto do elenco (${t2.ranking.length-3})</button>`:""}
+          ${(t2.rankingCompleto!==false&&t2.ranking.length>3)?`<button class="zmais" data-zmais="${h(t2.key)}">ver o resto do elenco (${t2.ranking.length-3})</button>`:""}
         </div>`;}).join("")}</div></section>`;
   }).join("");
 }
@@ -5605,12 +5610,12 @@ const dentroDoPeriodo=(ms)=>{
   const dias=(PERIODOS.find(p=>p[0]===periodo)||[])[2]||0;
   return !dias||(Date.now()-ms)/86400000<=dias;
 };
-function barraPeriodo(total,mostrando){
+function barraPeriodo(total,mostrando,unidade){
   return `<div class="perbar"><span class="lab">Período</span>
     <div class="seg">${PERIODOS.map(([k,n])=>
       `<button data-per="${k}" aria-pressed="${k===periodo}">${n}</button>`).join("")}</div>
-    <span class="cnt">${mostrando===total?`${ni(total)} partidas`
-      :`${ni(mostrando)} de ${ni(total)} partidas na janela`}</span></div>`;
+    <span class="cnt">${mostrando===total?`${ni(total)} ${unidade||"partidas"}`
+      :`${ni(mostrando)} de ${ni(total)} ${unidade||"partidas"} na janela`}</span></div>`;
 }
 function ligarPeriodo(){
   document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{
@@ -5765,7 +5770,15 @@ const paginas=()=>PAGES.filter(p=>
   &&(p.k!=="vexames"||temVexames())
   &&(p.k!=="arsenal"||temArsenal()));
 const filaDados=()=>page==="equipe"?"squad":page==="inhouse"?"inhouse":fila;
-const zoeiraDaFila=()=>(DATA.zoeira||{})[filaDados()]||[];
+/* zoeira[fila] virou {tudo, 90, 30}. O seletor de periodo do Paredao passa a
+   valer aqui tambem -- e a mesma variavel `periodo`, entao trocar numa aba
+   mantem na outra. */
+const zoeiraDaFila=()=>{
+  const b=(DATA.zoeira||{})[filaDados()];
+  if(!b) return [];
+  if(Array.isArray(b)) return b;                 // formato antigo, por seguranca
+  return b[periodo==="7"?"30":periodo]||b.tudo||[];
+};
 const vexamesDaFila=()=>(DATA.vexames||{})[filaDados()]||null;
 const arsenalDaFila=()=>(DATA.arsenal||{})[filaDados()]||null;
 const grupo=()=>DATA.data[page==="equipe"?"squad":page==="inhouse"?"inhouse":fila];
