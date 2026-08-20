@@ -253,7 +253,11 @@ body.navon .navscrim{opacity:1;pointer-events:auto}
 .ch .hint{font-size:12px;color:var(--dim);margin-top:3px}
 .ch .act{margin-left:auto;font-size:12px;color:var(--mut)}
 .grid{display:grid;gap:16px}
-.g2{grid-template-columns:1fr 1fr}
+/* align-items:start impede o cartao curto de esticar ate a altura do comprido.
+   Medido: "Confrontos internos" tem 12 linhas (~700 px de conteudo) e era
+   esticado a 2.041 px para acompanhar "Formacoes", que tem 24 -- 1.340 px de
+   vazio dentro de um cartao com borda, o que parece defeito, nao respiro. */
+.g2{grid-template-columns:1fr 1fr;align-items:start}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g23{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .g32{grid-template-columns:minmax(0,1fr) minmax(0,1.9fr)}
@@ -2403,6 +2407,9 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 
 /* ------------------------------------------------- a dupla e o divórcio */
 .dvs{display:grid;gap:2px}
+/* O miolo de cada linha tinha 681 px para escrever "Fulano + Beltrano quando se
+   enfrenta". Era espaco vazio, nao respiro. */
+@container content (min-width:820px){.dvs{grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px}}
 .dvr{display:grid;grid-template-columns:104px minmax(0,1fr) 152px;gap:14px;
   align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)}
 .dvr:last-child{border-bottom:0}
@@ -2433,6 +2440,10 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .bal-lg i.fx{background:var(--card3);border:1px dashed var(--gold-3)}
 .bal-lg i.dr{background:var(--teal)}
 .bal-lg i.es{background:var(--red)}
+/* Uma coluna de proposito. Aqui a barra de 783 px NAO e sobra: ela E a medida
+   -- o quanto os times terminaram distantes em ouro. Dividir em duas colunas
+   dobraria a densidade e cortaria pela metade a resolucao da regua, alem de
+   quebrar a comparacao de cima a baixo, que e o ponto do bloco. */
 .bal-rows{display:grid;gap:2px}
 .bal-r{display:grid;grid-template-columns:58px minmax(0,1fr) 52px 48px;gap:8px;
   align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);
@@ -2750,6 +2761,10 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 
 /* ============================================================= MURAL */
 .mugrid{display:grid;gap:12px}
+/* Um mes por cartao ocupava a largura inteira -- 1.015 px para um cabecalho, dois
+   podios e a linha de destaques. Em duas colunas o cartao vai a ~500 px, que e
+   folgado para o conteudo, e a aba cai de 2,0 para 1,6 telas. Medido. */
+@container content (min-width:900px){.mugrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .mumes{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .mumes.aberto{border-color:var(--gold)}
 .muh{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);
@@ -4763,17 +4778,17 @@ function matriz(m){
 }
 
 const formacoes=(l)=>!l.length?noData("SEM FORMAÇÕES","Ninguém aguentou jogar junto tempo suficiente ainda."):
-  l.map(f=>`<div class="lrow"><span class="ims">${f.icons.slice(0,5).map(i=>`<img src="${iconImg(i)}"${FB}>`).join("")}</span>
+  `<div class="lstack">`+l.map(f=>`<div class="lrow"><span class="ims">${f.icons.slice(0,5).map(i=>`<img src="${iconImg(i)}"${FB}>`).join("")}</span>
     <span class="nm"><span class="pill n" style="font-size:10px;padding:3px 8px">${h(f.label)}</span>
     <div style="margin-top:5px;font-size:12.5px">${f.members.map(h).join(" · ")}</div></span>
     <span class="st">${f.wins}V ${f.losses}D</span>
-    <span class="pill ${f.winrate>=50?"t":"r"}">${nf(f.winrate,0)}%</span></div>`).join("");
+    <span class="pill ${f.winrate>=50?"t":"r"}">${nf(f.winrate,0)}%</span></div>`).join("")+`</div>`;
 
 const confrontos=(l)=>!l.length?noData("SEM CONFRONTOS","Vocês nunca caíram em times opostos."):
-  l.map(c=>`<div class="lrow"><span class="ims"><img src="${iconImg(c.iconA)}"${FB}><img src="${iconImg(c.iconB)}"${FB}></span>
+  `<div class="lstack">`+l.map(c=>`<div class="lrow"><span class="ims"><img src="${iconImg(c.iconA)}"${FB}><img src="${iconImg(c.iconB)}"${FB}></span>
     <span class="nm">${h(c.a)} <span style="color:var(--dim)">×</span> ${h(c.b)}</span>
     <span class="st">${c.games} duelo${c.games>1?"s":""}</span>
-    <span class="pill n" style="font-size:13px">${c.aWins} – ${c.bWins}</span></div>`).join("");
+    <span class="pill n" style="font-size:13px">${c.aWins} – ${c.bWins}</span></div>`).join("")+`</div>`;
 
 /* ==================================================== O DOSSIÊ DO CAMPEÃO */
 const PAPEL={Fighter:"Lutador",Mage:"Mago",Assassin:"Assassino",Marksman:"Atirador",
@@ -6664,6 +6679,7 @@ const DOBRA=[
   [".estante",10,"campeões"],  /* a estante da pagina Campeoes   */
   [".fita-b",  6,"jogadores"], /* 13 fitas    -> 6 no celular    */
   [".hl-rows", 6,"jogadores"], /* 9 halteres  -> 6 no celular    */
+  [".lstack",  6,"formações"], /* 24 trios/quartetos -> 6 no celular   */
   [".zgrid",   4,"troféus"],   /* 31 trofeus por hall            */
   [".mugrid",  2,"meses"],     /* 11 meses do mural              */
   [".nems",    4,"jogadores"], /* algoz e fregues                */
@@ -6680,7 +6696,7 @@ const MQ_DOBRA=matchMedia("(max-width:620px)");
    nesta lista continua abrindo inteiro no desktop, como antes. */
 const DOBRA_DESKTOP={
   ".mfeed":12, ".awards":4, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
-  ".zgrid":6, ".mugrid":4, ".nems":9, ".dvs":8,
+  ".zgrid":6, ".mugrid":4, ".lstack":8, ".nems":9, ".dvs":8,
 };
 
 
