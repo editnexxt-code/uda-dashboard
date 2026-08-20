@@ -83,10 +83,17 @@ def collect_match_ids(client: RiotClient, conn: sqlite3.Connection,
 
     for puuid, info in resolved.items():
         name = f"{info['game_name']}#{info['tag_line']}"
-        last = store.last_match_time(conn, puuid)
+        # "Ja teve carga completa?" NAO pode ser deduzido de existir partida no
+        # banco. Quem entra no elenco depois ja tem participacoes gravadas -- elas
+        # vieram das partidas dos outros, com tracked=0, e o refresh_tracked as
+        # adota assim que a pessoa aparece em players.json. Deduzir dai jogava o
+        # membro novo direto no modo incremental e o historico SOLO dele nunca
+        # chegava. Por isso a marca e explicita, gravada so quando a carga termina.
+        completo = store.get_meta(conn, f"fullload:{puuid}") == "1"
+        last = store.last_match_time(conn, puuid) if completo else None
         # startTime da Riot e em segundos; recua 1h para nao perder nada na borda.
         start_time = (last // 1000 - 3600) if last else None
-        target = settings.match_count if last is None else 100
+        target = settings.match_count if not completo else 100
 
         ids: list[str] = []
         start = 0
@@ -105,8 +112,12 @@ def collect_match_ids(client: RiotClient, conn: sqlite3.Connection,
         novos = [m for m in ids if m not in known and m not in seen]
         seen.update(novos)
         wanted.extend(novos)
-        marca = "primeira carga" if last is None else "incremental"
+        marca = "primeira carga" if not completo else "incremental"
         print(f"  {name:<28} {len(ids):>4} ids ({marca}) -> {len(novos):>4} novos")
+        # A marca so entra depois da listagem inteira: se cair no meio, a proxima
+        # execucao refaz a carga completa em vez de assumir que ja veio tudo.
+        if not completo and ids:
+            store.set_meta(conn, f"fullload:{puuid}", "1")
 
     # Registra tudo na fila ANTES de baixar. Se o processo cair no meio, o run
     # seguinte retoma pelos que ficaram com done=0 em vez de perde-los.
