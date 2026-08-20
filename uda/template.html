@@ -2831,6 +2831,19 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .zev .lin .kda{margin-left:auto;color:var(--dim);font-variant-numeric:tabular-nums;flex:0 0 auto}
 
 
+
+/* ------------------------------------------ Visão geral: usar a largura que há
+   Medido em janela de 1280px (951 de conteúdo): o .g3 caía para UMA coluna e os
+   três cartões — medidor, rotas e filas — empilhavam em 1.206 px. E os pôsteres
+   do hall usavam 2 colunas porque o limiar era 960, um triz acima de 951.
+   Os limiares abaixo são de container, não de viewport: quem manda é a largura
+   real do conteúdo, então a barra lateral entra na conta. */
+@container content (min-width:820px){
+  .grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container content (min-width:900px){
+  .awards{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -6190,7 +6203,7 @@ const MQ_DOBRA=matchMedia("(max-width:620px)");
    do celular -- a tela e larga e cada fila cabe mais item -- e quem nao aparece
    nesta lista continua abrindo inteiro no desktop, como antes. */
 const DOBRA_DESKTOP={
-  ".mfeed":12, ".awards":6, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
+  ".mfeed":12, ".awards":4, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
   ".zgrid":6, ".mugrid":4, ".nems":9, ".dvs":8,
 };
 
