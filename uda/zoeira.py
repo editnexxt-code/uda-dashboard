@@ -33,6 +33,11 @@ SOMAS = [
     "penta_kills", "quadra_kills", "triple_kills", "double_kills",
     "multikill_flash", "survived_low_hp", "took_large_dmg", "flawless_aces",
     "buffs_stolen", "inhibs_lost", "turrets_lost", "first_blood",
+    # Estavam gravadas no banco desde o backfill e nunca viraram metrica:
+    "cs_adv", "lvl_lead", "vision_adv", "lane_cs10", "immobilizations",
+    "save_ally", "enemy_jungle_kills", "damage_epic", "ability_uses",
+    "dragon_td", "baron_td", "herald_td", "void_kills", "aces_15",
+    "spell4_casts", "perfect_souls",
 ]
 
 
@@ -55,6 +60,16 @@ def _agregar(rows_by_player, players) -> dict[str, dict[str, float]]:
                 except (IndexError, KeyError):
                     pass
         acc["minutos"] = acc["game_duration"] / 60.0
+
+        # CS aos 10 e vantagem de visao dependem da ROTA: jungler e suporte tem
+        # pouco farm de rota por definicao, e medi-los junto apontaria o jungler
+        # como "quem menos farma" -- o que nao e vexame, e a funcao dele.
+        # Aqui a conta corre so sobre topo, meio e atirador.
+        lane = [r for r in linhas if (r["position"] or "").upper()
+                in ("TOP", "MIDDLE", "BOTTOM")]
+        acc["lane_partidas"] = len(lane)
+        acc["lane_cs10_lane"] = sum(_n(r["lane_cs10"]) for r in lane)
+        acc["vision_adv_lane"] = sum(_n(r["vision_adv"]) for r in lane)
         saida[puuid] = dict(acc)
     return saida
 
@@ -164,6 +179,52 @@ TROFEUS: list[tuple] = [
     ("afk", "O Desaparecido", "curiosidade",
      "Partidas em que simplesmente sumiu. A internet leva a culpa.",
      lambda a: a["was_afk"], "partidas AFK", 0, True),
+    # ---------------------------- vindos das colunas que estavam paradas
+    ("donoDaRota", "Dono da Rota", "gloria",
+     "Maior vantagem de CS ja aberta sobre o oponente de rota, por partida.",
+     lambda a: _safe_div(a["cs_adv"], a["partidas"]), "de CS de vantagem", 0, True),
+    ("prendedor", "O Prendedor", "gloria",
+     "Inimigos imobilizados por minuto. Se voce parou, voce ja era.",
+     lambda a: _safe_div(a["immobilizations"], a["minutos"]),
+     "imobilizacoes por minuto", 2, True),
+    ("salvaVidas", "Salva-Vidas", "gloria",
+     "Aliados arrancados da morte no ultimo instante. O verdadeiro suporte.",
+     lambda a: a["save_ally"], "aliados salvos", 0, True),
+    ("invasor", "O Invasor", "gloria",
+     "Monstros roubados da selva inimiga. Educacao zero, lucro alto.",
+     lambda a: a["enemy_jungle_kills"], "campos invadidos", 0, True),
+    ("cacaObjetivo", "Caca-Objetivo", "gloria",
+     "Participacao em dragao, barao e arauto somada. Quem lembra do mapa.",
+     lambda a: a["dragon_td"] + a["baron_td"] + a["herald_td"],
+     "objetivos disputados", 0, True),
+    ("acePrecoce", "Ace Antes dos 15", "gloria",
+     "Times inimigos apagados inteiros antes dos 15 minutos. Sem piedade.",
+     lambda a: a["aces_15"], "aces precoces", 0, True),
+    ("cacadorMonstro", "Cacador de Monstro", "gloria",
+     "Dano nos objetivos neutros por partida. O barao nao se mata sozinho.",
+     lambda a: _safe_div(a["damage_epic"], a["partidas"]),
+     "de dano em objetivos", 0, True),
+
+    ("farmDoDez", "Farm dos Dez Minutos", "vergonha",
+     "CS aos dez minutos, contando so partidas de rota. Jungler e suporte ficam"
+     " de fora: farmar pouco la e a funcao, nao vexame.",
+     lambda a: _safe_div(a["lane_cs10_lane"], a["lane_partidas"]),
+     "de CS aos 10 min", 0, False),
+    ("cegoDaRota", "Cego de Rota", "vergonha",
+     "Vantagem de visao sobre o oponente de rota, so em partidas de rota."
+     " Negativo quer dizer que ele te via primeiro.",
+     lambda a: _safe_div(a["vision_adv_lane"], a["lane_partidas"]),
+     "de vantagem de visao", 2, False),
+
+    ("dedoNervoso", "Dedo Nervoso", "curiosidade",
+     "Habilidades usadas por minuto. O teclado que nao descansa.",
+     lambda a: _safe_div(a["ability_uses"], a["minutos"]),
+     "habilidades por minuto", 1, True),
+    ("botaoExtra", "Dedo no Quarto Botao", "curiosidade",
+     "Acionamentos do feitico de item. Metade foi ansiedade, como sempre.",
+     lambda a: _safe_div(a["spell4_casts"], a["partidas"]),
+     "acionamentos por jogo", 1, True),
+
     ("milagre", "Sobreviveu ao Impossivel", "curiosidade",
      "Ficou com um fio de vida e escapou. Sorte tambem e habilidade.",
      lambda a: a["survived_low_hp"], "escapadas milagrosas", 0, True),
@@ -204,10 +265,23 @@ COLUNA_POR_TROFEU = {
     "milagre": "survived_low_hp",
     "nexusAberto": "had_open_nexus",
     "matrix": "skillshots_dodged",
+    "donoDaRota": "cs_adv",
+    "prendedor": "immobilizations",
+    "salvaVidas": "save_ally",
+    "invasor": "enemy_jungle_kills",
+    "acePrecoce": "aces_15",
+    "cacadorMonstro": "damage_epic",
+    "farmDoDez": "lane_cs10",
+    "dedoNervoso": "ability_uses",
+    "botaoExtra": "spell4_casts",
 }
 
 # Como escrever o valor daquela partida na tela.
 FORMATO = {
+    "cs_adv": lambda v: f"+{int(v)} de CS",
+    "damage_epic": lambda v: f"{int(v)} em objetivos",
+    "lane_cs10": lambda v: f"{int(v)} CS aos 10",
+    "immobilizations": lambda v: f"{int(v)} presos",
     "telaCinza": lambda v: f"{int(v // 60)} min morto",
     "time_dead": lambda v: f"{int(v // 60)} min morto",
     "bounty_gold": lambda v: f"{int(v)} de recompensa",
@@ -250,10 +324,16 @@ def construir(rows_by_player, players, min_partidas: int = MIN_PARTIDAS) -> list
     if not elegiveis:
         return []
 
+    # Trofeu de rota so aceita quem tem amostra de rota.
+    SO_LANE = {"farmDoDez", "cegoDaRota"}
+    MIN_LANE = 8
+
     saida = []
     for key, titulo, grupo, legenda, calc, unidade, casas, maior in TROFEUS:
         linhas = []
         for puuid, acc in elegiveis.items():
+            if key in SO_LANE and acc.get("lane_partidas", 0) < MIN_LANE:
+                continue
             try:
                 valor = float(calc(acc))
             except (KeyError, TypeError, ZeroDivisionError):
