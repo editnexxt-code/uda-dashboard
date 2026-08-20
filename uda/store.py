@@ -167,6 +167,9 @@ NOVAS_MATCHES: list[tuple[str, str]] = [
     # Em que versao do extrator esta linha foi lida. E o que torna o backfill
     # repetivel a cada migracao -- ver o comentario em backfill().
     ("schema_v", "INTEGER DEFAULT 0"),
+    # 0 = timeline ainda nao buscada, 1 = extraida, 2 = sem dado / erro definitivo.
+    # E o que torna a coleta de timeline retomavel com teto por execucao.
+    ("tl_done", "INTEGER DEFAULT 0"),
     ("bans_json", "TEXT"),
     ("objectives_json", "TEXT"),
     ("patch", "TEXT"),
@@ -253,6 +256,25 @@ CREATE TABLE IF NOT EXISTS participants (
 CREATE INDEX IF NOT EXISTS idx_part_puuid  ON participants (puuid, game_creation);
 CREATE INDEX IF NOT EXISTS idx_part_track  ON participants (tracked, queue_id);
 CREATE INDEX IF NOT EXISTS idx_match_time  ON matches (game_creation);
+
+CREATE TABLE IF NOT EXISTS timeline_stats (
+    match_id        TEXT NOT NULL,
+    puuid           TEXT NOT NULL,
+    primeira_morte  INTEGER,
+    primeiro_abate  INTEGER,
+    wards_tl        INTEGER DEFAULT 0,
+    assists_tl      INTEGER DEFAULT 0,
+    mortes_json     TEXT,
+    abates_json     TEXT,
+    itens_json      TEXT,
+    skills_json     TEXT,
+    ouro10 INTEGER DEFAULT 0, xp10 INTEGER DEFAULT 0, cs10 INTEGER DEFAULT 0,
+    ouro15 INTEGER DEFAULT 0, xp15 INTEGER DEFAULT 0, cs15 INTEGER DEFAULT 0,
+    ouro20 INTEGER DEFAULT 0, xp20 INTEGER DEFAULT 0, cs20 INTEGER DEFAULT 0,
+    PRIMARY KEY (match_id, puuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tl_puuid ON timeline_stats(puuid);
 
 CREATE TABLE IF NOT EXISTS meta (
     key   TEXT PRIMARY KEY,
@@ -756,6 +778,10 @@ def backfill(conn: sqlite3.Connection, lote: int = 200) -> int:
     conn.commit()
     print(f"  concluido: {feitas} partidas repopuladas")
     return feitas
+
+
+def tracked_puuids(conn: sqlite3.Connection) -> list[str]:
+    return [r[0] for r in conn.execute("SELECT puuid FROM players")]
 
 
 def enqueue_matches(conn: sqlite3.Connection, match_ids: Iterable[str],

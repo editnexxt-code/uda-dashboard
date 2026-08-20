@@ -149,10 +149,20 @@ class RiotClient:
                 time.sleep(delay)
                 continue
             if resp.status_code in (401, 403):
+                # A Riot devolve 403 tanto para chave morta quanto para endpoint
+                # pedido no host errado -- Match-V5 em br1, por exemplo. Culpar
+                # so a chave manda quem esta depurando para o lado errado, entao
+                # a mensagem cita o host e a rota que produziram a resposta.
+                dica = ""
+                if "/lol/match/" in path and not host.startswith(
+                        ("americas", "europe", "asia", "sea")):
+                    dica = (f" | ATENCAO: Match-V5 so responde no host de "
+                            f"ROTEAMENTO (americas), e esta chamada foi para "
+                            f"'{host}'. Isso tambem devolve 403.")
                 raise RiotError(
-                    "403/401 da Riot: a chave e invalida ou expirou. "
-                    "Development Keys duram 24h -- gere outra em "
-                    "https://developer.riotgames.com e atualize o .env"
+                    f"403/401 da Riot em {host}{path}. A chave pode ter expirado"
+                    " -- Development Keys duram 24h, gere outra em "
+                    "https://developer.riotgames.com e atualize o .env." + dica
                 )
             if resp.status_code >= 500:
                 time.sleep(2 ** attempt)

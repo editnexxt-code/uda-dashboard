@@ -63,6 +63,9 @@ class Settings:
     match_count: int
     window_days: int
     min_games: int
+    # Teto de timelines por execucao. Sao ~1,25 s cada por causa do rate
+    # limit; 250 mantem a rodada em ~5 min e a coleta converge em rodadas.
+    timeline_limit: int = 250
 
 
 def _int_env(name: str, default: int) -> int:
@@ -100,6 +103,7 @@ def load_settings(require_key: bool = True) -> Settings:
         routing=region.get("routing", "americas"),
         players=tuple(jogadores),
         match_count=max(1, min(100, _int_env("MATCH_COUNT", 100))),
+        timeline_limit=max(0, _int_env("TIMELINE_LIMIT", 250)),
         window_days=_int_env("WINDOW_DAYS", 90),
         min_games=max(1, _int_env("MIN_GAMES", 5)),
     )

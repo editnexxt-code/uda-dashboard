@@ -187,6 +187,13 @@ def run(settings: Settings, conn: sqlite3.Connection) -> None:
     if corrigidos:
         print(f"  {corrigidos} participacoes reassociadas ao roster atual")
 
+    # Timeline por ultimo e com teto: e a parte mais cara e a unica que pode
+    # ficar pela metade sem estragar nada. O que ja veio fica gravado; o resto
+    # entra na proxima execucao.
+    from . import timeline as _timeline
+    _timeline.coletar(client, conn, set(store.tracked_puuids(conn)),
+                      limite=settings.timeline_limit)
+
     store.set_meta(conn, "last_fetch", str(_now()))
     store.set_meta(conn, "last_fetch_saved", str(saved))
     conn.commit()
