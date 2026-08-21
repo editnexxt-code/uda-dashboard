@@ -91,13 +91,22 @@ Traz **três origens diferentes de dado, cada uma dizendo qual é**:
 - *A queda, medida* — a curva do saldo acumulado ao longo do tempo, com o pico
   marcado e o quanto caiu de lá até hoje (medido, mas só alcança o que o
   Match-V5 ainda serve);
-- *Tempo de cadeia* — pódio de quem passou mais tempo suspenso. A Riot **não
-  expõe punição de conta** em endpoint nenhum, então também vem de `elos.json`,
-  seção `banimentos`.
 - *Os dois recordes* — a maior queda e a maior ascensão do grupo, lado a lado,
   com os arcos espelhados. Vêm de `elos.json` e são marcados com a fonte na
   tela. Quando alguém bate a marca, move-se o `atual` para o `historico` e o
   novo entra no lugar; os antigos viram o **quadro de honra**.
+
+**Cadeia** — pódio de quem passou mais tempo suspenso, com formulário na
+própria tela. A Riot **não expõe punição de conta** em endpoint nenhum
+(verificado: `PlayerBehavior` só carrega estado de combate, e o único desafio
+que casa com "ban" é o de Bandópolis), e medir por ausência não funciona
+retroativamente — os buracos do histórico são falha de coleta, já que o Match-V5
+entrega só as ~100 últimas partidas.
+
+> O formulário guarda no `localStorage`, que é **do navegador de quem digitou**:
+> serve para ver na hora. O botão *copiar JSON* gera a seção `banimentos` pronta
+> para colar em `elos.json` — só isso vale para o grupo inteiro. A tela diz isso
+> em vez de deixar a pessoa achar que salvou.
 
 **Mural do mês** — o 👑 UDA e o 💀 Afundado de cada mês, com pódio, e o quadro de
 títulos acumulados.

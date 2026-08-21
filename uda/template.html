@@ -2910,6 +2910,44 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   font-variant-numeric:tabular-nums}
 .ban-c b span{display:block;font:600 8.5px/1 var(--body);color:var(--mut);
   letter-spacing:.09em;text-transform:uppercase;margin-top:4px;text-align:right}
+/* ------------------------------------------------ formulario de punicao */
+.banf{background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:14px 15px;margin-top:14px}
+.banf-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.banf-h b{font:700 12.5px/1 var(--disp)}
+.banf-h span{font-size:11px;color:var(--dim)}
+.banf-g{display:grid;grid-template-columns:minmax(0,1.5fr) 76px minmax(0,1fr) minmax(0,1.2fr) auto;
+  gap:8px;align-items:end}
+.banf label{display:block;font:600 9px/1 var(--body);letter-spacing:.09em;
+  text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+.banf input,.banf select{width:100%;box-sizing:border-box;background:var(--card);
+  border:1px solid var(--line);border-radius:7px;color:var(--txt);
+  font:400 12px/1.2 var(--body);padding:8px 9px}
+.banf input:focus,.banf select:focus{outline:none;border-color:var(--teal)}
+.banf input::placeholder{color:var(--mut)}
+.banf .add{background:var(--teal);border:0;color:#04201d;border-radius:7px;
+  font:700 12px/1 var(--body);padding:10px 15px;cursor:pointer;white-space:nowrap}
+.banf .add:hover{filter:brightness(1.08)}
+.banf .add:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.banf-erro{margin-top:9px;font-size:11.5px;color:var(--red)}
+.banf-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--line)}
+.banf-acoes button{appearance:none;background:var(--card);border:1px solid var(--line);
+  color:var(--mut);border-radius:7px;font:600 11px/1 var(--body);padding:9px 12px;cursor:pointer}
+.banf-acoes button:hover{color:var(--txt);border-color:var(--teal)}
+.banf-nota{margin-top:11px;font-size:11px;line-height:1.6;color:var(--dim)}
+.ban-c.local{border-left-color:var(--gold);border-style:dashed}
+.ban-c .rem{appearance:none;background:none;border:0;color:var(--mut);cursor:pointer;
+  font-size:15px;line-height:1;padding:2px 4px;flex:none}
+.ban-c .rem:hover{color:var(--red)}
+.ban-tag{font:600 8.5px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold);border:1px solid rgba(214,178,92,.4);border-radius:4px;
+  padding:3px 5px;margin-left:6px}
+@container content (max-width:720px){
+  .banf-g{grid-template-columns:1fr 1fr;gap:8px}
+  .banf-g .add{grid-column:1/-1}
+}
+
 .ban-vazio{padding:16px 18px;font-size:12.5px;line-height:1.65;color:var(--dim);
   background:var(--card2);border:1px solid var(--line);border-radius:11px}
 .ban-vazio code{font-size:11.5px;background:rgba(255,255,255,.05);padding:2px 5px;
@@ -6212,6 +6250,7 @@ const PAGES=[
   {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo insiste em jogar, e no que dá"},
   {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:1,sub:"Itens, runas e feitiços que vocês repetem até cansar"},
   {k:"elevador",n:"Elevador",i:I.trend,g:"Zoeira",q:0,sub:"Quem subiu, quem desceu, e quem passou o ano apertando o botão"},
+  {k:"cadeia",n:"Cadeia",i:I.skull,g:"Zoeira",q:0,sub:"Quem passou mais tempo de castigo, e por quê"},
   {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"A coroa e a lanterna de cada mês, para a posteridade"},
   {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com a prova do lado"},
   {k:"zoeira",n:"Troféus",i:I.award,g:"Zoeira",q:1,sub:"As métricas que existem só para zoar"},
@@ -6923,6 +6962,95 @@ function dataCurta(iso){
   return `${+m[3]} de ${MES_PT[+m[2]-1]||""}`;
 }
 
+/* ------------------------------------------- PUNICOES DIGITADAS NA TELA
+   O painel e um HTML estatico servido pelo GitHub Pages -- nao ha servidor
+   para receber um POST. Entao o formulario guarda no localStorage, que e do
+   NAVEGADOR de quem digitou: serve para ver na hora, nao para compartilhar.
+   Por isso o botao de gerar JSON existe e e o caminho de verdade -- so o que
+   entra em elos.json aparece para o grupo inteiro. A tela diz isso em vez de
+   deixar a pessoa achar que salvou. */
+const BAN_KEY="uda.banimentos.rascunho";
+function banLocais(){
+  try{ const v=JSON.parse(localStorage.getItem(BAN_KEY)||"[]");
+       return Array.isArray(v)?v:[]; }catch(e){ return []; }
+}
+function banSalvar(l){
+  try{ localStorage.setItem(BAN_KEY,JSON.stringify(l)); }catch(e){}
+}
+/* junta o que veio do arquivo com o rascunho local e recalcula o podio */
+function banMesclado(){
+  const dados=(DATA.elevador||{}).banimentos||{todos:[]};
+  const doArquivo=(dados.todos||[]).map(x=>({...x,local:false}));
+  const jog=((grupo()||{}).players)||[];
+  const acha=(rid)=>jog.find(p=>`${p.gameName}#${p.tagLine}`===rid)||
+                    jog.find(p=>p.gameName===String(rid).split("#")[0]);
+  const locais=banLocais().map((x,i)=>{
+    const p=acha(x.jogador)||{};
+    return {...x, local:true, idx:i, gameName:p.gameName||x.jogador, icon:p.icon,
+            puuid:p.puuid||("local"+i)};
+  });
+  const todos=doArquivo.concat(locais);
+  const soma={};
+  for(const x of todos){
+    const k=x.puuid||x.gameName;
+    const a=soma[k]||(soma[k]={gameName:x.gameName,icon:x.icon,dias:0,vezes:0,local:false});
+    a.dias+=Number(x.dias)||0; a.vezes++; a.local=a.local||x.local;
+  }
+  return {todos:todos.sort((a,b)=>b.dias-a.dias),
+          podio:Object.values(soma).sort((a,b)=>b.dias-a.dias||b.vezes-a.vezes)};
+}
+/* o JSON pronto para colar em elos.json */
+function banJSON(){
+  const dados=(DATA.elevador||{}).banimentos||{todos:[]};
+  const doArquivo=(dados.todos||[]).map(x=>({
+    jogador:x.riotId||x.gameName, dias:x.dias, quando:x.quando||undefined,
+    tipo:x.tipo||undefined, motivo:x.motivo||undefined}));
+  const lista=doArquivo.concat(banLocais().map(x=>({
+    jogador:x.jogador, dias:Number(x.dias), quando:x.quando||undefined,
+    tipo:x.tipo||undefined, motivo:x.motivo||undefined})));
+  return JSON.stringify({banimentos:lista},null,2);
+}
+
+document.addEventListener("click",ev=>{
+  const t2=ev.target;
+  if(t2.closest&&t2.closest("#ban-add")){
+    const f=document.querySelector(".banf"); if(!f) return;
+    const jogador=f.querySelector("[name=jogador]").value;
+    const dias=parseInt(f.querySelector("[name=dias]").value,10);
+    const erro=f.querySelector(".banf-erro");
+    if(!jogador||!(dias>0)){
+      erro.textContent=!jogador?"Escolha quem foi.":"Os dias precisam ser um número maior que zero.";
+      return;
+    }
+    erro.textContent="";
+    const l=banLocais();
+    l.push({jogador, dias,
+      quando:f.querySelector("[name=quando]").value.trim(),
+      tipo:f.querySelector("[name=tipo]").value,
+      motivo:f.querySelector("[name=motivo]").value.trim()});
+    banSalvar(l); desenhar();
+    return;
+  }
+  const rem=t2.closest&&t2.closest("[data-ban-rem]");
+  if(rem){
+    const i=+rem.getAttribute("data-ban-rem");
+    const l=banLocais(); l.splice(i,1); banSalvar(l); desenhar(); return;
+  }
+  if(t2.closest&&t2.closest("#ban-json")){
+    copiarTexto(banJSON()).then(ok=>{
+      const b=t2.closest("#ban-json"), antes=b.textContent;
+      b.textContent=ok?"copiado! cole em elos.json":"falhou";
+      setTimeout(()=>{b.textContent=antes;},2200);
+    });
+    return;
+  }
+  if(t2.closest&&t2.closest("#ban-limpar")){
+    if(banLocais().length&&confirm("Apagar os rascunhos deste navegador?")){
+      banSalvar([]); desenhar();
+    }
+  }
+});
+
 function pElevador(){
   const e=DATA.elevador||{}, f=e.fichas||[];
   if(!f.length) return noData("ELEVADOR PARADO",
@@ -6943,15 +7071,14 @@ function pElevador(){
     <span class="sal ${x.saldo>0?"up":x.saldo<0?"dn":"eq"}">${x.saldo>0?"+":""}${x.saldo}</span>
   </div>`;
 
-  const hist=e.historico||{}, rec=e.recordes||{}, curva=e.curva||[],
-        ban=e.banimentos||{podio:[],todos:[]};
+  const hist=e.historico||{}, rec=e.recordes||{}, curva=e.curva||[];
   const zoada=["O ELEVADOR DA UDA — saldo em ranqueada"]
     .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
     .concat(rec.queda?[`🪂 maior queda: ${rec.queda.atual.gameName} ${rec.queda.atual.de.txt} → ${rec.queda.atual.para.txt} (${rec.queda.atual.degraus} degraus${rec.queda.atual.partidas?` em ${rec.queda.atual.partidas} partidas`:""})`]:[])
     .concat(rec.ascensao?[`🚀 maior ascensão: ${rec.ascensao.atual.gameName} ${rec.ascensao.atual.de.txt} → ${rec.ascensao.atual.para.txt} (${rec.ascensao.atual.degraus} degraus${rec.ascensao.atual.partidas?` em ${rec.ascensao.atual.partidas} partidas`:""})`]:[])
-    .concat((ban.podio||[]).slice(0,1).map(x=>`⛓️ mais tempo de cadeia: ${x.gameName} — ${x.dias} dias`))
+
     .join("\n");
 
   return `
@@ -7057,42 +7184,6 @@ function pElevador(){
         <span>${ni(x.jogos)} jogos</span></div>
     </div>`).join("")}</div></section>`:""}
 
-  <section><div class="sh-plain">${chead(I.skull,"Tempo de cadeia",
-    "quem passou mais tempo suspenso · a Riot não expõe punição de conta em endpoint nenhum, então isto é memória do grupo","red")}</div>
-    ${(ban.podio&&ban.podio.length)?`
-      <div class="autpod">${podio3(ban.podio.slice(0,3).map(x=>({
-        nome:x.gameName,icon:x.icon,valor:x.dias,
-        tip:tip(h(x.gameName),[["Dias somados",ni(x.dias)],
-          ["Punições",ni(x.vezes)]],"informado pelo grupo")})),
-        "verg",v=>ni(v)+(v===1?" dia":" dias"))}</div>
-      ${ban.todos.length?`<div class="ban-lista">${ban.todos.map(x=>`
-        <div class="ban-c"${tip(h(x.gameName),[
-          ["Duração",ni(x.dias)+(x.dias===1?" dia":" dias")],
-          x.tipo?["Tipo",x.tipo]:null, x.quando?["Quando",x.quando]:null
-          ].filter(Boolean), h(x.motivo||""))}>
-          <img src="${iconImg(x.icon)}"${FB}>
-          <div class="txt"><div class="n">${h(x.gameName)}</div>
-            <div class="m">${h(x.motivo||x.tipo||"sem motivo declarado")}</div></div>
-          <b>${ni(x.dias)}<span>${x.dias===1?"dia":"dias"}</span></b>
-        </div>`).join("")}</div>`:""}`
-    :`<div class="ban-vazio">
-      <b style="color:var(--txt)">Ninguém registrado — e não é por falta de tentativa minha.</b><br><br>
-      A Riot não publica punição de conta em endpoint nenhum: não há suspensão,
-      restrição de chat nem ban em lugar algum da API. Fui conferir antes de
-      desistir — o campo <code>PlayerBehavior</code> que vem em cada partida só
-      carrega estado de combate, e o único desafio cujo nome casa com "ban" é o
-      de <b style="color:var(--txt)">Bandópolis</b>.<br><br>
-      Medir por ausência também não resolve olhando para trás: os buracos do
-      histórico são falha de coleta, não sumiço. O Match-V5 entrega só as ~100
-      últimas partidas de cada um, então o banco tem 874 partidas em agosto e 3
-      em dezembro de 2024 — ler isso como "ficou 430 dias fora" seria confundir
-      o limite da API com comportamento de gente.<br><br>
-      Então este pódio só enche com o que vocês souberem: é editar
-      <code>elos.json</code>, seção <code>banimentos</code>, com o Riot ID, os
-      dias e o motivo.
-    </div>`}
-  </section>
-
   <section><div class="sh-plain">${chead(I.rank,"O prédio inteiro",
     "cada um, o elo de solo/duo agora, e o saldo que o levou até aí")}</div>
     <div class="elvt">${f.map(linha).join("")}</div></section>
@@ -7123,7 +7214,92 @@ function pElevador(){
   </section>`;
 }
 
-const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,elevador:pElevador,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
+/* --------------------------------------------------------------- A CADEIA
+   Aba propria porque punicao nao e movimento de elo: o Elevador conta o que
+   aconteceu com o PDL, e isto conta o que aconteceu com a CONTA. Juntar os dois
+   fazia a aba do elevador carregar dois assuntos diferentes. */
+function pCadeia(){
+  const e=DATA.elevador||{};
+  const ban=e.banimentos||{podio:[],todos:[]};
+  const zoada=(()=>{const m=banMesclado();
+    return ["TEMPO DE CADEIA — UDA"].concat(
+      (m.podio||[]).slice(0,3).map((x,i)=>
+        `${i+1}º ${x.gameName} — ${x.dias} dia${x.dias===1?"":"s"}` +
+        (x.vezes>1?` em ${x.vezes} punições`:""))).join("\n");})();
+  return `<section class="sec-copia">
+    ${(banMesclado().podio||[]).length?`<button class="zcopy" type="button"
+      title="copiar para mandar no grupo" data-zoada="${h(zoada)}">copiar</button>`:""}
+    <div class="sh-plain">${chead(I.skull,"Tempo de cadeia",
+    "quem passou mais tempo suspenso · a Riot não expõe punição de conta em endpoint nenhum, então isto é memória do grupo","red")}</div>
+    ${(()=>{const m=banMesclado(); const ban2={podio:m.podio,todos:m.todos};
+      const jog=((grupo()||{}).players)||[];
+      const form=`<div class="banf">
+        <div class="banf-h"><b>Registrar punição</b>
+          <span>fica só neste navegador até você colar o JSON em elos.json</span></div>
+        <div class="banf-g">
+          <div><label>Quem</label><select name="jogador">
+            <option value="">escolher…</option>
+            ${jog.map(p=>`<option value="${h(p.gameName)}#${h(p.tagLine)}">${h(p.gameName)}</option>`).join("")}
+          </select></div>
+          <div><label>Dias</label><input name="dias" type="number" min="1" step="1" placeholder="14"></div>
+          <div><label>Quando</label><input name="quando" type="text" placeholder="2026-03"></div>
+          <div><label>Tipo</label><select name="tipo">
+            <option>suspensão</option><option>restrição de chat</option>
+            <option>restrição de ranqueada</option><option>ban permanente</option>
+          </select></div>
+          <button class="add" id="ban-add" type="button">Adicionar</button>
+        </div>
+        <div style="margin-top:8px"><label style="display:block;font:600 9px/1 var(--body);
+          letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:5px">Motivo</label>
+          <input name="motivo" type="text" placeholder="o que ele aprontou (aparece na tela)"></div>
+        <div class="banf-erro"></div>
+        <div class="banf-acoes">
+          <button id="ban-json" type="button">copiar JSON para elos.json</button>
+          <button id="ban-limpar" type="button">limpar rascunhos deste navegador</button>
+        </div>
+        <div class="banf-nota">O painel é um arquivo estático servido pelo GitHub Pages:
+          não existe servidor para guardar o que você digita. O que fica aqui vive no
+          <b>seu</b> navegador — para o grupo inteiro ver, copie o JSON e cole em
+          <code>elos.json</code>.</div>
+      </div>`;
+      return (ban2.podio&&ban2.podio.length)?`
+      <div class="autpod">${podio3(ban2.podio.slice(0,3).map(x=>({
+        nome:x.gameName,icon:x.icon,valor:x.dias,
+        tip:tip(h(x.gameName),[["Dias somados",ni(x.dias)],
+          ["Punições",ni(x.vezes)]],"informado pelo grupo")})),
+        "verg",v=>ni(v)+(v===1?" dia":" dias"))}</div>
+      ${ban2.todos.length?`<div class="ban-lista">${ban2.todos.map(x=>`
+        <div class="ban-c ${x.local?"local":""}"${tip(h(x.gameName),[
+          ["Duração",ni(x.dias)+(x.dias===1?" dia":" dias")],
+          x.tipo?["Tipo",x.tipo]:null, x.quando?["Quando",x.quando]:null
+          ].filter(Boolean), h(x.motivo||""))}>
+          <img src="${iconImg(x.icon)}"${FB}>
+          <div class="txt"><div class="n">${h(x.gameName)}${x.local?`<span class="ban-tag">rascunho</span>`:""}</div>
+            <div class="m">${h(x.motivo||x.tipo||"sem motivo declarado")}</div></div>
+          <b>${ni(x.dias)}<span>${x.dias===1?"dia":"dias"}</span></b>
+          ${x.local?`<button class="rem" type="button" data-ban-rem="${x.idx}"
+            title="remover rascunho">✕</button>`:""}
+        </div>`).join("")}</div>`:""}${form}`
+    :`<div class="ban-vazio">
+      <b style="color:var(--txt)">Ninguém registrado — e não é por falta de tentativa minha.</b><br><br>
+      A Riot não publica punição de conta em endpoint nenhum: não há suspensão,
+      restrição de chat nem ban em lugar algum da API. Fui conferir antes de
+      desistir — o campo <code>PlayerBehavior</code> que vem em cada partida só
+      carrega estado de combate, e o único desafio cujo nome casa com "ban" é o
+      de <b style="color:var(--txt)">Bandópolis</b>.<br><br>
+      Medir por ausência também não resolve olhando para trás: os buracos do
+      histórico são falha de coleta, não sumiço. O Match-V5 entrega só as ~100
+      últimas partidas de cada um, então o banco tem 874 partidas em agosto e 3
+      em dezembro de 2024 — ler isso como "ficou 430 dias fora" seria confundir
+      o limite da API com comportamento de gente.<br><br>
+      Então este pódio só enche com o que vocês souberem — e o formulário
+      abaixo é o atalho: preencha, veja na hora, e copie o JSON para
+      <code>elos.json</code> quando quiser que valha para o grupo.
+    </div>${form}`;})()}
+  </section>`;
+}
+
+const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,elevador:pElevador,cadeia:pCadeia,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
   inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 
