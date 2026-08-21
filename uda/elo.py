@@ -29,6 +29,7 @@ import json
 import sqlite3
 import time
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 from .kpi import _r, _safe_div
@@ -129,6 +130,34 @@ def _historico(conn: sqlite3.Connection, players: dict) -> dict:
             "movimento": mov, "series": series, "pronto": bool(mov)}
 
 
+def passos(tier: str | None, division: str | None) -> int | None:
+    """Posicao na escada real, contando degrau por degrau.
+
+    valor_elo() serve para ORDENAR, mas mente na hora de contar: ela da 400 a
+    cada tier e 100 a cada divisao, entao trata Mestre como se existissem
+    divisoes acima de Diamante I. Medido: Mestre -> Esmeralda I dava "8
+    divisoes" quando a escada real tem 5 degraus (Mestre, D-I, D-II, D-III,
+    D-IV, E-I). Aqui cada tier abaixo de Mestre vale 4 degraus e Mestre para
+    cima vale 1 cada, que e como a fila de fato funciona.
+    """
+    if not tier or tier.upper() not in ORDEM_TIER:
+        return None
+    i = ORDEM_TIER.index(tier.upper())
+    if i >= ORDEM_TIER.index("MASTER"):
+        return ORDEM_TIER.index("MASTER") * 4 + (i - ORDEM_TIER.index("MASTER"))
+    return i * 4 + ORDEM_DIV.get((division or "I").upper(), 3)
+
+
+def _dias_entre(a: str, b: str) -> int | None:
+    """Intervalo em dias entre duas datas AAAA-MM-DD."""
+    try:
+        d1 = datetime.strptime(a, "%Y-%m-%d")
+        d2 = datetime.strptime(b, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        return None
+    return abs((d2 - d1).days)
+
+
 def _pt_para_tier(txt: str) -> tuple[str | None, str | None]:
     """'PLATINA II' -> ('PLATINUM', 'II'). Aceita o nome em portugues."""
     if not txt:
@@ -190,18 +219,26 @@ def _informado(players: dict) -> list[dict]:
             # -- faixa que ninguem do elenco tem hoje -- pediria a imagem na
             # internet e o painel deixaria de funcionar offline.
             queda = (v_fim - v_pico) if v_fim is not None else None
+            p_pico, p_fim = passos(t_pico, d_pico), passos(t_fim, d_fim)
+            degraus = (p_pico - p_fim) if (p_pico is not None and p_fim is not None) else None
+            dias = _dias_entre(m.get("picoEm", ""), m.get("fimEm", ""))
+            pdl = m.get("picoPdl")
             saida.append({
                 "puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
                 "temporada": m.get("temporada", ""),
                 "de": {"tier": (t_pico or "").lower(),
-                       "txt": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", "")},
+                       "txt": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", ""),
+                       "pdl": int(pdl) if isinstance(pdl, (int, float)) else None,
+                       "em": m.get("picoEm") or None},
                 "para": ({"tier": (t_fim or "").lower(),
-                          "txt": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", "")}
+                          "txt": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", ""),
+                          "em": m.get("fimEm") or None}
                          if v_fim is not None else None),
                 "queda": queda,
                 # Cada divisao vale 100 na escala achatada, entao a conta vira a
                 # unidade que todo mundo usa para medir tombo: divisoes.
-                "divisoes": abs(queda) // 100 if queda is not None else None,
+                "degraus": degraus,
+                "dias": dias,
                 "nota": m.get("nota", ""),
             })
     # A maior queda primeiro: e o que a aba existe para mostrar.

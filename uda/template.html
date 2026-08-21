@@ -2900,28 +2900,50 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
    assume a altura dos proprios lados (111 px) e o align-self:start/end nao tem
    para onde empurrar -- medido: 9 px de descida, ou seja, nenhuma. Com 210 px
    sao 99 px de queda visivel, ao custo de 90 px de cartao. */
-.queda{display:grid;grid-template-columns:1fr minmax(90px,1.5fr) 1fr;
-  align-items:center;gap:8px;min-height:210px}
+/* A altura minima e recalibrada junto com o tamanho do brasao: com 104 px de
+   emblema mais a linha de data, cada lado passou a medir 179 px e a descida
+   caiu para 71 px. Medido: 330 px de linha devolvem 151 px de queda, o
+   suficiente para o emblema de baixo comecar depois que o de cima termina --
+   e ai a diagonal e inequivoca, nao um desalinhamento. */
+.queda{display:grid;grid-template-columns:1fr minmax(120px,1.3fr) 1fr;
+  align-items:center;gap:8px;min-height:330px}
 .queda .lado{text-align:center}
 .queda .lado.alto{align-self:start}
 .queda .lado.baixo{align-self:end}
 .queda .rot{font:600 9.5px/1 var(--body);letter-spacing:.11em;
   text-transform:uppercase;color:var(--mut);margin-bottom:9px}
-.queda .bras{width:64px;height:64px;display:block;margin:0 auto 9px;
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
-.queda .lado.alto .bras{filter:drop-shadow(0 0 16px rgba(214,178,92,.42))}
-.queda .lado.baixo .bras{filter:drop-shadow(0 0 16px rgba(224,72,64,.38))}
-.queda .fx{font:800 17px/1.15 var(--disp)}
+.queda .bras{width:104px;height:104px;display:block;margin:0 auto 10px;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
+/* O halo atras do brasao: um circulo de luz que da peso ao simbolo sem
+   competir com ele. Fica no ::before para nao mexer no <img>. */
+.queda .lado{position:relative}
+.queda .lado::before{content:"";position:absolute;top:14px;left:50%;
+  width:128px;height:128px;margin-left:-64px;border-radius:50%;
+  pointer-events:none;z-index:0}
+.queda .lado.alto::before{background:radial-gradient(circle,rgba(214,178,92,.26),transparent 66%)}
+.queda .lado.baixo::before{background:radial-gradient(circle,rgba(224,72,64,.24),transparent 66%)}
+.queda .lado .bras,.queda .lado .fx,.queda .lado .rot,.queda .lado .det{position:relative;z-index:1}
+.queda .lado.alto .bras{filter:drop-shadow(0 0 22px rgba(214,178,92,.55))}
+.queda .lado.baixo .bras{filter:drop-shadow(0 0 22px rgba(224,72,64,.5))}
+.queda .fx{font:800 21px/1.15 var(--disp);letter-spacing:-.01em}
+.queda .det{font-size:11px;color:var(--mut);margin-top:6px;
+  font-variant-numeric:tabular-nums}
 .queda .lado.alto .fx{color:var(--gold)}
 .queda .lado.baixo .fx{color:var(--red)}
 .queda .meio{position:relative;align-self:stretch;min-height:120px}
 .queda .meio svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .queda .medida{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  text-align:center;background:rgba(10,12,16,.72);border:1px solid var(--line);
-  border-radius:11px;padding:7px 12px;backdrop-filter:blur(3px);white-space:nowrap}
-.queda .medida b{display:block;font:800 21px/1 var(--disp);color:var(--red)}
-.queda .medida span{display:block;font:600 8.5px/1 var(--body);letter-spacing:.1em;
-  text-transform:uppercase;color:var(--mut);margin-top:5px}
+  z-index:2;text-align:center;background:rgba(10,12,16,.82);
+  border:1px solid rgba(224,72,64,.35);border-radius:13px;padding:12px 16px;
+  backdrop-filter:blur(4px);white-space:nowrap;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.queda .medida b{display:block;font:800 34px/1 var(--disp);color:var(--red);
+  letter-spacing:-.02em}
+.queda .medida span{display:block;font:600 9px/1 var(--body);letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mut);margin-top:6px}
+.queda .medida em{display:block;font:600 11px/1 var(--body);font-style:normal;
+  color:var(--txt);opacity:.85;margin-top:9px;padding-top:9px;
+  border-top:1px solid var(--line);white-space:nowrap}
 .tombo-nota{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);
   font:italic 13.5px/1.55 var(--body);color:var(--txt);opacity:.9}
 .tombo-nota::before{content:"\201C"}
@@ -2929,10 +2951,12 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 @media (max-width:560px){
   .tombo-in{padding:18px 15px 20px}
   .tombo-cab .n{font-size:17px}
-  .queda{grid-template-columns:1fr;gap:0}
+  .queda{grid-template-columns:1fr;gap:0;min-height:0}
   .queda .lado.alto,.queda .lado.baixo{align-self:center}
-  .queda .meio{height:74px}
-  .queda .bras{width:52px;height:52px}
+  .queda .meio{min-height:104px;height:104px}
+  .queda .bras{width:82px;height:82px}
+  .queda .lado::before{width:100px;height:100px;margin-left:-50px;top:10px}
+  .queda .medida b{font-size:28px}
 }
 
 /* ------------------------------------------------------------- a curva */
@@ -6834,6 +6858,16 @@ function faisca(serie,queda){
       fill="var(--gold)"/></svg>`;
 }
 
+/* '2026-04-23' -> '23 de abril'. A data completa nao acrescenta nada aqui:
+   o ano ja esta no rotulo da temporada. */
+const MES_PT=["janeiro","fevereiro","março","abril","maio","junho","julho",
+  "agosto","setembro","outubro","novembro","dezembro"];
+function dataCurta(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||"");
+  if(!m) return iso||"";
+  return `${+m[3]} de ${MES_PT[+m[2]-1]||""}`;
+}
+
 function pElevador(){
   const e=DATA.elevador||{}, f=e.fichas||[];
   if(!f.length) return noData("ELEVADOR PARADO",
@@ -6859,7 +6893,7 @@ function pElevador(){
     .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
-    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} ${x.de.txt} → ${x.para?x.para.txt:"?"}${x.divisoes?` (−${x.divisoes} divisões)`:""}${x.nota?" — "+x.nota:""}`))
+    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} caiu de ${x.de.txt} para ${x.para?x.para.txt:"?"}${x.dias!=null?` em ${x.dias} dias`:""}${x.degraus?` (${x.degraus} degraus)`:""}`))
     .join("\n");
 
   return `
@@ -6893,7 +6927,8 @@ function pElevador(){
           <div class="lado alto">
             <div class="rot">chegou a</div>
             <img class="bras" src="${crestImg(x.de.tier)}"${FB} alt="">
-            <div class="fx">${h(x.de.txt)}</div>
+            <div class="fx">${h(x.de.txt)}${x.de.pdl!=null?` <span style="opacity:.75">${ni(x.de.pdl)} PDL</span>`:""}</div>
+            ${x.de.em?`<div class="det">${h(dataCurta(x.de.em))}</div>`:""}
           </div>
           <div class="meio">
             ${x.para?`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -6907,13 +6942,18 @@ function pElevador(){
               <path d="M89 82 L97 88 L89 94" fill="none" stroke="var(--red)"
                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                 vector-effect="non-scaling-stroke"/></svg>`:""}
-            ${x.divisoes?`<div class="medida"><b>−${ni(x.divisoes)}</b>
-              <span>divis${x.divisoes>1?"ões":"ão"}</span></div>`:""}
+            ${(x.dias!=null||x.degraus)?`<div class="medida">
+              ${x.dias!=null
+                ? `<b>${ni(x.dias)}</b><span>dia${x.dias===1?"":"s"}</span>
+                   ${x.degraus?`<em>${ni(x.degraus)} degrau${x.degraus>1?"s":""} abaixo</em>`:""}`
+                : `<b>−${ni(x.degraus)}</b><span>degrau${x.degraus>1?"s":""}</span>`}
+              </div>`:""}
           </div>
           ${x.para?`<div class="lado baixo">
             <div class="rot">terminou em</div>
             <img class="bras" src="${crestImg(x.para.tier)}"${FB} alt="">
             <div class="fx">${h(x.para.txt)}</div>
+            ${x.para.em?`<div class="det">${h(dataCurta(x.para.em))}</div>`:""}
           </div>`:"<div></div>"}
         </div>
         ${x.nota?`<div class="tombo-nota">${h(x.nota)}</div>`:""}

@@ -7,10 +7,16 @@
     "e o painel marca como tal. O que e medido fica separado do que e informado.",
     "",
     "Formato: o Riot ID completo, e uma lista de marcos.",
-    "  temporada  rotulo livre ('2025 Etapa 2', 'Pico da carreira'...)",
+    "  temporada  rotulo livre ('Temporada 2026', 'Pico da carreira'...)",
     "  pico       onde chegou de mais alto naquele periodo",
-    "  fim        onde terminou (opcional; se faltar, so o pico e mostrado)",
+    "  picoPdl    PDL no pico, opcional",
+    "  picoEm     data do pico, AAAA-MM-DD, opcional",
+    "  fim        onde terminou (opcional; sem isso, so o pico e mostrado)",
+    "  fimEm      data em que chegou la, AAAA-MM-DD, opcional",
     "  nota       uma linha de contexto, opcional",
+    "",
+    "Com as duas datas o painel CALCULA quantos dias levou -- ninguem precisa",
+    "digitar o intervalo, e ele nunca fica desencontrado das datas.",
     "",
     "Faixas aceitas: FERRO BRONZE PRATA OURO PLATINA ESMERALDA DIAMANTE MESTRE",
     "GRAO-MESTRE DESAFIANTE, com divisao opcional (IV III II I).",
@@ -19,10 +25,13 @@
   "jogadores": {
     "Gui#Gui": [
       {
-        "temporada": "Temporada passada",
+        "temporada": "Temporada 2026",
         "pico": "MESTRE",
-        "fim": "PLATINA II",
-        "nota": "Desceu direto, sem escala"
+        "picoPdl": 265,
+        "picoEm": "2026-04-23",
+        "fim": "ESMERALDA I",
+        "fimEm": "2026-05-12",
+        "nota": "Chegou ao topo com 265 PDL. Desceu cinco degraus sem nunca voltar."
       }
     ]
   }
