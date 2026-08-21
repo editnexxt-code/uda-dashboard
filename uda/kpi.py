@@ -1234,6 +1234,8 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
     payload["autopsia"] = autopsia_payload
     from . import servidor as _servidor
     payload["servidor"] = _servidor.construir(conn, players)
+    from . import elo as _elo
+    payload["elevador"] = _elo.construir(conn, players)
     payload["mapa"] = mapa_payload
     payload["mural"] = _mural.construir(rows_by_player, players, min_games,
                                         champ_index)

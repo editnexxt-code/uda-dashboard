@@ -82,6 +82,10 @@ campeão cada um apanha na fase de rota.
 
 **Arsenal** — itens, runas principais e duplas de feitiço mais usados.
 
+**Elevador** — quem subiu, quem desceu e quem passou o ano apertando o botão.
+Três pódios pelo saldo de vitórias e derrotas em ranqueada, mais a tabela do
+elenco inteiro com o elo de solo/duo.
+
 **Mural do mês** — o 👑 UDA e o 💀 Afundado de cada mês, com pódio, e o quadro de
 títulos acumulados.
 
@@ -162,6 +166,25 @@ A classificação é por `gameMode`, que vem dentro da partida — não por ID d
 A Riot cria IDs novos sem avisar e a lista pública dela fica desatualizada.
 
 Remakes e partidas de menos de 5 minutos também saem.
+
+### Histórico de elo: a Riot não guarda, o painel passou a guardar
+
+Não existe endpoint de histórico de elo. A League-V4 responde só onde a pessoa
+está **agora**, e a tabela `ranks` deste projeto também era só o agora — cada
+execução apagava a anterior. Por isso, até a aba *Elevador* nascer, a pergunta
+"quem caiu de elo?" não tinha resposta possível em lugar nenhum.
+
+Agora o `replace_ranks` carimba uma foto por dia em `rank_history`. A chave
+inclui o dia, não o horário: são doze execuções diárias e o que interessa é
+onde a pessoa parou naquele dia, então a última sobrescreve as anteriores.
+
+Enquanto o histórico não tem dois dias, a aba diz que está anotando. Os pódios
+usam o **saldo ranqueado** (vitórias menos derrotas nas filas 420 e 440), que é
+medido de partida real e é exatamente o que move o PDL. Estimar trajetória
+chutando "20 PDL por vitória" daria cara de medição a um palpite.
+
+> "Quem mais se manteve" exige mínimo de 20 ranqueadas. Sem o piso, o prêmio de
+> mais estável iria para quem não jogou: zero partida dá saldo zero.
 
 ### A timeline, e por que ela é a exceção
 
@@ -258,6 +281,7 @@ uda/autopsia.py       como cada um morre, e de que
 uda/timeline.py       coleta e extrato da timeline (minuto a minuto)
 uda/mapa.py           mapa de calor das mortes
 uda/desafios.py       coleta dos desafios e da maestria
+uda/elo.py            o elevador: sobe, desce e fica parado
 uda/servidor.py       a comparacao com o servidor
 uda/partidas.py       placar completo das partidas citadas
 uda/inhouse.py        importa e analisa as personalizadas

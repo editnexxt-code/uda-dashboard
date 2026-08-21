@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time
 import zlib
 from pathlib import Path
 from typing import Iterable
@@ -257,6 +258,19 @@ CREATE INDEX IF NOT EXISTS idx_part_puuid  ON participants (puuid, game_creation
 CREATE INDEX IF NOT EXISTS idx_part_track  ON participants (tracked, queue_id);
 CREATE INDEX IF NOT EXISTS idx_match_time  ON matches (game_creation);
 
+CREATE TABLE IF NOT EXISTS rank_history (
+    puuid       TEXT NOT NULL,
+    queue_type  TEXT NOT NULL,
+    dia         TEXT NOT NULL,
+    tier        TEXT,
+    division    TEXT,
+    lp          INTEGER,
+    wins        INTEGER,
+    losses      INTEGER,
+    updated_at  INTEGER,
+    PRIMARY KEY (puuid, queue_type, dia)
+);
+
 CREATE TABLE IF NOT EXISTS challenge_names (
     challenge_id  INTEGER PRIMARY KEY,
     nome          TEXT,
@@ -404,6 +418,27 @@ def upsert_player(conn: sqlite3.Connection, puuid: str, game_name: str, tag_line
 
 def replace_ranks(conn: sqlite3.Connection, puuid: str, entries: Iterable[dict],
                   ts: int) -> None:
+    """Grava o elo atual E carimba a foto do dia em rank_history.
+
+    A tabela `ranks` sempre foi so o AGORA -- este DELETE apaga o valor anterior
+    a cada execucao. Por isso nunca houve como dizer quem subiu ou caiu: a
+    informacao existia por duas horas e era sobrescrita. A Riot tambem nao
+    publica historico de elo, entao ou o painel anota, ou o dado nao existe.
+
+    A chave inclui o DIA, nao o timestamp: sao doze execucoes por dia e o que
+    interessa e a posicao ao fim de cada uma, nao doze pontos identicos. A
+    ultima execucao do dia sobrescreve as anteriores, que e exatamente a foto
+    boa -- onde a pessoa parou naquele dia.
+    """
+    dia = time.strftime("%Y-%m-%d", time.localtime(ts))
+    for e in entries:
+        conn.execute(
+            """INSERT OR REPLACE INTO rank_history
+               (puuid, queue_type, dia, tier, division, lp, wins, losses, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (puuid, e.get("queueType", "?"), dia, e.get("tier"), e.get("rank"),
+             _i(e.get("leaguePoints")), _i(e.get("wins")), _i(e.get("losses")), ts),
+        )
     conn.execute("DELETE FROM ranks WHERE puuid=?", (puuid,))
     for e in entries:
         conn.execute(

@@ -2748,6 +2748,35 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .mst{display:flex;gap:6px}
 .mst img{width:30px;height:30px;border-radius:6px;border:1px solid var(--line)}
 
+/* ============================================================= ELEVADOR */
+.elv{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+.elvbox{background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:13px 13px 15px}
+.elvbox .tt{display:flex;align-items:center;gap:7px;font:700 13.5px/1 var(--disp)}
+.elvbox .lg{font-size:11.5px;color:var(--dim);line-height:1.5;margin:6px 0 12px}
+.elvbox.sobe .tt{color:var(--teal)}
+.elvbox.desce .tt{color:var(--red)}
+.elvbox.parado .tt{color:var(--gold)}
+/* a tabela do predio */
+.elvt{display:flex;flex-direction:column;gap:2px}
+.elvr{display:grid;grid-template-columns:26px 1fr 120px 74px 58px;gap:10px;
+  align-items:center;padding:7px 10px;border-radius:7px;font-size:12px}
+.elvr:nth-child(even){background:var(--card2)}
+.elvr .who{display:flex;align-items:center;gap:8px;min-width:0}
+.elvr .who img{width:23px;height:23px;border-radius:5px;flex:none}
+.elvr .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.elvr .pos{color:var(--mut);font-variant-numeric:tabular-nums;text-align:right}
+.elvr .elo{color:var(--dim);font-size:11px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.elvr .vd{color:var(--dim);font-variant-numeric:tabular-nums;font-size:11px}
+.elvr .sal{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.elvr .sal.up{color:var(--teal)} .elvr .sal.dn{color:var(--red)}
+.elvr .sal.eq{color:var(--gold)}
+@container content (max-width:560px){
+  .elvr{grid-template-columns:22px 1fr 62px;gap:8px}
+  .elvr .elo,.elvr .vd{display:none}
+}
+
 /* =========================================================== ARSENAL */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -5925,6 +5954,7 @@ const PAGES=[
   {k:"jogadores",n:"Jogadores",i:I.user,g:"Grupo",q:1,sub:"Um cartão por pessoa. A ficha completa, com foto"},
   {k:"campeoes",n:"Campeões",i:I.sword,g:"Grupo",q:1,sub:"O que o grupo insiste em jogar, e no que dá"},
   {k:"arsenal",n:"Arsenal",i:I.bolt,g:"Grupo",q:1,sub:"Itens, runas e feitiços que vocês repetem até cansar"},
+  {k:"elevador",n:"Elevador",i:I.trend,g:"Zoeira",q:0,sub:"Quem subiu, quem desceu, e quem passou o ano apertando o botão"},
   {k:"mural",n:"Mural do mês",i:I.award,g:"Zoeira",q:0,sub:"A coroa e a lanterna de cada mês, para a posteridade"},
   {k:"vexames",n:"Paredão",i:I.skull,g:"Zoeira",q:1,sub:"As piores partidas de cada um, com a prova do lado"},
   {k:"zoeira",n:"Troféus",i:I.award,g:"Zoeira",q:1,sub:"As métricas que existem só para zoar"},
@@ -6582,7 +6612,98 @@ function pServidor(){
     </div></section>`;
 }
 
-const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
+/* ------------------------------------------------------------ ELEVADOR
+   A Riot nao publica historico de elo, e a tabela `ranks` deste projeto sempre
+   guardou so o AGORA. Entao os tres podios saem do SALDO RANQUEADO -- vitoria
+   menos derrota nas filas 420 e 440 -- que nao e PDL mas e o que move o PDL.
+   O movimento real em divisao e PDL comeca a existir quando `rank_history`
+   tiver dois dias; ate la a secao diz que esta anotando, em vez de estimar. */
+function pElevador(){
+  const e=DATA.elevador||{}, f=e.fichas||[];
+  if(!f.length) return noData("ELEVADOR PARADO",
+    "Ninguém jogou ranqueada o suficiente para entrar nesta conta.");
+
+  const pod=(lista,tone,fmt)=>podio3((lista||[]).map(x=>({
+    nome:x.gameName,icon:x.icon,valor:x.saldo,
+    tip:tip(h(x.gameName),[["Saldo",(x.saldo>0?"+":"")+x.saldo],
+      ["Vitórias / derrotas",`${x.vitorias}V ${x.derrotas}D`],
+      ["Ranqueadas jogadas",ni(x.jogos)],
+      ["Aproveitamento",nf(x.winrate,1)+"%"],
+      ["Elo agora",x.eloSolo||"sem elo"]],
+      "saldo de solo/duo e flex somadas")})),tone,fmt||(v=>(v>0?"+":"")+nf(v,0)));
+
+  const caixa=(cls,icone,titulo,legenda,lista,tone,fmt)=>`
+    <div class="elvbox ${cls}">
+      <div class="tt">${icone} ${titulo}</div>
+      <div class="lg">${legenda}</div>
+      ${pod(lista,tone,fmt)}
+    </div>`;
+
+  const linha=(x,i)=>`<div class="elvr">
+    <span class="pos">${i+1}</span>
+    <span class="who"><img src="${iconImg(x.icon)}"${FB}><span>${h(x.gameName)}</span></span>
+    <span class="elo">${h(x.eloSolo||"sem elo em solo")}</span>
+    <span class="vd">${x.vitorias}V ${x.derrotas}D</span>
+    <span class="sal ${x.saldo>0?"up":x.saldo<0?"dn":"eq"}">${x.saldo>0?"+":""}${x.saldo}</span>
+  </div>`;
+
+  const hist=e.historico||{};
+  const zoada=["O ELEVADOR DA UDA — saldo em ranqueada"]
+    .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
+    .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
+    .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
+    .join("\n");
+
+  return `
+  <section class="sec-copia">
+    <button class="zcopy" type="button" title="copiar para mandar no grupo"
+      data-zoada="${h(zoada)}">copiar</button>
+    <div class="sh-plain">${chead(I.trend,"O elevador",
+      `saldo de vitórias e derrotas em ranqueada · mínimo de ${ni(e.minJogos||20)} partidas, senão quem não joga ganharia o prêmio de mais estável`)}</div>
+    <div class="elv">
+      ${caixa("sobe","📈","Subiu de andar",
+        "Ganhou mais do que perdeu, e o elo foi junto. Vai lembrar disso o ano inteiro.",
+        e.subiu,"teal")}
+      ${caixa("desce","📉","Desceu de ré",
+        "Saldo negativo. Cada partida foi um degrau pra baixo, e o botão do térreo já estava apertado.",
+        e.caiu,"verg")}
+      ${caixa("parado","🛗","Nem saiu do térreo",
+        "Jogou pra caramba e terminou exatamente onde começou. Cem partidas para ficar no mesmo lugar.",
+        e.parado,"ouro")}
+    </div>
+  </section>
+
+  <section><div class="sh-plain">${chead(I.rank,"O prédio inteiro",
+    "cada um, o elo de solo/duo agora, e o saldo que o levou até aí")}</div>
+    <div class="elvt">${f.map(linha).join("")}</div></section>
+
+  <section><div class="sh-plain">${chead(I.book,"E o PDL de verdade?",
+    hist.pronto?`movimento medido em ${ni(hist.dias)} dias de anotação`
+               :"por que este quadro ainda está vazio")}</div>
+    ${hist.pronto&&hist.movimento.length?`<div class="elvt">${hist.movimento.map((m,i)=>`
+      <div class="elvr">
+        <span class="pos">${i+1}</span>
+        <span class="who"><img src="${iconImg(m.icon)}"${FB}><span>${h(m.gameName)}</span></span>
+        <span class="elo">${h(m.de)} → ${h(m.para)}</span>
+        <span class="vd">${h(m.fila)}</span>
+        <span class="sal ${m.delta>0?"up":m.delta<0?"dn":"eq"}">${m.delta>0?"+":""}${m.delta}</span>
+      </div>`).join("")}</div>`
+    :`<div class="card" style="padding:14px;font-size:12.5px;line-height:1.65;color:var(--dim)">
+      <b style="color:var(--txt)">A Riot não guarda isso.</b> Não existe endpoint de
+      histórico de elo: a API só responde onde você está <i>agora</i>. E até hoje este
+      painel também só guardava o agora — cada atualização apagava a anterior.<br><br>
+      <b style="color:var(--txt)">Agora ele anota.</b> A partir desta versão fica
+      gravada uma foto por dia do elo de cada um. Em alguns dias este quadro mostra a
+      subida e a queda de verdade, em divisão e PDL${hist.desde?`, contando desde ${h(hist.desde)}`:""}.<br><br>
+      Enquanto isso, os pódios acima usam o saldo de vitórias e derrotas em ranqueada,
+      que é medido de partida de verdade — não é PDL, mas é exatamente o que mexe nele.
+      Estimar a trajetória chutando "20 PDL por vitória" seria dar cara de medição
+      para um palpite.
+    </div>`}
+  </section>`;
+}
+
+const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,elevador:pElevador,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
   inhouse:pInhouse,jogadores:pJogadores,campeoes:pCampeoes,regras:pRegras};
 
