@@ -73,39 +73,58 @@ def texto_elo(tier: str | None, division: str | None, lp: int | None) -> str:
 
 
 def _historico(conn: sqlite3.Connection, players: dict) -> dict:
-    """Movimento real de PDL, se ja houver pelo menos dois dias anotados."""
+    """Movimento real de PDL, ponto a ponto.
+
+    Cada linha de rank_history e uma MUDANCA de posicao, nao uma leitura
+    periodica -- o `replace_ranks` descarta a leitura identica a anterior. Entao
+    a serie ja vem sem pontos repetidos, e o intervalo entre dois pontos e o
+    tempo que levou para o PDL mexer.
+
+    `wins`/`losses` vem da League-V4 e sao os totais da temporada, entao a
+    diferenca entre dois pontos diz exatamente quantas partidas ranqueadas
+    aconteceram naquele trecho -- inclusive as que o painel nao baixou.
+    """
     linhas = list(conn.execute(
-        "SELECT puuid, queue_type, dia, tier, division, lp FROM rank_history "
-        "ORDER BY dia"))
-    dias = sorted({r["dia"] for r in linhas})
-    if len(dias) < 2:
-        return {"dias": len(dias), "desde": dias[0] if dias else None,
-                "movimento": [], "pronto": False}
+        "SELECT puuid, queue_type, tier, division, lp, wins, losses, updated_at "
+        "  FROM rank_history ORDER BY updated_at"))
+    if not linhas:
+        return {"pontos": 0, "desde": None, "movimento": [], "series": [],
+                "pronto": False}
 
     por = defaultdict(list)
     for r in linhas:
         if r["puuid"] in players:
             por[(r["puuid"], r["queue_type"])].append(r)
 
-    mov = []
+    mov, series = [], []
     for (puuid, qt), ls in por.items():
         if len(ls) < 2:
             continue
-        ini, fim = ls[0], ls[-1]
-        a = valor_elo(ini["tier"], ini["division"], ini["lp"])
-        b = valor_elo(fim["tier"], fim["division"], fim["lp"])
-        if a is None or b is None:
+        pontos = []
+        for r in ls:
+            v = valor_elo(r["tier"], r["division"], r["lp"])
+            if v is None:
+                continue
+            pontos.append({"t": int(r["updated_at"]) * 1000, "v": v,
+                           "txt": texto_elo(r["tier"], r["division"], r["lp"]),
+                           "j": int((r["wins"] or 0) + (r["losses"] or 0))})
+        if len(pontos) < 2:
             continue
-        mov.append({
+        ini, fim = pontos[0], pontos[-1]
+        ficha = {
             "puuid": puuid, "gameName": players[puuid]["gameName"],
             "icon": players[puuid]["icon"],
             "fila": FILA_NOME.get(QUEUE_TYPE.get(qt, 0), qt),
-            "de": texto_elo(ini["tier"], ini["division"], ini["lp"]),
-            "para": texto_elo(fim["tier"], fim["division"], fim["lp"]),
-            "delta": b - a, "dias": len(ls),
-        })
+            "de": ini["txt"], "para": fim["txt"],
+            "delta": fim["v"] - ini["v"],
+            "partidas": max(0, fim["j"] - ini["j"]),
+            "pontos": len(pontos),
+        }
+        mov.append(ficha)
+        series.append({**ficha, "serie": pontos})
     mov.sort(key=lambda x: -x["delta"])
-    return {"dias": len(dias), "desde": dias[0], "movimento": mov, "pronto": True}
+    return {"pontos": len(linhas), "desde": int(linhas[0]["updated_at"]) * 1000,
+            "movimento": mov, "series": series, "pronto": bool(mov)}
 
 
 def construir(conn: sqlite3.Connection, players: dict) -> dict:

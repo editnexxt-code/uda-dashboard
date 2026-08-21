@@ -2777,6 +2777,56 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   .elvr .elo,.elvr .vd{display:none}
 }
 
+/* ========================================================= CHAMPION POOL */
+.pool{background:var(--card);border-radius:var(--r);padding:20px 22px 24px;position:relative}
+.pool-h{display:flex;align-items:center;gap:12px;margin-bottom:4px;padding-right:44px}
+.pool-h img{width:46px;height:46px;border-radius:10px;flex:none}
+.pool-h .nm{font:800 20px/1.1 var(--disp)}
+.pool-h .tg{font-size:12px;color:var(--dim);margin-top:3px}
+.pool-sub{font-size:12px;color:var(--dim);margin:8px 0 18px;line-height:1.6}
+/* uma faixa por rota */
+.pool-r{margin-bottom:18px}
+.pool-rh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding-bottom:7px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.pool-rh .r{font:700 14px/1 var(--disp)}
+.pool-rh .j{font-size:11.5px;color:var(--dim)}
+.pool-rh .wr{margin-left:auto;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.pool-rh .wr.good{color:var(--teal)} .pool-rh .wr.bad{color:var(--red)}
+.pool-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.pool-c{display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:center;
+  padding:7px 9px;background:var(--card2);border:1px solid var(--line);border-radius:8px}
+.pool-c img{width:34px;height:34px;border-radius:7px}
+.pool-c .n{font-size:11.5px;font-weight:600;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;display:block}
+.pool-c .d{display:flex;align-items:baseline;gap:6px;margin-top:3px;
+  font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pool-c .d b{font-size:11.5px}
+.pool-c .d b.good{color:var(--teal)} .pool-c .d b.bad{color:var(--red)}
+.pool-c .d b.eq{color:var(--gold)}
+/* barra de vitoria/derrota: o que o pedido chama de "% de win e lose" */
+.pool-c .bar{grid-column:1/-1;display:flex;height:4px;border-radius:2px;overflow:hidden;
+  background:var(--line);margin-top:5px}
+.pool-c .bar i{display:block;height:100%}
+.pool-c .bar i.v{background:var(--teal)} .pool-c .bar i.d{background:var(--red)}
+.pcards .pc{cursor:pointer}
+.pc-abrir{position:absolute;top:12px;right:12px;font:600 10px/1 var(--body);
+  letter-spacing:.06em;text-transform:uppercase;color:var(--mut);
+  border:1px solid var(--line);border-radius:6px;padding:5px 8px;opacity:0;
+  transition:opacity .15s,color .15s;pointer-events:none}
+.pc{position:relative}
+.pc:hover .pc-abrir{opacity:1}
+@media (hover:none){.pc-abrir{opacity:1}}
+/* MEDIA query, nao container query: o <dialog> e filho do <body> e vive FORA
+   do container `content`, entao nenhuma @container o alcanca. Com a regra sem
+   efeito a grade caia para uma coluna no celular e os 89 campeoes viravam
+   7.743 px de rolagem; com duas colunas sao 4.118 px -- 47% a menos, medido. */
+@media (max-width:520px){
+  .pool{padding:15px 12px 18px}
+  .pool-g{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+  .pool-h img{width:40px;height:40px}
+  .pool-h .nm{font-size:17px}
+}
+
 /* =========================================================== ARSENAL */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -4339,7 +4389,9 @@ function hall(g,bad){
 function playerCard(p,labels){
   const s=p.stats,e=eloTxt(p.ranks.solo),ef=eloTxt(p.ranks.flex);
   const c=p.score==null?"var(--dim)":p.score>=60?"var(--teal)":p.score>=45?"var(--gold)":"var(--red)";
-  return `<div class="pc" id="pc-${h(p.puuid)}">
+  return `<div class="pc" id="pc-${h(p.puuid)}" data-pool="${h(p.puuid)}"
+    tabindex="0" role="button" aria-label="Champion pool de ${h(p.gameName)}">
+    <span class="pc-abrir">pool por rota</span>
     <div class="pc-h"><img src="${iconImg(p.icon)}"${FB}>
       <div style="min-width:0"><div class="nm">${h(p.gameName)}</div>
       <div class="tg">#${h(p.tagLine)} · ${h(e.name)}${ef.tier!=="unranked"?` · Flex ${h(ef.name)}`:""}</div></div>
@@ -6702,6 +6754,78 @@ function pElevador(){
     </div>`}
   </section>`;
 }
+
+/* ------------------------------------------------- CHAMPION POOL POR ROTA
+   Abre no clique do cartao do jogador. O cartao ja tinha coisa clicavel
+   dentro -- campeao abre dossie, partida abre placar -- entao o gatilho so
+   vale quando o clique NAO caiu num desses; senao abrir o pool sequestraria
+   os dois comportamentos que ja existiam. */
+const POOL=document.createElement("dialog");
+POOL.className="dossie"; POOL.setAttribute("aria-label","Champion pool");
+document.body.appendChild(POOL);
+POOL.addEventListener("click",e=>{ if(e.target===POOL) POOL.close(); });
+
+function poolHTML(p){
+  if(!p) return "";
+  const rotas=(p.pool||[]).filter(r=>r.games>0);
+  const linha=(c)=>{
+    const pv=c.games?c.wins/c.games*100:0;
+    return `<div class="pool-c"${tip(h(c.champion),[
+      ["Vitórias",ni(c.wins),"var(--teal)"],
+      ["Derrotas",ni(c.losses),"var(--red)"],
+      ["Aproveitamento",nf(c.winrate,1)+"%"],
+      ["KDA",nf(c.kda,2)]],`${ni(c.games)} partida${c.games>1?"s":""}`)}>
+      <img src="${champImg(c.championId,c.champion)}"${FB}>
+      <div style="min-width:0">
+        <span class="n">${h(c.champion)}</span>
+        <span class="d"><b class="${c.winrate>=55?"good":c.winrate<45?"bad":"eq"}">${nf(c.winrate,0)}%</b>
+          <span>${c.wins}V ${c.losses}D</span></span>
+      </div>
+      <div class="bar"><i class="v" style="width:${pv.toFixed(1)}%"></i>
+        <i class="d" style="width:${(100-pv).toFixed(1)}%"></i></div>
+    </div>`;};
+
+  return `<div class="pool">
+    <button class="ds-x" type="button" aria-label="Fechar">✕</button>
+    <div class="pool-h"><img src="${iconImg(p.icon)}"${FB}>
+      <div style="min-width:0"><div class="nm">${h(p.gameName)}</div>
+        <div class="tg">#${h(p.tagLine)} · ${ni(p.stats.games)} partidas na fila selecionada</div></div>
+    </div>
+    <div class="pool-sub">Cada rota conta separado — o mesmo campeão de suporte e de
+      meio são duas histórias diferentes, e juntar as duas esconde justamente a que
+      interessa. A barra embaixo de cada campeão é a fatia de vitória contra derrota.</div>
+    ${rotas.length?rotas.map(r=>`<div class="pool-r">
+      <div class="pool-rh"><span class="r">${h(r.roleLabel)}</span>
+        <span class="j">${ni(r.games)} jogos · ${r.wins}V ${r.losses}D · ${ni(r.champions.length)} campeões</span>
+        <span class="wr ${r.winrate>=50?"good":"bad"}">${nf(r.winrate,1)}%</span></div>
+      <div class="pool-g">${r.champions.map(linha).join("")}</div>
+    </div>`).join(""):`<div style="color:var(--dim);font-size:12.5px">
+      Sem partidas com rota identificada nesta fila.</div>`}
+  </div>`;
+}
+
+function abrirPool(puuid){
+  const g=grupo(); if(!g) return;
+  const p=(g.players||[]).find(x=>x.puuid===puuid);
+  if(!p) return;
+  POOL.innerHTML=poolHTML(p);
+  POOL.scrollTop=0;
+  if(POOL.showModal) POOL.showModal(); else POOL.setAttribute("open","");
+}
+
+document.addEventListener("click",e=>{
+  if(!e.target.closest) return;
+  if(e.target.closest(".pool .ds-x")){ POOL.close(); return; }
+  /* o que ja era clicavel dentro do cartao continua mandando */
+  if(e.target.closest("[data-champ],[data-match],[data-ev],[data-zoada],button,a")) return;
+  const card=e.target.closest("[data-pool]");
+  if(card) abrirPool(card.getAttribute("data-pool"));
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ") return;
+  const card=e.target.closest&&e.target.closest("[data-pool]");
+  if(card){ e.preventDefault(); abrirPool(card.getAttribute("data-pool")); }
+});
 
 const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,elevador:pElevador,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,

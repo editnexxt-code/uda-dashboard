@@ -259,17 +259,18 @@ CREATE INDEX IF NOT EXISTS idx_part_track  ON participants (tracked, queue_id);
 CREATE INDEX IF NOT EXISTS idx_match_time  ON matches (game_creation);
 
 CREATE TABLE IF NOT EXISTS rank_history (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
     puuid       TEXT NOT NULL,
     queue_type  TEXT NOT NULL,
-    dia         TEXT NOT NULL,
     tier        TEXT,
     division    TEXT,
     lp          INTEGER,
     wins        INTEGER,
     losses      INTEGER,
-    updated_at  INTEGER,
-    PRIMARY KEY (puuid, queue_type, dia)
+    updated_at  INTEGER NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_rh ON rank_history(puuid, queue_type, updated_at);
 
 CREATE TABLE IF NOT EXISTS challenge_names (
     challenge_id  INTEGER PRIMARY KEY,
@@ -370,9 +371,25 @@ def connect(db_path: Path) -> sqlite3.Connection:
     # deixa ler durante a escrita; o que faltava era paciencia no CREATE/ALTER.
     # 30 s nao bastava: o coletor de timeline segurava a transacao por ~31 s.
     conn.execute("PRAGMA busy_timeout=60000")
+    _migrar_rank_history(conn)
     conn.executescript(SCHEMA)
     migrate(conn)
     return conn
+
+
+def _migrar_rank_history(conn: sqlite3.Connection) -> None:
+    """Troca a rank_history de chave-por-dia para uma linha por MUDANCA.
+
+    A primeira versao gravava (puuid, fila, dia) e jogava fora 11 das 12
+    leituras diarias. CREATE TABLE IF NOT EXISTS nao substitui tabela que ja
+    existe, entao a troca tem que ser explicita. A tabela nasceu ontem e tem no
+    maximo algumas horas de dado, entao recriar custa quase nada -- e a
+    alternativa seria arrastar para sempre uma resolucao pior.
+    """
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(rank_history)")}
+    if cols and "dia" in cols:
+        conn.execute("DROP TABLE rank_history")
+        conn.commit()
 
 
 def migrate(conn: sqlite3.Connection) -> list[str]:
@@ -430,14 +447,26 @@ def replace_ranks(conn: sqlite3.Connection, puuid: str, entries: Iterable[dict],
     ultima execucao do dia sobrescreve as anteriores, que e exatamente a foto
     boa -- onde a pessoa parou naquele dia.
     """
-    dia = time.strftime("%Y-%m-%d", time.localtime(ts))
     for e in entries:
+        fila = e.get("queueType", "?")
+        atual = (e.get("tier"), e.get("rank"), _i(e.get("leaguePoints")),
+                 _i(e.get("wins")), _i(e.get("losses")))
+        ultimo = conn.execute(
+            "SELECT tier, division, lp, wins, losses FROM rank_history "
+            " WHERE puuid=? AND queue_type=? ORDER BY updated_at DESC LIMIT 1",
+            (puuid, fila),
+        ).fetchone()
+        # So grava quando MUDOU. O Actions roda de duas em duas horas e a maior
+        # parte das leituras e identica a anterior -- guardar todas encheria a
+        # tabela de pontos repetidos sem acrescentar um unico dado. Assim cada
+        # linha e uma mudanca real de PDL, que e a resolucao que o grafico quer.
+        if ultimo and tuple(ultimo) == atual:
+            continue
         conn.execute(
-            """INSERT OR REPLACE INTO rank_history
-               (puuid, queue_type, dia, tier, division, lp, wins, losses, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
-            (puuid, e.get("queueType", "?"), dia, e.get("tier"), e.get("rank"),
-             _i(e.get("leaguePoints")), _i(e.get("wins")), _i(e.get("losses")), ts),
+            """INSERT INTO rank_history
+               (puuid, queue_type, tier, division, lp, wins, losses, updated_at)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (puuid, fila) + atual + (ts,),
         )
     conn.execute("DELETE FROM ranks WHERE puuid=?", (puuid,))
     for e in entries:

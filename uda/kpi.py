@@ -1035,6 +1035,9 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
                 lambda: {"games": 0, "wins": 0, "k": 0, "d": 0, "a": 0, "id": 0}
             )
             positions: dict[str, int] = defaultdict(int)
+            # rota -> campeao -> contadores
+            pool = defaultdict(lambda: defaultdict(
+                lambda: {'games': 0, 'wins': 0, 'k': 0, 'd': 0, 'a': 0, 'id': 0}))
             for row in prows:
                 _accumulate(acc, row)
                 champ = champs[row["champion_name"] or "?"]
@@ -1046,8 +1049,42 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
                 champ["id"] = row["champion_id"]
                 if row["position"]:
                     positions[row["position"]] += 1
+                    # Mesmo campeao em rotas diferentes conta separado: Pyke de
+                    # suporte e Pyke de meio sao duas historias, e juntar as duas
+                    # esconde justamente a que interessa.
+                    # Position vem "Invalid" em ARAM, URF e afins, onde nao
+                    # existe rota. Jogar tudo num balde chamado "Invalid" fazia
+                    # dele a maior "rota" do jogador -- 47 jogos e 32 campeoes
+                    # no primeiro que testei. Vira um balde proprio, nomeado.
+                    rota_k = row["position"] if row["position"] in ROTA_PT else "SEM_ROTA"
+                    pc = pool[rota_k][row["champion_name"] or "?"]
+                    pc["games"] += 1
+                    pc["wins"] += row["win"]
+                    pc["k"] += row["kills"]
+                    pc["d"] += row["deaths"]
+                    pc["a"] += row["assists"]
+                    pc["id"] = row["champion_id"]
 
             stats = _finalize(acc)
+            pool_saida = []
+            for rota, cs in pool.items():
+                jogos = sum(c["games"] for c in cs.values())
+                vit = sum(c["wins"] for c in cs.values())
+                pool_saida.append({
+                    "role": rota,
+                    "roleLabel": ROTA_PT.get(rota, "Sem rota (ARAM e afins)"),
+                    "games": jogos, "wins": vit, "losses": jogos - vit,
+                    "winrate": _r(_safe_div(vit, jogos) * 100, 1),
+                    "champions": sorted(
+                        ({"champion": nome, "championId": c["id"],
+                          "games": c["games"], "wins": c["wins"],
+                          "losses": c["games"] - c["wins"],
+                          "winrate": _r(_safe_div(c["wins"], c["games"]) * 100, 1),
+                          "kda": _r(_safe_div(c["k"] + c["a"], max(c["d"], 1)))}
+                         for nome, c in cs.items()),
+                        key=lambda d: (-d["games"], -d["winrate"]))})
+            pool_saida.sort(key=lambda d: (d["role"] == "SEM_ROTA", -d["games"]))
+
             top_champs = sorted(
                 (
                     {
@@ -1068,6 +1105,7 @@ def build_payload(conn: sqlite3.Connection, window_days: int,
                 "stats": stats,
                 "metrics": _score_metrics(stats, profile),
                 "champions": top_champs,
+                "pool": pool_saida,
                 "roles": sorted(
                     ({"role": p, "games": n} for p, n in positions.items()),
                     key=lambda d: -d["games"],

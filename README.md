@@ -75,7 +75,9 @@ matriz de sinergia, formações e confrontos internos.
 todos, algoz e freguês, a dupla e o divórcio, a balança, o espelho.
 
 **Jogadores** — um cartão por pessoa com radar comparativo, rotas, melhor e pior
-partida.
+partida. **Clicar no cartão abre o champion pool por rota**: cada campeão com
+vitórias, derrotas, aproveitamento e KDA, separado por posição. Clicar num
+campeão dentro do cartão continua abrindo o dossiê, e numa partida, o placar.
 
 **Campeões** — o que o grupo joga, o arsenal e **os algozes da rota**: contra qual
 campeão cada um apanha na fase de rota.
@@ -169,14 +171,18 @@ Remakes e partidas de menos de 5 minutos também saem.
 
 ### Histórico de elo: a Riot não guarda, o painel passou a guardar
 
-Não existe endpoint de histórico de elo. A League-V4 responde só onde a pessoa
-está **agora**, e a tabela `ranks` deste projeto também era só o agora — cada
-execução apagava a anterior. Por isso, até a aba *Elevador* nascer, a pergunta
-"quem caiu de elo?" não tinha resposta possível em lugar nenhum.
+A API da Riot não tem endpoint de histórico de elo: a League-V4 responde só onde
+a pessoa está **agora**. Sites como Blitz e OP.GG mostram a curva de PDL porque
+**eles mesmos vêm gravando snapshots há anos** — não é um dado que a Riot
+entregue, é um dado que se acumula. Este painel também só guardava o agora, e
+cada execução apagava a anterior.
 
-Agora o `replace_ranks` carimba uma foto por dia em `rank_history`. A chave
-inclui o dia, não o horário: são doze execuções diárias e o que interessa é
-onde a pessoa parou naquele dia, então a última sobrescreve as anteriores.
+Agora o `replace_ranks` grava em `rank_history` **a cada mudança**, não a cada
+leitura: o Actions roda de duas em duas horas e a maioria das leituras é idêntica
+à anterior, então guardar todas encheria a tabela de pontos repetidos. Assim cada
+linha é uma mudança real de PDL, que é a resolução que o gráfico quer. Como
+`wins`/`losses` vêm da própria League-V4, a diferença entre dois pontos diz
+exatamente quantas ranqueadas aconteceram no trecho.
 
 Enquanto o histórico não tem dois dias, a aba diz que está anotando. Os pódios
 usam o **saldo ranqueado** (vitórias menos derrotas nas filas 420 e 440), que é
