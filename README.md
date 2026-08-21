@@ -91,6 +91,9 @@ Traz **três origens diferentes de dado, cada uma dizendo qual é**:
 - *A queda, medida* — a curva do saldo acumulado ao longo do tempo, com o pico
   marcado e o quanto caiu de lá até hoje (medido, mas só alcança o que o
   Match-V5 ainda serve);
+- *Tempo de cadeia* — pódio de quem passou mais tempo suspenso. A Riot **não
+  expõe punição de conta** em endpoint nenhum, então também vem de `elos.json`,
+  seção `banimentos`.
 - *Os dois recordes* — a maior queda e a maior ascensão do grupo, lado a lado,
   com os arcos espelhados. Vêm de `elos.json` e são marcados com a fonte na
   tela. Quando alguém bate a marca, move-se o `atual` para o `historico` e o

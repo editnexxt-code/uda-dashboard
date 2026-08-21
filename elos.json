@@ -27,7 +27,20 @@
     "",
     "Faixas: FERRO BRONZE PRATA OURO PLATINA ESMERALDA DIAMANTE MESTRE",
     "GRAO-MESTRE DESAFIANTE, com divisao opcional (IV III II I).",
-    "Editar e rodar `python run.py --build` ja atualiza o painel."
+    "Editar e rodar `python run.py --build` ja atualiza o painel.",
+    "",
+    "BANIMENTOS: a Riot NAO expoe punicao de conta em endpoint nenhum -- nem",
+    "suspensao, nem restricao de chat, nem ban. Verificado: o campo",
+    "`PlayerBehavior` da partida so carrega estado de combate, e o unico desafio",
+    "que casa com 'ban' e o de Bandopolis. Medir por ausencia tambem nao serve:",
+    "os buracos no historico sao falha de coleta, porque o Match-V5 so entrega",
+    "as ultimas ~100 partidas. Entao aqui tambem e memoria do grupo.",
+    "",
+    "  jogador  Riot ID completo",
+    "  dias     duracao da punicao",
+    "  quando   AAAA-MM ou texto livre",
+    "  tipo     'suspensão', 'restrição de chat', 'ban permanente'...",
+    "  motivo   opcional, e onde mora a zoeira"
   ],
   "recordes": {
     "queda": {
@@ -110,5 +123,15 @@
         }
       ]
     }
-  }
+  },
+  "banimentos": [
+    {
+      "_exemplo": true,
+      "jogador": "Fulano#TAG",
+      "dias": 14,
+      "quando": "2026-03",
+      "tipo": "suspensão",
+      "motivo": "digitou o que não devia no chat"
+    }
+  ]
 }

@@ -248,6 +248,65 @@ def _recordes(players: dict) -> dict:
     return saida
 
 
+def _banimentos(players: dict) -> dict:
+    """Podio de quem passou mais tempo suspenso.
+
+    A Riot NAO expoe punicao de conta em endpoint nenhum. Verificado antes de
+    escrever isto: `PlayerBehavior` na partida so carrega estado de combate
+    ({"PlayerBehavior_IsHeroInCombat": 0} em 2.000 participacoes), e o unico
+    desafio cujo texto casa com "ban" e o de Bandopolis.
+
+    Medir por AUSENCIA tambem nao funciona olhando para tras: os buracos do
+    historico sao falha de coleta, nao sumico. O Match-V5 entrega so as ~100
+    ultimas partidas, entao o banco tem 874 partidas em agosto e 3 em dezembro
+    de 2024 -- e "sumiu 430 dias" seria ler o limite da API como se fosse
+    comportamento de gente.
+
+    Sobra a memoria do grupo, e ela fica marcada como tal.
+    """
+    caminho = Path(__file__).resolve().parent.parent / "elos.json"
+    if not caminho.exists():
+        return {"podio": [], "todos": [], "total": 0}
+    try:
+        bruto = json.loads(caminho.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {"podio": [], "todos": [], "total": 0}
+
+    por_riot = {}
+    for puuid, info in players.items():
+        nome, tag = info.get("gameName", ""), info.get("tagLine") or ""
+        por_riot[f"{nome}#{tag}".lower()] = (puuid, info)
+        por_riot[nome.lower()] = (puuid, info)
+
+    soma: dict[str, dict] = {}
+    todos = []
+    for b in bruto.get("banimentos") or []:
+        # A entrada de exemplo que acompanha o arquivo nao pode virar dado.
+        if b.get("_exemplo"):
+            continue
+        alvo = (por_riot.get(str(b.get("jogador", "")).lower())
+                or por_riot.get(str(b.get("jogador", "")).split("#")[0].lower()))
+        if not alvo:
+            continue
+        puuid, info = alvo
+        dias = b.get("dias")
+        if not isinstance(dias, (int, float)) or dias <= 0:
+            continue
+        item = {"puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
+                "dias": int(dias), "quando": b.get("quando", ""),
+                "tipo": b.get("tipo", ""), "motivo": b.get("motivo", "")}
+        todos.append(item)
+        acc = soma.setdefault(puuid, {"puuid": puuid, "gameName": info["gameName"],
+                                      "icon": info["icon"], "dias": 0, "vezes": 0})
+        acc["dias"] += int(dias)
+        acc["vezes"] += 1
+
+    podio = sorted(soma.values(), key=lambda x: (-x["dias"], -x["vezes"]))
+    todos.sort(key=lambda x: -x["dias"])
+    return {"podio": podio, "todos": todos,
+            "total": sum(x["dias"] for x in soma.values())}
+
+
 def _curva(conn: sqlite3.Connection, players: dict) -> list[dict]:
     """Saldo ranqueado acumulado ao longo do tempo, medido das partidas.
 
@@ -342,6 +401,7 @@ def construir(conn: sqlite3.Connection, players: dict) -> dict:
         "fichas": fichas,
         "subiu": subiu, "caiu": caiu, "parado": parado,
         "recordes": _recordes(players),
+        "banimentos": _banimentos(players),
         "curva": _curva(conn, players),
         "minJogos": MIN_RANQUEADAS,
         "historico": _historico(conn, players),
