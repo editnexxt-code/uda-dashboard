@@ -184,12 +184,24 @@ def _informado(players: dict) -> list[dict]:
             v_fim = valor_elo(t_fim, d_fim, 0)
             if v_pico is None:
                 continue
+            # `de` e `para` sao dicionarios com a chave "tier" de proposito: o
+            # coletor de assets varre o payload atras dessa chave exata para
+            # decidir quais emblemas embutir. Sem isso, um marco que cita MESTRE
+            # -- faixa que ninguem do elenco tem hoje -- pediria a imagem na
+            # internet e o painel deixaria de funcionar offline.
+            queda = (v_fim - v_pico) if v_fim is not None else None
             saida.append({
                 "puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
                 "temporada": m.get("temporada", ""),
-                "pico": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", ""),
-                "fim": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", "") if v_fim is not None else None,
-                "queda": (v_fim - v_pico) if v_fim is not None else None,
+                "de": {"tier": (t_pico or "").lower(),
+                       "txt": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", "")},
+                "para": ({"tier": (t_fim or "").lower(),
+                          "txt": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", "")}
+                         if v_fim is not None else None),
+                "queda": queda,
+                # Cada divisao vale 100 na escala achatada, entao a conta vira a
+                # unidade que todo mundo usa para medir tombo: divisoes.
+                "divisoes": abs(queda) // 100 if queda is not None else None,
                 "nota": m.get("nota", ""),
             })
     # A maior queda primeiro: e o que a aba existe para mostrar.

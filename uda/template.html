@@ -2868,24 +2868,73 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
 .epod.parado .epod-s.s1 .av{border-color:var(--gold)}
 .epod.parado .epod-s.s1 .andar{background:var(--gold)}
 .epod.parado .epod-s.s2 .andar{background:#c9c2b0} .epod.parado .epod-s.s3 .andar{background:#b0783f}
-/* --------------------------------------------------- o tombo historico */
-.tombo{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:12px}
-.tombo-c{position:relative;background:var(--card2);border:1px solid var(--line);
-  border-left:3px solid var(--red);border-radius:10px;padding:13px 14px}
-.tombo-c .cab{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-.tombo-c .cab img{width:30px;height:30px;border-radius:7px}
-.tombo-c .cab .n{font:700 13px/1 var(--disp)}
-.tombo-c .cab .t{font-size:10.5px;color:var(--mut);margin-top:3px}
-.tombo-c .rota{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.tombo-c .rota .de,.tombo-c .rota .para{display:flex;align-items:center;gap:6px;
-  font:700 12.5px/1 var(--disp)}
-.tombo-c .rota .de{color:var(--gold)} .tombo-c .rota .para{color:var(--red)}
-.tombo-c .rota img{width:26px;height:26px}
-.tombo-c .rota .sep{color:var(--dim);font-size:15px}
-.tombo-c .nota{font-size:11.5px;color:var(--dim);margin-top:9px;line-height:1.5}
-.tombo-c .selo{position:absolute;top:11px;right:12px;font:600 9px/1 var(--body);
-  letter-spacing:.08em;text-transform:uppercase;color:var(--mut);
-  border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+/* --------------------------------------------------- O TOMBO (destaque)
+   Este bloco e o clima da aba: a queda que todo mundo lembra. Antes era um
+   cartao fino de borda vermelha, com cara de nota de rodape. Agora e um
+   poster -- o pico la em cima a esquerda, o pouso la embaixo a direita, e o
+   arco descendo entre os dois. A diagonal faz o trabalho: o olho le a queda
+   antes de ler o texto. */
+.tombo{display:grid;gap:16px}
+.tombo-c{position:relative;overflow:hidden;border-radius:16px;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 8% 0%,rgba(214,178,92,.16),transparent 58%),
+    radial-gradient(120% 90% at 92% 100%,rgba(224,72,64,.20),transparent 58%),
+    linear-gradient(150deg,#191d26,#0e1116 62%)}
+.tombo-c::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(150deg,transparent 40%,rgba(224,72,64,.07))}
+.tombo-in{position:relative;z-index:2;padding:22px 26px 24px}
+/* cabecalho: quem levou o tombo */
+.tombo-cab{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.tombo-cab img.av{width:44px;height:44px;border-radius:11px;
+  border:1px solid rgba(255,255,255,.10)}
+.tombo-cab .n{font:800 20px/1.1 var(--disp);letter-spacing:-.01em}
+.tombo-cab .t{font-size:11px;color:var(--mut);margin-top:4px;
+  letter-spacing:.07em;text-transform:uppercase}
+.tombo-c .selo{position:absolute;top:16px;right:18px;z-index:3;
+  font:600 9px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mut);border:1px solid var(--line);border-radius:20px;
+  padding:6px 11px;background:rgba(10,12,16,.55)}
+/* a trajetoria: pico -> arco -> pouso */
+/* A altura minima e o que faz a diagonal existir. Sem ela a linha da grade
+   assume a altura dos proprios lados (111 px) e o align-self:start/end nao tem
+   para onde empurrar -- medido: 9 px de descida, ou seja, nenhuma. Com 210 px
+   sao 99 px de queda visivel, ao custo de 90 px de cartao. */
+.queda{display:grid;grid-template-columns:1fr minmax(90px,1.5fr) 1fr;
+  align-items:center;gap:8px;min-height:210px}
+.queda .lado{text-align:center}
+.queda .lado.alto{align-self:start}
+.queda .lado.baixo{align-self:end}
+.queda .rot{font:600 9.5px/1 var(--body);letter-spacing:.11em;
+  text-transform:uppercase;color:var(--mut);margin-bottom:9px}
+.queda .bras{width:64px;height:64px;display:block;margin:0 auto 9px;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.queda .lado.alto .bras{filter:drop-shadow(0 0 16px rgba(214,178,92,.42))}
+.queda .lado.baixo .bras{filter:drop-shadow(0 0 16px rgba(224,72,64,.38))}
+.queda .fx{font:800 17px/1.15 var(--disp)}
+.queda .lado.alto .fx{color:var(--gold)}
+.queda .lado.baixo .fx{color:var(--red)}
+.queda .meio{position:relative;align-self:stretch;min-height:120px}
+.queda .meio svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.queda .medida{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  text-align:center;background:rgba(10,12,16,.72);border:1px solid var(--line);
+  border-radius:11px;padding:7px 12px;backdrop-filter:blur(3px);white-space:nowrap}
+.queda .medida b{display:block;font:800 21px/1 var(--disp);color:var(--red)}
+.queda .medida span{display:block;font:600 8.5px/1 var(--body);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mut);margin-top:5px}
+.tombo-nota{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);
+  font:italic 13.5px/1.55 var(--body);color:var(--txt);opacity:.9}
+.tombo-nota::before{content:"\201C"}
+.tombo-nota::after{content:"\201D"}
+@media (max-width:560px){
+  .tombo-in{padding:18px 15px 20px}
+  .tombo-cab .n{font-size:17px}
+  .queda{grid-template-columns:1fr;gap:0}
+  .queda .lado.alto,.queda .lado.baixo{align-self:center}
+  .queda .meio{height:74px}
+  .queda .bras{width:52px;height:52px}
+}
+
 /* ------------------------------------------------------------- a curva */
 .curva{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 .curva-c{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px}
@@ -6810,7 +6859,7 @@ function pElevador(){
     .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
-    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} ${x.pico} → ${x.fim}${x.nota?" — "+x.nota:""}`))
+    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} ${x.de.txt} → ${x.para?x.para.txt:"?"}${x.divisoes?` (−${x.divisoes} divisões)`:""}${x.nota?" — "+x.nota:""}`))
     .join("\n");
 
   return `
@@ -6834,17 +6883,42 @@ function pElevador(){
 
   ${inf.length?`<section><div class="sh-plain">${chead(I.skull,"O tombo que ninguém esquece",
     "temporada antiga não está em API nenhuma — a Riot não guarda e o Match-V5 só serve partida recente · isto aqui é memória do grupo, digitada à mão em elos.json","red")}</div>
-    <div class="tombo">${inf.map(x=>`<div class="tombo-c">
+    <div class="tombo">${inf.map(x=>`<article class="tombo-c">
       <span class="selo">informado</span>
-      <div class="cab"><img src="${iconImg(x.icon)}"${FB}>
-        <div><div class="n">${h(x.gameName)}</div>
-        <div class="t">${h(x.temporada)}</div></div></div>
-      <div class="rota">
-        <span class="de">${h(x.pico)}</span>
-        ${x.fim?`<span class="sep">→</span><span class="para">${h(x.fim)}</span>`:""}
+      <div class="tombo-in">
+        <div class="tombo-cab"><img class="av" src="${iconImg(x.icon)}"${FB}>
+          <div><div class="n">${h(x.gameName)}</div>
+          <div class="t">${h(x.temporada)}</div></div></div>
+        <div class="queda">
+          <div class="lado alto">
+            <div class="rot">chegou a</div>
+            <img class="bras" src="${crestImg(x.de.tier)}"${FB} alt="">
+            <div class="fx">${h(x.de.txt)}</div>
+          </div>
+          <div class="meio">
+            ${x.para?`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="gqueda${h(x.puuid).slice(0,8)}" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="var(--gold)"/><stop offset="1" stop-color="var(--red)"/>
+              </linearGradient></defs>
+              <path d="M4 12 C 40 12, 60 88, 96 88" fill="none"
+                stroke="url(#gqueda${h(x.puuid).slice(0,8)})" stroke-width="2.5"
+                stroke-linecap="round" stroke-dasharray="5 6" opacity=".85"
+                vector-effect="non-scaling-stroke"/>
+              <path d="M89 82 L97 88 L89 94" fill="none" stroke="var(--red)"
+                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"/></svg>`:""}
+            ${x.divisoes?`<div class="medida"><b>−${ni(x.divisoes)}</b>
+              <span>divis${x.divisoes>1?"ões":"ão"}</span></div>`:""}
+          </div>
+          ${x.para?`<div class="lado baixo">
+            <div class="rot">terminou em</div>
+            <img class="bras" src="${crestImg(x.para.tier)}"${FB} alt="">
+            <div class="fx">${h(x.para.txt)}</div>
+          </div>`:"<div></div>"}
+        </div>
+        ${x.nota?`<div class="tombo-nota">${h(x.nota)}</div>`:""}
       </div>
-      ${x.nota?`<div class="nota">${h(x.nota)}</div>`:""}
-    </div>`).join("")}</div></section>`:""}
+    </article>`).join("")}</div></section>`:""}
 
   ${curva.length?`<section><div class="sh-plain">${chead(I.trend,"A queda, medida",
     "saldo acumulado de ranqueada ao longo do tempo · o ponto dourado é o melhor momento, e o número é o quanto caiu de lá até hoje · só alcança o que o Match-V5 ainda serve","red")}</div>
