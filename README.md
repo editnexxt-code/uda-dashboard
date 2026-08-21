@@ -85,8 +85,14 @@ campeão cada um apanha na fase de rota.
 **Arsenal** — itens, runas principais e duplas de feitiço mais usados.
 
 **Elevador** — quem subiu, quem desceu e quem passou o ano apertando o botão.
-Três pódios pelo saldo de vitórias e derrotas em ranqueada, mais a tabela do
-elenco inteiro com o elo de solo/duo.
+Traz **três origens diferentes de dado, cada uma dizendo qual é**:
+
+- os três pódios, pelo saldo de vitórias e derrotas em ranqueada (medido);
+- *A queda, medida* — a curva do saldo acumulado ao longo do tempo, com o pico
+  marcado e o quanto caiu de lá até hoje (medido, mas só alcança o que o
+  Match-V5 ainda serve);
+- *O tombo que ninguém esquece* — temporada antiga, digitada à mão em
+  `elos.json` e marcada como **informado** na tela.
 
 **Mural do mês** — o 👑 UDA e o 💀 Afundado de cada mês, com pódio, e o quadro de
 títulos acumulados.
@@ -191,6 +197,18 @@ chutando "20 PDL por vitória" daria cara de medição a um palpite.
 
 > "Quem mais se manteve" exige mínimo de 20 ranqueadas. Sem o piso, o prêmio de
 > mais estável iria para quem não jogou: zero partida dá saldo zero.
+
+**Temporada antiga não está em API nenhuma.** O Match-V5 só serve partida
+recente — o banco tem 155 ranqueadas do Gui, enquanto a própria Riot diz que ele
+tem 832 na temporada. Então a queda que o grupo lembra ("foi de Mestre a quase
+Platina") não é recuperável: ou alguém digita, ou o painel finge que não
+aconteceu. `elos.json` é onde se digita, e a tela marca como *informado* para
+ninguém confundir com o que foi medido.
+
+> Testei usar os desafios de temporada como elo — "Temporada 2024: Etapa 2 =
+> MASTER" parecia promissor. Não serve: CliqueLetal está **Prata** hoje e marca
+> MASTER nesse desafio. A descrição confirma que são pontos de desafio, não
+> ranque.
 
 ### A timeline, e por que ela é a exceção
 

@@ -1,0 +1,29 @@
+{
+  "_leia": [
+    "Historico de elo que a API da Riot NAO devolve e o painel nao tinha como",
+    "medir: temporadas antigas, pico de carreira, aquela queda que todo mundo",
+    "lembra. O Match-V5 so guarda partida recente e a League-V4 so responde onde",
+    "a pessoa esta agora -- entao isto aqui e memoria do grupo, digitada a mao,",
+    "e o painel marca como tal. O que e medido fica separado do que e informado.",
+    "",
+    "Formato: o Riot ID completo, e uma lista de marcos.",
+    "  temporada  rotulo livre ('2025 Etapa 2', 'Pico da carreira'...)",
+    "  pico       onde chegou de mais alto naquele periodo",
+    "  fim        onde terminou (opcional; se faltar, so o pico e mostrado)",
+    "  nota       uma linha de contexto, opcional",
+    "",
+    "Faixas aceitas: FERRO BRONZE PRATA OURO PLATINA ESMERALDA DIAMANTE MESTRE",
+    "GRAO-MESTRE DESAFIANTE, com divisao opcional (IV III II I).",
+    "Editar este arquivo e rodar `python run.py --build` ja atualiza o painel."
+  ],
+  "jogadores": {
+    "Gui#Gui": [
+      {
+        "temporada": "Temporada passada",
+        "pico": "MESTRE",
+        "fim": "PLATINA II",
+        "nota": "Desceu direto, sem escala"
+      }
+    ]
+  }
+}

@@ -2827,6 +2827,83 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
   .pool-h .nm{font-size:17px}
 }
 
+/* =================================================== ELEVADOR: O PODIO */
+.epod{display:grid;grid-template-columns:1fr 1.24fr 1fr;gap:12px;align-items:end;
+  max-width:640px;margin:0 auto}
+.epod-s{position:relative;overflow:hidden;border-radius:12px;padding:16px 12px 0;
+  background:var(--card2);border:1px solid var(--line);text-align:center;
+  display:flex;flex-direction:column;align-items:center}
+.epod-s.s1{order:2} .epod-s.s2{order:1} .epod-s.s3{order:3}
+/* o emblema da faixa entra como marca d'agua, grande e discreto */
+.epod-s .brasao{position:absolute;top:-14px;right:-18px;width:104px;height:104px;
+  opacity:.09;pointer-events:none;filter:saturate(1.3)}
+.epod-s .av{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);
+  object-fit:cover;position:relative}
+.epod-s.s1 .av{width:58px;height:58px}
+.epod-s .nm{font:700 12.5px/1.2 var(--disp);margin-top:8px;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.epod-s.s1 .nm{font-size:14px}
+.epod-s .big{display:flex;align-items:baseline;justify-content:center;gap:3px;
+  margin-top:6px;font:800 26px/1 var(--disp);font-variant-numeric:tabular-nums}
+.epod-s.s1 .big{font-size:34px}
+.epod-s .seta{font-size:15px;line-height:1}
+.epod-s .elo{font-size:10.5px;color:var(--dim);margin-top:5px;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.epod-s .vd{font-size:10.5px;color:var(--mut);margin-top:2px;
+  font-variant-numeric:tabular-nums}
+/* o degrau: e o "andar" do elevador */
+.epod-s .andar{width:100%;margin-top:12px;border-radius:8px 8px 0 0;
+  display:grid;place-items:center;font:700 12px/1 var(--disp);color:var(--bg)}
+.epod-s.s1 .andar{height:36px;font-size:15px} .epod-s.s2 .andar{height:26px}
+.epod-s.s3 .andar{height:19px;font-size:11px}
+.epod.sobe .epod-s .big{color:var(--teal)}
+.epod.sobe .epod-s.s1 .av{border-color:var(--teal)}
+.epod.sobe .epod-s.s1 .andar{background:var(--teal)}
+.epod.sobe .epod-s.s2 .andar{background:#2a7d78} .epod.sobe .epod-s.s3 .andar{background:#245e5b}
+.epod.desce .epod-s .big{color:var(--red)}
+.epod.desce .epod-s.s1 .av{border-color:var(--red)}
+.epod.desce .epod-s.s1 .andar{background:var(--red)}
+.epod.desce .epod-s.s2 .andar{background:#8d4038} .epod.desce .epod-s.s3 .andar{background:#6b3630}
+.epod.parado .epod-s .big{color:var(--gold)}
+.epod.parado .epod-s.s1 .av{border-color:var(--gold)}
+.epod.parado .epod-s.s1 .andar{background:var(--gold)}
+.epod.parado .epod-s.s2 .andar{background:#c9c2b0} .epod.parado .epod-s.s3 .andar{background:#b0783f}
+/* --------------------------------------------------- o tombo historico */
+.tombo{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:12px}
+.tombo-c{position:relative;background:var(--card2);border:1px solid var(--line);
+  border-left:3px solid var(--red);border-radius:10px;padding:13px 14px}
+.tombo-c .cab{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.tombo-c .cab img{width:30px;height:30px;border-radius:7px}
+.tombo-c .cab .n{font:700 13px/1 var(--disp)}
+.tombo-c .cab .t{font-size:10.5px;color:var(--mut);margin-top:3px}
+.tombo-c .rota{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tombo-c .rota .de,.tombo-c .rota .para{display:flex;align-items:center;gap:6px;
+  font:700 12.5px/1 var(--disp)}
+.tombo-c .rota .de{color:var(--gold)} .tombo-c .rota .para{color:var(--red)}
+.tombo-c .rota img{width:26px;height:26px}
+.tombo-c .rota .sep{color:var(--dim);font-size:15px}
+.tombo-c .nota{font-size:11.5px;color:var(--dim);margin-top:9px;line-height:1.5}
+.tombo-c .selo{position:absolute;top:11px;right:12px;font:600 9px/1 var(--body);
+  letter-spacing:.08em;text-transform:uppercase;color:var(--mut);
+  border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+/* ------------------------------------------------------------- a curva */
+.curva{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
+.curva-c{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.curva-c .cab{display:flex;align-items:center;gap:7px;margin-bottom:7px;min-width:0}
+.curva-c .cab img{width:22px;height:22px;border-radius:5px;flex:none}
+.curva-c .cab .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:11.5px;font-weight:600}
+.curva-c .cab b{font-size:12px;font-variant-numeric:tabular-nums}
+.curva-c .cab b.dn{color:var(--red)} .curva-c .cab b.up{color:var(--teal)}
+.curva-c svg{width:100%;height:56px;display:block}
+.curva-c .pe{display:flex;justify-content:space-between;font-size:10px;
+  color:var(--dim);margin-top:5px;font-variant-numeric:tabular-nums}
+@media (max-width:520px){
+  .epod{grid-template-columns:1fr;gap:8px;max-width:none}
+  .epod-s.s1,.epod-s.s2,.epod-s.s3{order:0}
+  .epod-s .andar{height:22px!important;font-size:11px!important}
+}
+
 /* =========================================================== ARSENAL */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .aitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -6664,31 +6741,60 @@ function pServidor(){
     </div></section>`;
 }
 
-/* ------------------------------------------------------------ ELEVADOR
-   A Riot nao publica historico de elo, e a tabela `ranks` deste projeto sempre
-   guardou so o AGORA. Entao os tres podios saem do SALDO RANQUEADO -- vitoria
-   menos derrota nas filas 420 e 440 -- que nao e PDL mas e o que move o PDL.
-   O movimento real em divisao e PDL comeca a existir quando `rank_history`
-   tiver dois dias; ate la a secao diz que esta anotando, em vez de estimar. */
+/* --------------------------------------- ELEVADOR: podio proprio e o tombo
+   O podio generico servia, mas nao dizia nada sobre elo. Este mostra o emblema
+   da faixa como marca d'agua, a seta da direcao e o degrau colorido pelo lado
+   para onde a pessoa foi -- o "andar" em que ela parou. */
+function epodio(lista,cls,fmt){
+  const l=(lista||[]).slice(0,3); if(!l.length) return "";
+  const ordem=[1,0,2];   /* 2º, 1º, 3º — o `order` do CSS recoloca */
+  const seta=cls==="sobe"?"▲":cls==="desce"?"▼":"■";
+  return `<div class="epod ${cls}">${ordem.map(i=>{
+    const x=l[i]; if(!x) return "";
+    return `<div class="epod-s s${i+1}"${tip(h(x.gameName),[
+      ["Saldo",(x.saldo>0?"+":"")+x.saldo],
+      ["Vitórias / derrotas",`${x.vitorias}V ${x.derrotas}D`],
+      ["Ranqueadas",ni(x.jogos)],
+      ["Aproveitamento",nf(x.winrate,1)+"%"],
+      ["Elo agora",x.eloSolo||"sem elo"]],"solo/duo e flex somadas")}>
+      <img class="brasao" src="${crestImg(x.tierSolo)}"${FB} alt="">
+      <img class="av" src="${iconImg(x.icon)}"${FB}>
+      <div class="nm">${h(short(x.gameName))}</div>
+      <div class="big"><span class="seta">${seta}</span>${fmt(x.saldo)}</div>
+      <div class="elo">${h(x.eloSolo||"sem elo")}</div>
+      <div class="vd">${x.vitorias}V · ${x.derrotas}D</div>
+      <div class="andar">${i+1}º</div>
+    </div>`;}).join("")}</div>`;
+}
+
+/* Faisca da curva: o formato do tombo, com o pico marcado. */
+function faisca(serie,queda){
+  if(!serie||serie.length<2) return "";
+  const vs=serie.map(p=>p.v), mn=Math.min(...vs), mx=Math.max(...vs);
+  const amp=(mx-mn)||1, W=100, H=32;
+  const x=(i)=>i/(serie.length-1)*W;
+  const y=(v)=>H-((v-mn)/amp)*H;
+  const d=serie.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
+  const iPico=vs.indexOf(mx);
+  const cor=queda<0?"var(--red)":"var(--teal)";
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <path d="${d} L${W} ${H} L0 ${H} Z" fill="${cor}" opacity=".1"/>
+    <path d="${d}" fill="none" stroke="${cor}" stroke-width="1.4"
+      stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${x(iPico).toFixed(1)}" cy="${y(mx).toFixed(1)}" r="1.8"
+      fill="var(--gold)"/></svg>`;
+}
+
 function pElevador(){
   const e=DATA.elevador||{}, f=e.fichas||[];
   if(!f.length) return noData("ELEVADOR PARADO",
     "Ninguém jogou ranqueada o suficiente para entrar nesta conta.");
 
-  const pod=(lista,tone,fmt)=>podio3((lista||[]).map(x=>({
-    nome:x.gameName,icon:x.icon,valor:x.saldo,
-    tip:tip(h(x.gameName),[["Saldo",(x.saldo>0?"+":"")+x.saldo],
-      ["Vitórias / derrotas",`${x.vitorias}V ${x.derrotas}D`],
-      ["Ranqueadas jogadas",ni(x.jogos)],
-      ["Aproveitamento",nf(x.winrate,1)+"%"],
-      ["Elo agora",x.eloSolo||"sem elo"]],
-      "saldo de solo/duo e flex somadas")})),tone,fmt||(v=>(v>0?"+":"")+nf(v,0)));
-
-  const caixa=(cls,icone,titulo,legenda,lista,tone,fmt)=>`
+  const caixa=(cls,icone,titulo,legenda,lista)=>`
     <div class="elvbox ${cls}">
       <div class="tt">${icone} ${titulo}</div>
       <div class="lg">${legenda}</div>
-      ${pod(lista,tone,fmt)}
+      ${epodio(lista,cls,v=>(v>0?"+":"")+nf(v,0))}
     </div>`;
 
   const linha=(x,i)=>`<div class="elvr">
@@ -6699,11 +6805,12 @@ function pElevador(){
     <span class="sal ${x.saldo>0?"up":x.saldo<0?"dn":"eq"}">${x.saldo>0?"+":""}${x.saldo}</span>
   </div>`;
 
-  const hist=e.historico||{};
+  const hist=e.historico||{}, inf=e.informado||[], curva=e.curva||[];
   const zoada=["O ELEVADOR DA UDA — saldo em ranqueada"]
     .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
+    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} ${x.pico} → ${x.fim}${x.nota?" — "+x.nota:""}`))
     .join("\n");
 
   return `
@@ -6715,117 +6822,74 @@ function pElevador(){
     <div class="elv">
       ${caixa("sobe","📈","Subiu de andar",
         "Ganhou mais do que perdeu, e o elo foi junto. Vai lembrar disso o ano inteiro.",
-        e.subiu,"teal")}
+        e.subiu)}
       ${caixa("desce","📉","Desceu de ré",
         "Saldo negativo. Cada partida foi um degrau pra baixo, e o botão do térreo já estava apertado.",
-        e.caiu,"verg")}
+        e.caiu)}
       ${caixa("parado","🛗","Nem saiu do térreo",
         "Jogou pra caramba e terminou exatamente onde começou. Cem partidas para ficar no mesmo lugar.",
-        e.parado,"ouro")}
+        e.parado)}
     </div>
   </section>
+
+  ${inf.length?`<section><div class="sh-plain">${chead(I.skull,"O tombo que ninguém esquece",
+    "temporada antiga não está em API nenhuma — a Riot não guarda e o Match-V5 só serve partida recente · isto aqui é memória do grupo, digitada à mão em elos.json","red")}</div>
+    <div class="tombo">${inf.map(x=>`<div class="tombo-c">
+      <span class="selo">informado</span>
+      <div class="cab"><img src="${iconImg(x.icon)}"${FB}>
+        <div><div class="n">${h(x.gameName)}</div>
+        <div class="t">${h(x.temporada)}</div></div></div>
+      <div class="rota">
+        <span class="de">${h(x.pico)}</span>
+        ${x.fim?`<span class="sep">→</span><span class="para">${h(x.fim)}</span>`:""}
+      </div>
+      ${x.nota?`<div class="nota">${h(x.nota)}</div>`:""}
+    </div>`).join("")}</div></section>`:""}
+
+  ${curva.length?`<section><div class="sh-plain">${chead(I.trend,"A queda, medida",
+    "saldo acumulado de ranqueada ao longo do tempo · o ponto dourado é o melhor momento, e o número é o quanto caiu de lá até hoje · só alcança o que o Match-V5 ainda serve","red")}</div>
+    <div class="curva">${curva.slice(0,12).map(x=>`<div class="curva-c"${tip(h(x.gameName),[
+      ["Melhor momento",(x.pico>0?"+":"")+x.pico],
+      ["Onde está agora",(x.fim>0?"+":"")+x.fim],
+      ["Queda desde o pico",x.doPico],
+      ["Ranqueadas medidas",ni(x.jogos)]],"cada ponto é uma partida ranqueada")}>
+      <div class="cab"><img src="${iconImg(x.icon)}"${FB}>
+        <span class="n">${h(x.gameName)}</span>
+        <b class="${x.doPico<0?"dn":"up"}">${x.doPico>0?"+":""}${x.doPico}</b></div>
+      ${faisca(x.serie,x.doPico)}
+      <div class="pe"><span>pico ${x.pico>0?"+":""}${x.pico}</span>
+        <span>${ni(x.jogos)} jogos</span></div>
+    </div>`).join("")}</div></section>`:""}
 
   <section><div class="sh-plain">${chead(I.rank,"O prédio inteiro",
     "cada um, o elo de solo/duo agora, e o saldo que o levou até aí")}</div>
     <div class="elvt">${f.map(linha).join("")}</div></section>
 
   <section><div class="sh-plain">${chead(I.book,"E o PDL de verdade?",
-    hist.pronto?`movimento medido em ${ni(hist.dias)} dias de anotação`
+    hist.pronto?`movimento medido em ${ni(hist.pontos)} mudanças anotadas`
                :"por que este quadro ainda está vazio")}</div>
     ${hist.pronto&&hist.movimento.length?`<div class="elvt">${hist.movimento.map((m,i)=>`
       <div class="elvr">
         <span class="pos">${i+1}</span>
         <span class="who"><img src="${iconImg(m.icon)}"${FB}><span>${h(m.gameName)}</span></span>
         <span class="elo">${h(m.de)} → ${h(m.para)}</span>
-        <span class="vd">${h(m.fila)}</span>
+        <span class="vd">${h(m.fila)} · ${ni(m.partidas)} jogos</span>
         <span class="sal ${m.delta>0?"up":m.delta<0?"dn":"eq"}">${m.delta>0?"+":""}${m.delta}</span>
       </div>`).join("")}</div>`
     :`<div class="card" style="padding:14px;font-size:12.5px;line-height:1.65;color:var(--dim)">
       <b style="color:var(--txt)">A Riot não guarda isso.</b> Não existe endpoint de
-      histórico de elo: a API só responde onde você está <i>agora</i>. E até hoje este
-      painel também só guardava o agora — cada atualização apagava a anterior.<br><br>
-      <b style="color:var(--txt)">Agora ele anota.</b> A partir desta versão fica
-      gravada uma foto por dia do elo de cada um. Em alguns dias este quadro mostra a
-      subida e a queda de verdade, em divisão e PDL${hist.desde?`, contando desde ${h(hist.desde)}`:""}.<br><br>
-      Enquanto isso, os pódios acima usam o saldo de vitórias e derrotas em ranqueada,
-      que é medido de partida de verdade — não é PDL, mas é exatamente o que mexe nele.
-      Estimar a trajetória chutando "20 PDL por vitória" seria dar cara de medição
-      para um palpite.
+      histórico de elo: a API só responde onde você está <i>agora</i>. Sites como o
+      Blitz mostram a curva porque <b style="color:var(--txt)">eles mesmos vêm gravando
+      há anos</b> — não é um dado entregue, é um dado acumulado.<br><br>
+      <b style="color:var(--txt)">Este painel agora acumula.</b> A cada mudança de PDL
+      fica um ponto gravado. Em alguns dias este quadro vira a curva de verdade, em
+      divisão e PDL.<br><br>
+      Enquanto isso: os pódios acima usam o saldo de ranqueada, "A queda, medida" usa
+      a curva das partidas que o Match-V5 ainda serve, e "O tombo" é o que vocês
+      digitaram à mão. Três origens diferentes, cada uma dizendo qual é.
     </div>`}
   </section>`;
 }
-
-/* ------------------------------------------------- CHAMPION POOL POR ROTA
-   Abre no clique do cartao do jogador. O cartao ja tinha coisa clicavel
-   dentro -- campeao abre dossie, partida abre placar -- entao o gatilho so
-   vale quando o clique NAO caiu num desses; senao abrir o pool sequestraria
-   os dois comportamentos que ja existiam. */
-const POOL=document.createElement("dialog");
-POOL.className="dossie"; POOL.setAttribute("aria-label","Champion pool");
-document.body.appendChild(POOL);
-POOL.addEventListener("click",e=>{ if(e.target===POOL) POOL.close(); });
-
-function poolHTML(p){
-  if(!p) return "";
-  const rotas=(p.pool||[]).filter(r=>r.games>0);
-  const linha=(c)=>{
-    const pv=c.games?c.wins/c.games*100:0;
-    return `<div class="pool-c"${tip(h(c.champion),[
-      ["Vitórias",ni(c.wins),"var(--teal)"],
-      ["Derrotas",ni(c.losses),"var(--red)"],
-      ["Aproveitamento",nf(c.winrate,1)+"%"],
-      ["KDA",nf(c.kda,2)]],`${ni(c.games)} partida${c.games>1?"s":""}`)}>
-      <img src="${champImg(c.championId,c.champion)}"${FB}>
-      <div style="min-width:0">
-        <span class="n">${h(c.champion)}</span>
-        <span class="d"><b class="${c.winrate>=55?"good":c.winrate<45?"bad":"eq"}">${nf(c.winrate,0)}%</b>
-          <span>${c.wins}V ${c.losses}D</span></span>
-      </div>
-      <div class="bar"><i class="v" style="width:${pv.toFixed(1)}%"></i>
-        <i class="d" style="width:${(100-pv).toFixed(1)}%"></i></div>
-    </div>`;};
-
-  return `<div class="pool">
-    <button class="ds-x" type="button" aria-label="Fechar">✕</button>
-    <div class="pool-h"><img src="${iconImg(p.icon)}"${FB}>
-      <div style="min-width:0"><div class="nm">${h(p.gameName)}</div>
-        <div class="tg">#${h(p.tagLine)} · ${ni(p.stats.games)} partidas na fila selecionada</div></div>
-    </div>
-    <div class="pool-sub">Cada rota conta separado — o mesmo campeão de suporte e de
-      meio são duas histórias diferentes, e juntar as duas esconde justamente a que
-      interessa. A barra embaixo de cada campeão é a fatia de vitória contra derrota.</div>
-    ${rotas.length?rotas.map(r=>`<div class="pool-r">
-      <div class="pool-rh"><span class="r">${h(r.roleLabel)}</span>
-        <span class="j">${ni(r.games)} jogos · ${r.wins}V ${r.losses}D · ${ni(r.champions.length)} campeões</span>
-        <span class="wr ${r.winrate>=50?"good":"bad"}">${nf(r.winrate,1)}%</span></div>
-      <div class="pool-g">${r.champions.map(linha).join("")}</div>
-    </div>`).join(""):`<div style="color:var(--dim);font-size:12.5px">
-      Sem partidas com rota identificada nesta fila.</div>`}
-  </div>`;
-}
-
-function abrirPool(puuid){
-  const g=grupo(); if(!g) return;
-  const p=(g.players||[]).find(x=>x.puuid===puuid);
-  if(!p) return;
-  POOL.innerHTML=poolHTML(p);
-  POOL.scrollTop=0;
-  if(POOL.showModal) POOL.showModal(); else POOL.setAttribute("open","");
-}
-
-document.addEventListener("click",e=>{
-  if(!e.target.closest) return;
-  if(e.target.closest(".pool .ds-x")){ POOL.close(); return; }
-  /* o que ja era clicavel dentro do cartao continua mandando */
-  if(e.target.closest("[data-champ],[data-match],[data-ev],[data-zoada],button,a")) return;
-  const card=e.target.closest("[data-pool]");
-  if(card) abrirPool(card.getAttribute("data-pool"));
-});
-document.addEventListener("keydown",e=>{
-  if(e.key!=="Enter"&&e.key!==" ") return;
-  const card=e.target.closest&&e.target.closest("[data-pool]");
-  if(card){ e.preventDefault(); abrirPool(card.getAttribute("data-pool")); }
-});
 
 const RENDER={visao:pVisao,autopsia:pAutopsia,mapa:pMapa,servidor:pServidor,elevador:pElevador,ranking:pRanking,evolucao:pEvolucao,equipe:pEquipe,
   arsenal:pArsenal,mural:pMural,zoeira:pZoeira,vexames:pVexames,
@@ -6992,6 +7056,7 @@ const DOBRA=[
   [".estante",10,"campeões"],  /* a estante da pagina Campeoes   */
   [".fita-b",  6,"jogadores"], /* 13 fitas    -> 6 no celular    */
   [".hl-rows", 6,"jogadores"], /* 9 halteres  -> 6 no celular    */
+  [".curva",   4,"curvas"],     /* 12 quedas -> 4 no celular          */
   [".lstack",  6,"formações"], /* 24 trios/quartetos -> 6 no celular   */
   [".zgrid",   4,"troféus"],   /* 31 trofeus por hall            */
   [".mugrid",  2,"meses"],     /* 11 meses do mural              */
@@ -7009,7 +7074,7 @@ const MQ_DOBRA=matchMedia("(max-width:620px)");
    nesta lista continua abrindo inteiro no desktop, como antes. */
 const DOBRA_DESKTOP={
   ".mfeed":12, ".awards":4, ".rgrid":8, ".pcards":6, ".cgrid":12, ".estante":20,
-  ".zgrid":6, ".mugrid":4, ".lstack":8, ".nems":9, ".dvs":8,
+  ".zgrid":6, ".mugrid":4, ".lstack":8, ".curva":8, ".nems":9, ".dvs":8,
 };
 
 

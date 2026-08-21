@@ -25,9 +25,11 @@ por vitoria" seria dar cara de medicao para um chute.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import time
 from collections import defaultdict
+from pathlib import Path
 
 from .kpi import _r, _safe_div
 
@@ -127,6 +129,118 @@ def _historico(conn: sqlite3.Connection, players: dict) -> dict:
             "movimento": mov, "series": series, "pronto": bool(mov)}
 
 
+def _pt_para_tier(txt: str) -> tuple[str | None, str | None]:
+    """'PLATINA II' -> ('PLATINUM', 'II'). Aceita o nome em portugues."""
+    if not txt:
+        return None, None
+    partes = txt.strip().upper().replace("-", " ").split()
+    inverso = {v.upper().replace("Ã", "A").replace("Ç", "C").replace("-", " "): k
+               for k, v in TIER_PT.items()}
+    inverso["GRAO MESTRE"] = "GRANDMASTER"
+    tier = div = None
+    for i in range(len(partes), 0, -1):
+        chave = " ".join(partes[:i])
+        if chave in inverso:
+            tier = inverso[chave]
+            resto = partes[i:]
+            div = resto[0] if resto and resto[0] in ORDEM_DIV else None
+            break
+    return tier, div
+
+
+def _informado(players: dict) -> list[dict]:
+    """Marcos digitados a mao em elos.json.
+
+    Existe porque a Riot nao devolve temporada antiga: o Match-V5 so guarda
+    partida recente e a League-V4 so responde o agora. A queda que o grupo
+    lembra e real, mas nao esta em nenhuma API -- entao ou o grupo digita, ou
+    o painel finge que nao aconteceu. Fica marcado como INFORMADO na tela, para
+    ninguem confundir com o que foi medido.
+    """
+    caminho = Path(__file__).resolve().parent.parent / "elos.json"
+    if not caminho.exists():
+        return []
+    try:
+        bruto = json.loads(caminho.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return []
+    por_riot = {}
+    for puuid, info in players.items():
+        nome = info.get("gameName", "")
+        tag = info.get("tagLine") or ""
+        por_riot[f"{nome}#{tag}".lower()] = (puuid, info)
+        por_riot[nome.lower()] = (puuid, info)
+
+    saida = []
+    for riot_id, marcos in (bruto.get("jogadores") or {}).items():
+        alvo = por_riot.get(riot_id.lower()) or por_riot.get(riot_id.split("#")[0].lower())
+        if not alvo:
+            continue
+        puuid, info = alvo
+        for m in marcos or []:
+            t_pico, d_pico = _pt_para_tier(m.get("pico", ""))
+            t_fim, d_fim = _pt_para_tier(m.get("fim", ""))
+            v_pico = valor_elo(t_pico, d_pico, 0)
+            v_fim = valor_elo(t_fim, d_fim, 0)
+            if v_pico is None:
+                continue
+            saida.append({
+                "puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
+                "temporada": m.get("temporada", ""),
+                "pico": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", ""),
+                "fim": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", "") if v_fim is not None else None,
+                "queda": (v_fim - v_pico) if v_fim is not None else None,
+                "nota": m.get("nota", ""),
+            })
+    # A maior queda primeiro: e o que a aba existe para mostrar.
+    saida.sort(key=lambda x: (x["queda"] if x["queda"] is not None else 0))
+    return saida
+
+
+def _curva(conn: sqlite3.Connection, players: dict) -> list[dict]:
+    """Saldo ranqueado acumulado ao longo do tempo, medido das partidas.
+
+    Nao e PDL, e nao alcanca temporada antiga -- o Match-V5 nao guarda tanto.
+    Mas onde alcanca, mostra o FORMATO do tombo com data: luizin1v9 desce de 0 a
+    -21 ao longo de dez meses, e isso e medido, nao lembrado.
+    """
+    por = defaultdict(list)
+    for r in conn.execute(
+            "SELECT puuid, game_creation, win FROM participants "
+            " WHERE tracked = 1 AND queue_id IN (?, ?) ORDER BY game_creation",
+            FILAS_RANQUEADAS):
+        if r["puuid"] in players:
+            por[r["puuid"]].append(r)
+
+    saida = []
+    for puuid, linhas in por.items():
+        if len(linhas) < MIN_RANQUEADAS:
+            continue
+        acum = 0
+        pontos, pico, vale = [], 0, 0
+        for r in linhas:
+            acum += 1 if r["win"] else -1
+            pico = max(pico, acum)
+            vale = min(vale, acum)
+            pontos.append({"t": int(r["game_creation"]), "v": acum})
+        # Um ponto por partida deixaria a serie com centenas de itens por
+        # pessoa. A curva e lida pelo formato, entao 60 pontos bastam.
+        passo = max(1, len(pontos) // 60)
+        magros = pontos[::passo]
+        if magros[-1] is not pontos[-1]:
+            magros.append(pontos[-1])
+        saida.append({
+            "puuid": puuid, "gameName": players[puuid]["gameName"],
+            "icon": players[puuid]["icon"],
+            "serie": magros, "pico": pico, "vale": vale,
+            "fim": acum, "jogos": len(linhas),
+            # A queda que interessa: do melhor momento ate onde parou.
+            "doPico": acum - pico,
+        })
+    saida.sort(key=lambda x: x["doPico"])
+    return saida
+
+
 def construir(conn: sqlite3.Connection, players: dict) -> dict:
     # --- saldo ranqueado, das partidas que ja estao no banco ----------------
     acc = defaultdict(lambda: defaultdict(int))
@@ -156,6 +270,9 @@ def construir(conn: sqlite3.Connection, players: dict) -> dict:
             "saldo": vit - der,
             "winrate": _r(_safe_div(vit, jogos) * 100, 1),
             "eloSolo": texto_elo(solo["tier"], solo["division"], solo["lp"]) if solo else None,
+            # O emblema da faixa ja vem embutido no HTML; a tela so precisa do
+            # nome do tier para escolher qual.
+            "tierSolo": (solo["tier"] or "").lower() if solo else "unranked",
             "eloFlex": texto_elo(flex["tier"], flex["division"], flex["lp"]) if flex else None,
             "valorSolo": valor_elo(solo["tier"], solo["division"], solo["lp"]) if solo else None,
             "elegivel": jogos >= MIN_RANQUEADAS,
@@ -173,6 +290,8 @@ def construir(conn: sqlite3.Connection, players: dict) -> dict:
     return {
         "fichas": fichas,
         "subiu": subiu, "caiu": caiu, "parado": parado,
+        "informado": _informado(players),
+        "curva": _curva(conn, players),
         "minJogos": MIN_RANQUEADAS,
         "historico": _historico(conn, players),
         "geradoEm": time.strftime("%Y-%m-%d"),
