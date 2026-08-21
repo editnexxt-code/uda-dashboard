@@ -177,72 +177,74 @@ def _pt_para_tier(txt: str) -> tuple[str | None, str | None]:
     return tier, div
 
 
-def _informado(players: dict) -> list[dict]:
-    """Marcos digitados a mao em elos.json.
+def _recordes(players: dict) -> dict:
+    """Os dois recordes do grupo -- maior queda e maior ascensao -- de elos.json.
 
-    Existe porque a Riot nao devolve temporada antiga: o Match-V5 so guarda
-    partida recente e a League-V4 so responde o agora. A queda que o grupo
-    lembra e real, mas nao esta em nenhuma API -- entao ou o grupo digita, ou
-    o painel finge que nao aconteceu. Fica marcado como INFORMADO na tela, para
-    ninguem confundir com o que foi medido.
+    Existe porque a Riot nao devolve historico de elo: a League-V4 so responde o
+    agora e o Match-V5 so serve partida recente. Blitz e OP.GG conseguem porque
+    vem gravando ha anos; aqui e memoria do grupo, e a tela marca como INFORMADO.
+
+    Cada categoria tem um `atual` e um `historico`. Quem bate a marca ocupa o
+    `atual` e o antigo desce para o quadro de honra -- e por isso o formato ja
+    nasce com lista, em vez de um campo unico que precisaria ser reescrito.
     """
     caminho = Path(__file__).resolve().parent.parent / "elos.json"
     if not caminho.exists():
-        return []
+        return {}
     try:
         bruto = json.loads(caminho.read_text(encoding="utf-8"))
     except (ValueError, OSError):
-        return []
+        return {}
+
     por_riot = {}
     for puuid, info in players.items():
-        nome = info.get("gameName", "")
-        tag = info.get("tagLine") or ""
+        nome, tag = info.get("gameName", ""), info.get("tagLine") or ""
         por_riot[f"{nome}#{tag}".lower()] = (puuid, info)
         por_riot[nome.lower()] = (puuid, info)
 
-    saida = []
-    for riot_id, marcos in (bruto.get("jogadores") or {}).items():
-        alvo = por_riot.get(riot_id.lower()) or por_riot.get(riot_id.split("#")[0].lower())
+    def ficha(m: dict) -> dict | None:
+        alvo = (por_riot.get(str(m.get("jogador", "")).lower())
+                or por_riot.get(str(m.get("jogador", "")).split("#")[0].lower()))
         if not alvo:
-            continue
+            return None
         puuid, info = alvo
-        for m in marcos or []:
-            t_pico, d_pico = _pt_para_tier(m.get("pico", ""))
-            t_fim, d_fim = _pt_para_tier(m.get("fim", ""))
-            v_pico = valor_elo(t_pico, d_pico, 0)
-            v_fim = valor_elo(t_fim, d_fim, 0)
-            if v_pico is None:
-                continue
-            # `de` e `para` sao dicionarios com a chave "tier" de proposito: o
-            # coletor de assets varre o payload atras dessa chave exata para
-            # decidir quais emblemas embutir. Sem isso, um marco que cita MESTRE
-            # -- faixa que ninguem do elenco tem hoje -- pediria a imagem na
-            # internet e o painel deixaria de funcionar offline.
-            queda = (v_fim - v_pico) if v_fim is not None else None
-            p_pico, p_fim = passos(t_pico, d_pico), passos(t_fim, d_fim)
-            degraus = (p_pico - p_fim) if (p_pico is not None and p_fim is not None) else None
-            dias = _dias_entre(m.get("picoEm", ""), m.get("fimEm", ""))
-            pdl = m.get("picoPdl")
-            saida.append({
-                "puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
-                "temporada": m.get("temporada", ""),
-                "de": {"tier": (t_pico or "").lower(),
-                       "txt": texto_elo(t_pico, d_pico, 0).replace(" 0 PDL", ""),
-                       "pdl": int(pdl) if isinstance(pdl, (int, float)) else None,
-                       "em": m.get("picoEm") or None},
-                "para": ({"tier": (t_fim or "").lower(),
-                          "txt": texto_elo(t_fim, d_fim, 0).replace(" 0 PDL", ""),
-                          "em": m.get("fimEm") or None}
-                         if v_fim is not None else None),
-                "queda": queda,
-                # Cada divisao vale 100 na escala achatada, entao a conta vira a
-                # unidade que todo mundo usa para medir tombo: divisoes.
-                "degraus": degraus,
-                "dias": dias,
-                "nota": m.get("nota", ""),
-            })
-    # A maior queda primeiro: e o que a aba existe para mostrar.
-    saida.sort(key=lambda x: (x["queda"] if x["queda"] is not None else 0))
+        t_de, d_de = _pt_para_tier(m.get("de", ""))
+        t_para, d_para = _pt_para_tier(m.get("para", ""))
+        if not t_de or not t_para:
+            return None
+        p_de, p_para = passos(t_de, d_de), passos(t_para, d_para)
+        # O numero de degraus pode vir escrito, mas se as duas pontas existem a
+        # conta manda: assim uma correcao de faixa nunca deixa o texto mentindo.
+        degraus = (abs(p_de - p_para) if (p_de is not None and p_para is not None)
+                   else m.get("degraus"))
+        pdl = m.get("dePdl")
+        return {
+            "puuid": puuid, "gameName": info["gameName"], "icon": info["icon"],
+            "quando": m.get("quando", ""), "fonte": m.get("fonte", ""),
+            "nota": m.get("nota", ""),
+            "de": {"tier": t_de.lower(),
+                   "txt": texto_elo(t_de, d_de, 0).replace(" 0 PDL", ""),
+                   "pdl": int(pdl) if isinstance(pdl, (int, float)) else None,
+                   "em": m.get("deEm") or None},
+            "para": {"tier": t_para.lower(),
+                     "txt": texto_elo(t_para, d_para, 0).replace(" 0 PDL", ""),
+                     "em": m.get("paraEm") or None},
+            "degraus": degraus,
+            "partidas": m.get("partidas"),
+            "dias": _dias_entre(m.get("deEm", ""), m.get("paraEm", "")),
+        }
+
+    saida = {}
+    for chave in ("queda", "ascensao"):
+        bloco = (bruto.get("recordes") or {}).get(chave) or {}
+        atual = ficha(bloco.get("atual") or {})
+        if not atual:
+            continue
+        saida[chave] = {
+            "atual": atual,
+            "historico": [f for f in (ficha(h) for h in (bloco.get("historico") or []))
+                          if f],
+        }
     return saida
 
 
@@ -339,7 +341,7 @@ def construir(conn: sqlite3.Connection, players: dict) -> dict:
     return {
         "fichas": fichas,
         "subiu": subiu, "caiu": caiu, "parado": parado,
-        "informado": _informado(players),
+        "recordes": _recordes(players),
         "curva": _curva(conn, players),
         "minJogos": MIN_RANQUEADAS,
         "historico": _historico(conn, players),

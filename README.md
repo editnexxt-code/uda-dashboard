@@ -91,8 +91,10 @@ Traz **três origens diferentes de dado, cada uma dizendo qual é**:
 - *A queda, medida* — a curva do saldo acumulado ao longo do tempo, com o pico
   marcado e o quanto caiu de lá até hoje (medido, mas só alcança o que o
   Match-V5 ainda serve);
-- *O tombo que ninguém esquece* — temporada antiga, digitada à mão em
-  `elos.json` e marcada como **informado** na tela.
+- *Os dois recordes* — a maior queda e a maior ascensão do grupo, lado a lado,
+  com os arcos espelhados. Vêm de `elos.json` e são marcados com a fonte na
+  tela. Quando alguém bate a marca, move-se o `atual` para o `historico` e o
+  novo entra no lugar; os antigos viram o **quadro de honra**.
 
 **Mural do mês** — o 👑 UDA e o 💀 Afundado de cada mês, com pódio, e o quadro de
 títulos acumulados.
@@ -197,6 +199,12 @@ chutando "20 PDL por vitória" daria cara de medição a um palpite.
 
 > "Quem mais se manteve" exige mínimo de 20 ranqueadas. Sem o piso, o prêmio de
 > mais estável iria para quem não jogou: zero partida dá saldo zero.
+
+**Os degraus são recalculados, não lidos.** `elos.json` aceita um campo
+`degraus`, mas se as duas pontas da faixa existem a conta manda — assim uma
+correção de faixa nunca deixa o texto mentindo. Foi o que pegou a diferença
+entre o que li no gráfico do Blitz (por posição de pixel, com arredondamento) e
+o valor real: Prata III → Esmeralda IV são 11 degraus, não 12.
 
 **Temporada antiga não está em API nenhuma.** O Match-V5 só serve partida
 recente — o banco tem 155 ranqueadas do Gui, enquanto a própria Riot diz que ele

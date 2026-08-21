@@ -2874,7 +2874,42 @@ footer{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-si
    poster -- o pico la em cima a esquerda, o pouso la embaixo a direita, e o
    arco descendo entre os dois. A diagonal faz o trabalho: o olho le a queda
    antes de ler o texto. */
+/* Os dois recordes dividem a linha. O limiar e 800 e nao 1000 de proposito: na
+   tela padrao o conteudo mede 1.015 px, e um corte em 1000 passaria por 15 px
+   -- exatamente o tipo de calibragem que ja me mordeu duas vezes neste arquivo.
+   Testado a 388 px por cartao: o brasao de 104 px continua cabendo e a caixa da
+   medida nao encosta nele. */
 .tombo{display:grid;gap:16px}
+@container content (min-width:800px){.tombo{grid-template-columns:1fr 1fr}}
+/* verde para quem subiu: o mesmo desenho, com os gradientes trocados de lado */
+.tombo-c.sobe{border-left-color:var(--teal)}
+.tombo-c.sobe{background:
+    radial-gradient(120% 90% at 8% 100%,rgba(214,178,92,.14),transparent 58%),
+    radial-gradient(120% 90% at 92% 0%,rgba(34,160,141,.20),transparent 58%),
+    linear-gradient(150deg,#151d20,#0e1116 62%)}
+.tombo-c.sobe::after{background:linear-gradient(150deg,transparent 40%,rgba(34,160,141,.07))}
+.tombo-c.sobe .queda .lado.alto{align-self:end}
+.tombo-c.sobe .queda .lado.baixo{align-self:start}
+.tombo-c.sobe .queda .lado.alto .fx{color:var(--teal)}
+.tombo-c.sobe .queda .lado.alto::before{background:radial-gradient(circle,rgba(34,160,141,.26),transparent 66%)}
+.tombo-c.sobe .queda .lado.alto .bras{filter:drop-shadow(0 0 22px rgba(34,160,141,.55))}
+.tombo-c.sobe .medida{border-color:rgba(34,160,141,.35)}
+.tombo-c.sobe .medida b{color:var(--teal)}
+/* quadro de honra: os recordes que ja foram batidos */
+.honra{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:10px}
+.honra-c{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--card2);border:1px solid var(--line);border-radius:9px;
+  border-left:2px solid var(--line)}
+.honra-c.q{border-left-color:rgba(224,72,64,.55)}
+.honra-c.a{border-left-color:rgba(34,160,141,.55)}
+.honra-c img.av{width:26px;height:26px;border-radius:6px;flex:none}
+.honra-c .txt{flex:1;min-width:0}
+.honra-c .n{font-size:12px;font-weight:600;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.honra-c .r{font-size:10.5px;color:var(--dim);margin-top:3px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.honra-c b{font:700 15px/1 var(--disp);font-variant-numeric:tabular-nums;flex:none}
+.honra-c.q b{color:var(--red)} .honra-c.a b{color:var(--teal)}
 .tombo-c{position:relative;overflow:hidden;border-radius:16px;
   border:1px solid var(--line);
   background:
@@ -6888,12 +6923,13 @@ function pElevador(){
     <span class="sal ${x.saldo>0?"up":x.saldo<0?"dn":"eq"}">${x.saldo>0?"+":""}${x.saldo}</span>
   </div>`;
 
-  const hist=e.historico||{}, inf=e.informado||[], curva=e.curva||[];
+  const hist=e.historico||{}, rec=e.recordes||{}, curva=e.curva||[];
   const zoada=["O ELEVADOR DA UDA — saldo em ranqueada"]
     .concat((e.subiu||[]).slice(0,1).map(x=>`📈 subiu: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.caiu||[]).slice(0,1).map(x=>`📉 desceu: ${x.gameName} ${x.saldo} (${x.vitorias}V ${x.derrotas}D)`))
     .concat((e.parado||[]).slice(0,1).map(x=>`🛗 parado: ${x.gameName} ${x.saldo>0?"+":""}${x.saldo} em ${x.jogos} partidas`))
-    .concat(inf.slice(0,1).map(x=>`🪂 o tombo: ${x.gameName} caiu de ${x.de.txt} para ${x.para?x.para.txt:"?"}${x.dias!=null?` em ${x.dias} dias`:""}${x.degraus?` (${x.degraus} degraus)`:""}`))
+    .concat(rec.queda?[`🪂 maior queda: ${rec.queda.atual.gameName} ${rec.queda.atual.de.txt} → ${rec.queda.atual.para.txt} (${rec.queda.atual.degraus} degraus${rec.queda.atual.partidas?` em ${rec.queda.atual.partidas} partidas`:""})`]:[])
+    .concat(rec.ascensao?[`🚀 maior ascensão: ${rec.ascensao.atual.gameName} ${rec.ascensao.atual.de.txt} → ${rec.ascensao.atual.para.txt} (${rec.ascensao.atual.degraus} degraus${rec.ascensao.atual.partidas?` em ${rec.ascensao.atual.partidas} partidas`:""})`]:[])
     .join("\n");
 
   return `
@@ -6915,50 +6951,74 @@ function pElevador(){
     </div>
   </section>
 
-  ${inf.length?`<section><div class="sh-plain">${chead(I.skull,"O tombo que ninguém esquece",
-    "temporada antiga não está em API nenhuma — a Riot não guarda e o Match-V5 só serve partida recente · isto aqui é memória do grupo, digitada à mão em elos.json","red")}</div>
-    <div class="tombo">${inf.map(x=>`<article class="tombo-c">
-      <span class="selo">informado</span>
-      <div class="tombo-in">
-        <div class="tombo-cab"><img class="av" src="${iconImg(x.icon)}"${FB}>
-          <div><div class="n">${h(x.gameName)}</div>
-          <div class="t">${h(x.temporada)}</div></div></div>
-        <div class="queda">
-          <div class="lado alto">
-            <div class="rot">chegou a</div>
-            <img class="bras" src="${crestImg(x.de.tier)}"${FB} alt="">
-            <div class="fx">${h(x.de.txt)}${x.de.pdl!=null?` <span style="opacity:.75">${ni(x.de.pdl)} PDL</span>`:""}</div>
-            ${x.de.em?`<div class="det">${h(dataCurta(x.de.em))}</div>`:""}
+  ${(rec.queda||rec.ascensao)?`<section><div class="sh-plain">${chead(I.award,"Os dois recordes",
+    "a maior queda e a maior ascensão do grupo · quem bater a marca toma o lugar, e o antigo desce para o quadro de honra · temporada antiga não está em API nenhuma, então isto é memória do grupo","gold")}</div>
+    <div class="tombo">
+      ${["queda","ascensao"].map(k=>{const r=rec[k]; if(!r) return "";
+        const x=r.atual, sobe=k==="ascensao";
+        const uid=(k+h(x.puuid)).replace(/[^a-zA-Z0-9]/g,"").slice(0,12);
+        return `<article class="tombo-c ${sobe?"sobe":""}">
+        <span class="selo">${h(x.fonte||"informado")}</span>
+        <div class="tombo-in">
+          <div class="tombo-cab"><img class="av" src="${iconImg(x.icon)}"${FB}>
+            <div><div class="n">${h(x.gameName)}</div>
+            <div class="t">${sobe?"maior ascensão":"maior queda"}${x.quando?" · "+h(x.quando):""}</div></div></div>
+          <div class="queda">
+            <div class="lado ${sobe?"baixo":"alto"}">
+              <div class="rot">${sobe?"saiu de":"chegou a"}</div>
+              <img class="bras" src="${crestImg(sobe?x.de.tier:x.de.tier)}"${FB} alt="">
+              <div class="fx">${h(x.de.txt)}${x.de.pdl!=null?` <span style="opacity:.75">${ni(x.de.pdl)} PDL</span>`:""}</div>
+              ${x.de.em?`<div class="det">${h(dataCurta(x.de.em))}</div>`:""}
+            </div>
+            <div class="meio">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <defs><linearGradient id="g${uid}" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="${sobe?"var(--gold)":"var(--gold)"}"/>
+                  <stop offset="1" stop-color="${sobe?"var(--teal)":"var(--red)"}"/>
+                </linearGradient></defs>
+                <path d="${sobe?"M4 88 C 40 88, 60 12, 96 12":"M4 12 C 40 12, 60 88, 96 88"}"
+                  fill="none" stroke="url(#g${uid})" stroke-width="2.5" stroke-linecap="round"
+                  stroke-dasharray="5 6" opacity=".85" vector-effect="non-scaling-stroke"/>
+                <path d="${sobe?"M89 18 L97 12 L89 6":"M89 82 L97 88 L89 94"}" fill="none"
+                  stroke="${sobe?"var(--teal)":"var(--red)"}" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+              ${(x.partidas||x.dias!=null||x.degraus)?`<div class="medida">
+                ${x.partidas?`<b>${ni(x.partidas)}</b><span>partida${x.partidas===1?"":"s"}</span>`
+                 :x.dias!=null?`<b>${ni(x.dias)}</b><span>dia${x.dias===1?"":"s"}</span>`
+                 :`<b>${sobe?"+":"−"}${ni(x.degraus)}</b><span>degraus</span>`}
+                ${x.degraus&&(x.partidas||x.dias!=null)
+                  ?`<em>${ni(x.degraus)} degrau${x.degraus>1?"s":""} ${sobe?"acima":"abaixo"}</em>`:""}
+                </div>`:""}
+            </div>
+            <div class="lado ${sobe?"alto":"baixo"}">
+              <div class="rot">${sobe?"chegou a":"terminou em"}</div>
+              <img class="bras" src="${crestImg(x.para.tier)}"${FB} alt="">
+              <div class="fx">${h(x.para.txt)}</div>
+              ${x.para.em?`<div class="det">${h(dataCurta(x.para.em))}</div>`:""}
+            </div>
           </div>
-          <div class="meio">
-            ${x.para?`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <defs><linearGradient id="gqueda${h(x.puuid).slice(0,8)}" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="var(--gold)"/><stop offset="1" stop-color="var(--red)"/>
-              </linearGradient></defs>
-              <path d="M4 12 C 40 12, 60 88, 96 88" fill="none"
-                stroke="url(#gqueda${h(x.puuid).slice(0,8)})" stroke-width="2.5"
-                stroke-linecap="round" stroke-dasharray="5 6" opacity=".85"
-                vector-effect="non-scaling-stroke"/>
-              <path d="M89 82 L97 88 L89 94" fill="none" stroke="var(--red)"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                vector-effect="non-scaling-stroke"/></svg>`:""}
-            ${(x.dias!=null||x.degraus)?`<div class="medida">
-              ${x.dias!=null
-                ? `<b>${ni(x.dias)}</b><span>dia${x.dias===1?"":"s"}</span>
-                   ${x.degraus?`<em>${ni(x.degraus)} degrau${x.degraus>1?"s":""} abaixo</em>`:""}`
-                : `<b>−${ni(x.degraus)}</b><span>degrau${x.degraus>1?"s":""}</span>`}
-              </div>`:""}
-          </div>
-          ${x.para?`<div class="lado baixo">
-            <div class="rot">terminou em</div>
-            <img class="bras" src="${crestImg(x.para.tier)}"${FB} alt="">
-            <div class="fx">${h(x.para.txt)}</div>
-            ${x.para.em?`<div class="det">${h(dataCurta(x.para.em))}</div>`:""}
-          </div>`:"<div></div>"}
+          ${x.nota?`<div class="tombo-nota">${h(x.nota)}</div>`:""}
         </div>
-        ${x.nota?`<div class="tombo-nota">${h(x.nota)}</div>`:""}
-      </div>
-    </article>`).join("")}</div></section>`:""}
+      </article>`;}).join("")}
+    </div></section>
+
+    ${(((rec.queda||{}).historico||[]).length||((rec.ascensao||{}).historico||[]).length)?`
+    <section><div class="sh-plain">${chead(I.book,"Quadro de honra",
+      "marcas que já foram batidas · continuam valendo como história")}</div>
+      <div class="honra">
+        ${["queda","ascensao"].flatMap(k=>((rec[k]||{}).historico||[]).map(x=>`
+          <div class="honra-c ${k==="queda"?"q":"a"}"${tip(h(x.gameName),[
+            [k==="queda"?"Caiu de":"Subiu de",x.de.txt],
+            ["Até",x.para.txt],
+            ["Degraus",ni(x.degraus)],
+            x.partidas?["Em",ni(x.partidas)+" partidas"]:null,
+            x.fonte?["Fonte",x.fonte]:null].filter(Boolean), h(x.nota||""))}>
+            <img class="av" src="${iconImg(x.icon)}"${FB}>
+            <div class="txt"><div class="n">${h(x.gameName)}</div>
+              <div class="r">${h(x.de.txt)} → ${h(x.para.txt)}</div></div>
+            <b>${k==="queda"?"−":"+"}${ni(x.degraus)}</b>
+          </div>`)).join("")}
+      </div></section>`:""}`:""}
 
   ${curva.length?`<section><div class="sh-plain">${chead(I.trend,"A queda, medida",
     "saldo acumulado de ranqueada ao longo do tempo · o ponto dourado é o melhor momento, e o número é o quanto caiu de lá até hoje · só alcança o que o Match-V5 ainda serve","red")}</div>

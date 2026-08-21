@@ -1,38 +1,114 @@
 {
   "_leia": [
-    "Historico de elo que a API da Riot NAO devolve e o painel nao tinha como",
-    "medir: temporadas antigas, pico de carreira, aquela queda que todo mundo",
-    "lembra. O Match-V5 so guarda partida recente e a League-V4 so responde onde",
-    "a pessoa esta agora -- entao isto aqui e memoria do grupo, digitada a mao,",
-    "e o painel marca como tal. O que e medido fica separado do que e informado.",
+    "RECORDES DE ELO -- a maior queda e a maior ascensao do grupo.",
     "",
-    "Formato: o Riot ID completo, e uma lista de marcos.",
-    "  temporada  rotulo livre ('Temporada 2026', 'Pico da carreira'...)",
-    "  pico       onde chegou de mais alto naquele periodo",
-    "  picoPdl    PDL no pico, opcional",
-    "  picoEm     data do pico, AAAA-MM-DD, opcional",
-    "  fim        onde terminou (opcional; sem isso, so o pico e mostrado)",
-    "  fimEm      data em que chegou la, AAAA-MM-DD, opcional",
-    "  nota       uma linha de contexto, opcional",
+    "A Riot nao publica historico de elo: a League-V4 so responde onde a pessoa",
+    "esta agora e o Match-V5 so serve partida recente. Sites como Blitz e OP.GG",
+    "mostram a curva porque vem gravando ha anos. Este arquivo e a memoria do",
+    "grupo, e o painel marca tudo como INFORMADO para nao confundir com o que",
+    "ele mesmo mede.",
     "",
-    "Com as duas datas o painel CALCULA quantos dias levou -- ninguem precisa",
-    "digitar o intervalo, e ele nunca fica desencontrado das datas.",
+    "COMO FUNCIONA O RECORDE: cada categoria tem um `atual` e uma lista",
+    "`historico`. Quando alguem bate a marca, mova o `atual` para o inicio do",
+    "`historico` e ponha o novo no lugar. O painel mostra os dois recordes lado",
+    "a lado e os antigos embaixo, como quadro de honra.",
     "",
-    "Faixas aceitas: FERRO BRONZE PRATA OURO PLATINA ESMERALDA DIAMANTE MESTRE",
+    "Campos de um recorde:",
+    "  jogador   Riot ID completo, igual ao players.json",
+    "  de/para   as duas pontas ('MESTRE', 'ESMERALDA II'...)",
+    "  dePdl     PDL na ponta de cima, opcional",
+    "  degraus   quantos degraus da escada, contando 4 divisoes por tier",
+    "  partidas  em quantas partidas aconteceu, opcional",
+    "  deEm/paraEm  datas AAAA-MM-DD, opcionais -- com as duas o painel",
+    "            calcula os dias sozinho",
+    "  quando    rotulo livre ('Temporada 2026')",
+    "  fonte     de onde veio o numero ('Blitz', 'lembranca do grupo'...)",
+    "  nota      uma linha de contexto",
+    "",
+    "Faixas: FERRO BRONZE PRATA OURO PLATINA ESMERALDA DIAMANTE MESTRE",
     "GRAO-MESTRE DESAFIANTE, com divisao opcional (IV III II I).",
-    "Editar este arquivo e rodar `python run.py --build` ja atualiza o painel."
+    "Editar e rodar `python run.py --build` ja atualiza o painel."
   ],
-  "jogadores": {
-    "Gui#Gui": [
-      {
-        "temporada": "Temporada 2026",
-        "pico": "MESTRE",
-        "picoPdl": 265,
-        "picoEm": "2026-04-23",
-        "fim": "ESMERALDA I",
-        "fimEm": "2026-05-12",
-        "nota": "Chegou ao topo com 265 PDL. Desceu cinco degraus sem nunca voltar."
-      }
-    ]
+  "recordes": {
+    "queda": {
+      "atual": {
+        "jogador": "различие#666",
+        "de": "DIAMANTE III",
+        "para": "PLATINA III",
+        "degraus": 8,
+        "partidas": 7,
+        "quando": "Temporada 2026",
+        "fonte": "Blitz",
+        "nota": "Oito degraus em sete partidas. Não foi queda, foi tombo."
+      },
+      "historico": [
+        {
+          "jogador": "UDA JuninCambota#Zovao",
+          "de": "OURO II",
+          "para": "BRONZE I",
+          "degraus": 8,
+          "partidas": 29,
+          "quando": "Temporada 2026",
+          "fonte": "Blitz",
+          "nota": "Mesmos oito degraus, mas levou quatro vezes mais partidas."
+        },
+        {
+          "jogador": "Gui#Gui",
+          "de": "MESTRE",
+          "dePdl": 265,
+          "para": "ESMERALDA II",
+          "degraus": 7,
+          "partidas": 12,
+          "deEm": "2026-04-23",
+          "quando": "Temporada 2026",
+          "fonte": "Blitz",
+          "nota": "Chegou ao topo com 265 PDL e não voltou mais."
+        }
+      ]
+    },
+    "ascensao": {
+      "atual": {
+        "jogador": "UDA Aaurora#lara",
+        "de": "PRATA III",
+        "para": "ESMERALDA IV",
+        "degraus": 12,
+        "partidas": 19,
+        "quando": "Temporada 2026",
+        "fonte": "Blitz",
+        "nota": "Caiu até Prata e voltou passando por cima de todo mundo."
+      },
+      "historico": [
+        {
+          "jogador": "YaGoo1v9#1v9",
+          "de": "PRATA III",
+          "para": "ESMERALDA III",
+          "degraus": 12,
+          "partidas": 10,
+          "quando": "Temporada 2026",
+          "fonte": "Blitz",
+          "nota": "Mesmos doze degraus em dez partidas, mas em conta de nível 53 — subir rápido numa conta nova é outra história."
+        },
+        {
+          "jogador": "Gui#Gui",
+          "de": "PLATINA II",
+          "para": "MESTRE",
+          "degraus": 11,
+          "partidas": 41,
+          "quando": "Temporada 2026",
+          "fonte": "Blitz",
+          "nota": "Subiu onze degraus até o topo. Desceu sete logo depois."
+        },
+        {
+          "jogador": "UDA JuninCambota#Zovao",
+          "de": "BRONZE I",
+          "para": "PLATINA II",
+          "degraus": 11,
+          "partidas": 24,
+          "quando": "Temporada 2026",
+          "fonte": "Blitz",
+          "nota": "Saiu do Bronze e não parou até a Platina."
+        }
+      ]
+    }
   }
 }
